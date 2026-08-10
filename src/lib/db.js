@@ -1,7 +1,8 @@
 import { Pool } from 'pg';
 
 export function getPool() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:ZnBUG%2Ap%40w%24zgH8C@db.ibhgxgvxxfqxtoavofef.supabase.co:5432/postgres';
+  const connectionString = process.env.DATABASE_URL || 
+    'postgresql://postgres.ibhgxgvxxfqxtoavofef:ZnBUG%2Ap%40w%24zgH8C@aws-0-ap-south-1.pooler.supabase.com:5432/postgres';
 
   const isCloudDb = connectionString.includes('supabase') || 
                     connectionString.includes('neon.tech') || 
