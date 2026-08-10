@@ -12,6 +12,7 @@ import Sales from './pages/Sales';
 import SaleDetail from './pages/SaleDetail';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Attendance from './pages/Attendance';
 
 const App = () => {
   const { loading } = useAuth();
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/sales" element={<Sales />} />
         <Route path="/sales/:id" element={<SaleDetail />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/attendance" element={<Attendance />} />
         <Route path="/settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

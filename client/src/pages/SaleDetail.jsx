@@ -49,6 +49,7 @@ const SaleDetail = () => {
   }, [autoPrint, sale, settings, handlePrint]);
 
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentNotes, setPaymentNotes] = useState('');
 
   const paymentMutation = useMutation({
@@ -63,8 +64,8 @@ const SaleDetail = () => {
   const handleAddPayment = () => {
     if (!paymentAmount || isNaN(paymentAmount) || Number(paymentAmount) <= 0) return;
     paymentMutation.mutate({
-      amount: parseFloat(paymentAmount),
-      payment_mode: 'Cash',
+      amount_paid: parseFloat(paymentAmount),
+      payment_mode: paymentMethod,
       notes: paymentNotes
     });
   };
@@ -121,6 +122,7 @@ const SaleDetail = () => {
                   onChange={(e) => setPaymentNotes(e.target.value)}
                 />
               </div>
+              <div className="form-group"><label className="form-label">Payment method</label><select className="form-select" value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}><option value="cash">Cash</option><option value="upi">UPI</option></select></div>
               <button 
                 className="btn btn-success btn-full" 
                 onClick={handleAddPayment}
@@ -135,7 +137,7 @@ const SaleDetail = () => {
         <div className="card" style={{flex: '2', minWidth: '300px'}}>
           <div className="card-header">Payment History</div>
           <div className="card-body p-0">
-            {sale.payments && sale.payments.length > 0 ? (
+            {sale.payment_logs && sale.payment_logs.length > 0 ? (
               <table className="table">
                 <thead>
                   <tr>
@@ -146,11 +148,11 @@ const SaleDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sale.payments.map((p, i) => (
+                  {sale.payment_logs.map((p, i) => (
                     <tr key={i}>
                       <td>{formatDate(p.payment_date || p.created_at)}</td>
                       <td>{p.payment_mode}</td>
-                      <td className="amount text-success">{formatCurrency(p.amount)}</td>
+                      <td className="amount text-success">{formatCurrency(p.amount_paid)}</td>
                       <td>{p.notes}</td>
                     </tr>
                   ))}

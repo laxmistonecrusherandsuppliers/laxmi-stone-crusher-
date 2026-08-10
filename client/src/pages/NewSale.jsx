@@ -102,6 +102,7 @@ const NewSale = () => {
   // Step 4: Payment
   const [paymentMode, setPaymentMode] = useState('full');
   const [amountPaid, setAmountPaid] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -140,6 +141,7 @@ const NewSale = () => {
       })),
       payment_mode: paymentMode,
       amount_paid: parseFloat(amountPaid) || 0,
+      payment_method: paymentMethod,
       notes: notes,
     };
 
@@ -442,6 +444,15 @@ const NewSale = () => {
                   value={amountPaid}
                   onChange={e => setAmountPaid(e.target.value)}
                 />
+              </div>
+            )}
+
+            {paymentMode !== 'due' && (
+              <div className="form-group" style={{maxWidth:'300px', margin:'0 auto 24px'}}>
+                <label className="form-label">Payment method</label>
+                <select className="form-select" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                  <option value="cash">Cash</option><option value="upi">UPI</option>
+                </select>
               </div>
             )}
 

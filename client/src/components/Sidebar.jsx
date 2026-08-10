@@ -8,6 +8,7 @@ const navItems = [
   { to: '/sales', icon: '🧾', label: 'Sales' },
   { to: '/customers', icon: '👥', label: 'Customers' },
   { to: '/reports', icon: '📊', label: 'Reports' },
+  { to: '/attendance', icon: '📅', label: 'Attendance' },
   { to: '/settings', icon: '⚙️', label: 'Settings', adminOnly: true },
 ];
 

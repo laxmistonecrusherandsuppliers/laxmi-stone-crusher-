@@ -129,9 +129,9 @@ exports.create = async (req, res, next) => {
 
     // Insert initial payment log
     await client.query(
-      `INSERT INTO payment_logs (sale_id, customer_id, amount_paid, balance_before, balance_after, notes, recorded_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [sale_id, customer_id, actual_amount_paid, grand_total, amount_due, 'Initial bill payment', req.user.id]
+      `INSERT INTO payment_logs (sale_id, customer_id, amount_paid, payment_mode, balance_before, balance_after, notes, recorded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [sale_id, customer_id, actual_amount_paid, req.body.payment_method || 'cash', grand_total, amount_due, 'Initial bill payment', req.user.id]
     );
 
     // Update settings next number
@@ -215,7 +215,7 @@ exports.addPayment = async (req, res, next) => {
   const client = await db.pool.connect();
   try {
     const { id } = req.params;
-    const { amount_paid, notes } = req.body;
+    const { amount_paid, payment_mode = 'cash', notes } = req.body;
     if (!amount_paid || amount_paid <= 0) return res.status(400).json({ error: 'Valid amount is required' });
 
     await client.query('BEGIN');
@@ -242,9 +242,9 @@ exports.addPayment = async (req, res, next) => {
     `, [totalPaid, balanceAfter, newPaymentMode, id]);
 
     await client.query(`
-      INSERT INTO payment_logs (sale_id, customer_id, amount_paid, balance_before, balance_after, notes, recorded_by)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [id, sale.customer_id, payAmt, balanceBefore, balanceAfter, notes, req.user.id]);
+      INSERT INTO payment_logs (sale_id, customer_id, amount_paid, payment_mode, balance_before, balance_after, notes, recorded_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [id, sale.customer_id, payAmt, payment_mode, balanceBefore, balanceAfter, notes, req.user.id]);
 
     await client.query('COMMIT');
     res.json({ message: 'Payment recorded successfully' });

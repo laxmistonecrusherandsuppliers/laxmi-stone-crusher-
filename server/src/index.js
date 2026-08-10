@@ -18,6 +18,7 @@ app.use('/api/materials', require('./routes/materials'));
 app.use('/api/sales', require('./routes/sales'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/settings', require('./routes/settings'));
+app.use('/api/attendance', require('./routes/attendance'));
 
 app.use(errorHandler);
 

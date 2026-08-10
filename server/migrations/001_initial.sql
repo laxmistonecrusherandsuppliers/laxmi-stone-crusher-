@@ -76,6 +76,7 @@ CREATE TABLE payment_logs (
   customer_id INT REFERENCES customers(id),
   payment_date TIMESTAMPTZ DEFAULT NOW(),
   amount_paid NUMERIC(12,2) NOT NULL,
+  payment_mode VARCHAR(10) DEFAULT 'cash' CHECK (payment_mode IN ('cash','upi')),
   balance_before NUMERIC(12,2) NOT NULL,
   balance_after NUMERIC(12,2) NOT NULL,
   notes TEXT,
