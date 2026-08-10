@@ -12,6 +12,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('lsc_token');
+      if (token) {
+        router.replace('/');
+      }
+    }
+  }, [router]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');

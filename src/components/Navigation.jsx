@@ -15,12 +15,40 @@ const navItems = [
 
 export default function Navigation({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
+
+  React.useEffect(() => {
+    if (pathname === '/login') {
+      setCheckingAuth(false);
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('lsc_token');
+      if (!token) {
+        router.replace('/login');
+      } else {
+        setCheckingAuth(false);
+      }
+    }
+  }, [pathname, router]);
 
   // If on login page, skip app sidebar layout
   if (pathname === '/login') {
     return <main>{children}</main>;
+  }
+
+  if (checkingAuth) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔒</div>
+          <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Verifying Authentication...</div>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = () => {
