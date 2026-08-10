@@ -284,6 +284,7 @@ export default function ReportsPage() {
                     <th>Grand Total</th>
                     <th>Paid</th>
                     <th>Outstanding Due</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -296,6 +297,11 @@ export default function ReportsPage() {
                       <td>{formatCurrency(row.grand_total)}</td>
                       <td style={{ color: 'var(--success)' }}>{formatCurrency(row.amount_paid)}</td>
                       <td style={{ color: 'var(--danger)', fontWeight: 700 }}>{formatCurrency(row.amount_due)}</td>
+                      <td>
+                        <a href={`/sales/${row.id}`} className="btn btn-danger btn-sm">
+                          💳 Settle Due
+                        </a>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
