@@ -1,22 +1,29 @@
 import { Pool } from 'pg';
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://lsc_user:lsc_pass@localhost:5432/lsc_db';
+export function getPool() {
+  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:ZnBUG%2Ap%40w%24zgH8C@db.ibhgxgvxxfqxtoavofef.supabase.co:5432/postgres';
 
-const isCloudDb = connectionString.includes('supabase') || 
-                  connectionString.includes('neon.tech') || 
-                  connectionString.includes('sslmode=require') || 
-                  process.env.NODE_ENV === 'production';
+  const isCloudDb = connectionString.includes('supabase') || 
+                    connectionString.includes('neon.tech') || 
+                    connectionString.includes('sslmode=require') || 
+                    process.env.NODE_ENV === 'production';
 
-let pool;
+  if (!global._pgPool || global._pgConnectionString !== connectionString) {
+    global._pgConnectionString = connectionString;
+    global._pgPool = new Pool({
+      connectionString,
+      ssl: isCloudDb ? { rejectUnauthorized: false } : false,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+  }
 
-if (!global._pgPool) {
-  global._pgPool = new Pool({
-    connectionString,
-    ssl: isCloudDb ? { rejectUnauthorized: false } : false,
-  });
+  return global._pgPool;
 }
 
-pool = global._pgPool;
-
-export const query = (text, params) => pool.query(text, params);
-export { pool };
+export const query = (text, params) => getPool().query(text, params);
+export const pool = {
+  connect: () => getPool().connect(),
+  query: (text, params) => getPool().query(text, params),
+};

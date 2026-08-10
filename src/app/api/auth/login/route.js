@@ -68,6 +68,7 @@ export async function POST(request) {
 
     return NextResponse.json({ data: { token, user: payload }, message: 'Login successful' });
   } catch (error) {
-    return NextResponse.json({ error: 'An unexpected authentication error occurred.' }, { status: 500 });
+    console.error('Login Auth Error:', error);
+    return NextResponse.json({ error: error.message || 'An unexpected authentication error occurred.' }, { status: 500 });
   }
 }
