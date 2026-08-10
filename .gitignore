@@ -1,9 +1,24 @@
+# DEPENDENCIES
 node_modules/
 client/node_modules/
 server/node_modules/
-*.log
+
+# ENVIRONMENT VARIABLES (CRITICAL SECURITY)
 .env
-.DS_Store
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# BUILD & CACHE OUTPUTS
+.next/
 dist/
 client/dist/
-.next/
+build/
+*.log
+*.pid
+.DS_Store
+
+# IDE / SYSTEM
+.vscode/
+.idea/
