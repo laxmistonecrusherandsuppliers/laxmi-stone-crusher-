@@ -1,0 +1,139 @@
+.settings-container {
+  display: flex;
+  gap: 30px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  border: 1px solid #f0f4f8;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.settings-sidebar {
+  width: 280px;
+  background-color: #f7fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-tab {
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 4px solid transparent;
+}
+
+.settings-tab:hover {
+  background-color: #edf2f7;
+  color: #2d3748;
+}
+
+.settings-tab.active {
+  background-color: white;
+  color: var(--primary, #3182ce);
+  border-left-color: var(--primary, #3182ce);
+  font-weight: 600;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 40px;
+}
+
+.settings-panel h2 {
+  margin: 0 0 10px 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+}
+
+.settings-desc {
+  color: #718096;
+  margin-bottom: 30px;
+  font-size: 0.95rem;
+}
+
+.settings-form {
+  max-width: 600px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.settings-form .form-group {
+  margin-bottom: 24px;
+}
+
+.settings-form label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.settings-form input,
+.settings-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background-color: #fcfcfc;
+}
+
+.settings-form input:focus,
+.settings-form textarea:focus {
+  border-color: var(--primary, #3182ce);
+  background-color: white;
+}
+
+.settings-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    flex-direction: column;
+  }
+  
+  .settings-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
