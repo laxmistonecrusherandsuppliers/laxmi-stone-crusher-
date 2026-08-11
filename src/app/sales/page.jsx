@@ -9,6 +9,7 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     loadSales();
@@ -40,17 +41,42 @@ export default function SalesPage() {
     }
   };
 
+  const filteredSales = sales.filter(s => {
+    if (!search.trim()) return true;
+    const term = search.toLowerCase();
+    return (
+      s.invoice_number?.toLowerCase().includes(term) ||
+      s.customer_name?.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">🧾 All Sales &amp; Invoices</h1>
+        <div>
+          <h1 className="page-title">Sales &amp; Invoices</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.84375rem', marginTop: '2px' }}>
+            Browse and manage all billing records
+          </p>
+        </div>
         <Link href="/sales/new" className="btn btn-primary">
-          ➕ New Sale
+          <span>➕</span> New Sale Invoice
         </Link>
       </div>
 
-      <div className="card" style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      {/* Filter Card */}
+      <div className="card" style={{ marginBottom: '20px', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'end', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <label className="form-label">Search Invoice or Customer</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Filter by invoice no or customer name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <div>
             <label className="form-label">From Date</label>
             <input type="date" className="form-input" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -59,40 +85,43 @@ export default function SalesPage() {
             <label className="form-label">To Date</label>
             <input type="date" className="form-input" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
-          <div style={{ marginTop: '24px' }}>
-            <button className="btn btn-secondary" onClick={() => { setFrom(''); setTo(''); }}>Clear Dates</button>
+          <div>
+            <button className="btn btn-secondary" onClick={() => { setFrom(''); setTo(''); setSearch(''); }}>
+              Reset Filters
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Sales List Table */}
       <div className="card">
         {loading ? (
-          <div style={{ padding: '32px', textAlign: 'center' }}>Loading sales...</div>
-        ) : sales.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No sales found for selected dates.</div>
+          <div style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading sales invoices...</div>
+        ) : filteredSales.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No sales invoices match your filters.</div>
         ) : (
           <div className="table-container">
             <table className="table">
               <thead>
                 <tr>
                   <th>Invoice No</th>
-                  <th>Customer</th>
+                  <th>Customer Name</th>
                   <th>Sale Date</th>
-                  <th>GST</th>
-                  <th>Status</th>
+                  <th>Tax Billing</th>
+                  <th>Payment Status</th>
                   <th>Grand Total</th>
-                  <th>Paid</th>
-                  <th>Due</th>
+                  <th>Paid Amount</th>
+                  <th>Due Balance</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {sales.map((s) => (
+                {filteredSales.map((s) => (
                   <tr key={s.id}>
                     <td style={{ fontWeight: 600 }}>{s.invoice_number}</td>
-                    <td>{s.customer_name || 'N/A'}</td>
+                    <td style={{ fontWeight: 500 }}>{s.customer_name || 'N/A'}</td>
                     <td>{formatDate(s.sale_date)}</td>
-                    <td>{s.gst_enabled ? '✅ YES' : '❌ NO'}</td>
+                    <td>{s.gst_enabled ? <span className="badge badge-admin">GST TAX</span> : <span className="badge badge-pending">PLAIN</span>}</td>
                     <td>
                       <span className={`badge badge-${s.payment_mode}`}>{s.payment_mode?.toUpperCase()}</span>
                     </td>

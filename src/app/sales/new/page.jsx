@@ -164,45 +164,52 @@ export default function NewSalePage() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">➕ New Sale</h1>
+        <div>
+          <h1 className="page-title">New Sale Invoice</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.84375rem', marginTop: '2px' }}>
+            Generate bill for stone crusher material sales
+          </p>
+        </div>
       </div>
 
       {/* Step Indicator */}
       <div className="steps">
         <div className={`step-item ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
           <div className="step-number">{step > 1 ? '✓' : '1'}</div>
-          <span>Customer</span>
+          <span>1. Customer</span>
         </div>
         <div className={`step-item ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
           <div className="step-number">{step > 2 ? '✓' : '2'}</div>
-          <span>Materials</span>
+          <span>2. Materials</span>
         </div>
         <div className={`step-item ${step >= 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}>
           <div className="step-number">{step > 3 ? '✓' : '3'}</div>
-          <span>GST</span>
+          <span>3. GST Tax</span>
         </div>
         <div className={`step-item ${step >= 4 ? 'active' : ''} ${step > 4 ? 'completed' : ''}`}>
           <div className="step-number">{step > 4 ? '✓' : '4'}</div>
-          <span>Payment</span>
+          <span>4. Payment</span>
         </div>
         <div className={`step-item ${step >= 5 ? 'active' : ''}`}>
           <div className="step-number">5</div>
-          <span>Review</span>
+          <span>5. Final Review</span>
         </div>
       </div>
 
       {/* STEP 1: CUSTOMER */}
       {step === 1 && (
-        <div className="card">
-          <div className="card-header">Step 1: Select Customer</div>
+        <div className="card" style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <div className="card-header">Step 1: Select Customer Account</div>
 
           {selectedCustomer ? (
-            <div style={{ background: 'var(--success-light)', padding: '16px 20px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--success-light)', border: '1px solid #a7f3d0', padding: '16px 20px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <div style={{ fontWeight: 700, color: '#065f46', fontSize: '1.1rem' }}>👤 {selectedCustomer.name}</div>
-                <div style={{ color: '#047857', fontSize: '0.9rem' }}>📞 {selectedCustomer.mobile || 'No Mobile'} | 🏠 {selectedCustomer.address || 'No Address'}</div>
+                <div style={{ fontWeight: 700, color: 'var(--success-text)', fontSize: '1rem' }}>👤 {selectedCustomer.name}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.84375rem', marginTop: '2px' }}>
+                  📞 {selectedCustomer.mobile || 'No Mobile'} | 🏠 {selectedCustomer.address || 'No Address'}
+                </div>
               </div>
-              <button className="btn btn-secondary btn-sm" onClick={() => setSelectedCustomer(null)}>Change Customer</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setSelectedCustomer(null)}>Change</button>
             </div>
           ) : (
             <div>
@@ -211,7 +218,7 @@ export default function NewSalePage() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Type to search existing customer..."
+                  placeholder="Type customer name or phone number..."
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   autoFocus
@@ -219,12 +226,12 @@ export default function NewSalePage() {
               </div>
 
               {customerResults.length > 0 && (
-                <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', maxHeight: '220px', overflowY: 'auto', marginBottom: '20px', background: 'white' }}>
                   {customerResults.map((c) => (
                     <div
                       key={c.id}
                       onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
-                      style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                      style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}
                     >
                       <span style={{ fontWeight: 600 }}>{c.name}</span>
                       <span style={{ color: 'var(--text-secondary)' }}>{c.mobile}</span>
@@ -233,7 +240,7 @@ export default function NewSalePage() {
                 </div>
               )}
 
-              <div style={{ textAlignment: 'center', marginTop: '16px' }}>
+              <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--border)' }}>
                 <button className="btn btn-secondary" onClick={() => setShowNewCustModal(true)}>
                   ➕ Create New Customer Profile
                 </button>
@@ -243,7 +250,7 @@ export default function NewSalePage() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
             <button className="btn btn-primary btn-lg" disabled={!selectedCustomer} onClick={() => setStep(2)}>
-              Next: Select Materials →
+              Next: Materials List →
             </button>
           </div>
         </div>
@@ -259,9 +266,9 @@ export default function NewSalePage() {
             const rowAmt = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0);
 
             return (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 40px', gap: '12px', alignItems: 'end', marginBottom: '16px', padding: '16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)' }}>
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 40px', gap: '10px', alignItems: 'end', marginBottom: '12px', padding: '14px', background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Material</label>
+                  <label className="form-label">Material Item</label>
                   <select className="form-select" value={item.material_id} onChange={(e) => handleMaterialSelect(idx, e.target.value)}>
                     <option value="">Select Material</option>
                     {materials.map(m => (
@@ -272,7 +279,7 @@ export default function NewSalePage() {
                     <input
                       type="text"
                       className="form-input"
-                      style={{ marginTop: '8px' }}
+                      style={{ marginTop: '6px' }}
                       placeholder="Type custom material name..."
                       value={item.custom_material_name}
                       onChange={(e) => handleItemChange(idx, 'custom_material_name', e.target.value)}
@@ -302,8 +309,8 @@ export default function NewSalePage() {
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Amount</label>
-                  <div style={{ padding: '10px 14px', background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', fontWeight: 700 }}>
+                  <label className="form-label">Subtotal</label>
+                  <div style={{ padding: '8px 12px', background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: '0.875rem' }}>
                     {formatCurrency(rowAmt)}
                   </div>
                 </div>
@@ -315,108 +322,108 @@ export default function NewSalePage() {
             );
           })}
 
-          <button className="btn btn-secondary" onClick={addItemRow}>➕ Add Another Item</button>
+          <button className="btn btn-secondary" onClick={addItemRow}>➕ Add Line Item</button>
 
-          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Subtotal Amount:</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(subtotal)}</span>
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Calculated Subtotal:</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--brand-blue)' }}>{formatCurrency(subtotal)}</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
             <button className="btn btn-secondary" onClick={() => setStep(1)}>← Back</button>
-            <button className="btn btn-primary btn-lg" onClick={() => setStep(3)}>Next: GST Settings →</button>
+            <button className="btn btn-primary btn-lg" onClick={() => setStep(3)}>Next: GST Config →</button>
           </div>
         </div>
       )}
 
       {/* STEP 3: GST */}
       {step === 3 && (
-        <div className="card">
+        <div className="card" style={{ maxWidth: '640px', margin: '0 auto' }}>
           <div className="card-header">Step 3: GST Invoice Options</div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', marginBottom: '24px' }}>
-            <input type="checkbox" id="gst-toggle" checked={gstEnabled} onChange={(e) => setGstEnabled(e.target.checked)} style={{ width: '24px', height: '24px', cursor: 'pointer' }} />
-            <label htmlFor="gst-toggle" style={{ fontSize: '1.1rem', fontWeight: 600, cursor: 'pointer' }}>
-              Enable GST Tax Invoice (ON / OFF)
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', marginBottom: '20px', border: '1px solid var(--border)' }}>
+            <input type="checkbox" id="gst-toggle" checked={gstEnabled} onChange={(e) => setGstEnabled(e.target.checked)} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
+            <label htmlFor="gst-toggle" style={{ fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer' }}>
+              Enable Tax Invoice (GST Billing)
             </label>
           </div>
 
           {gstEnabled && (
-            <div className="form-group" style={{ maxWidth: '300px' }}>
-              <label className="form-label">GST Percentage (%)</label>
+            <div className="form-group" style={{ maxWidth: '240px' }}>
+              <label className="form-label">GST Tax Rate (%)</label>
               <input type="number" className="form-input" value={gstPercent} onChange={(e) => setGstPercent(e.target.value)} />
             </div>
           )}
 
-          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
               <span>Taxable Subtotal:</span> <strong>{formatCurrency(subtotal)}</strong>
             </div>
             {gstEnabled && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: 'var(--text-secondary)' }}>
                   <span>CGST @ {(parseFloat(gstPercent)/2).toFixed(1)}%:</span> <strong>{formatCurrency(gstAmount/2)}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: 'var(--text-secondary)' }}>
                   <span>SGST @ {(parseFloat(gstPercent)/2).toFixed(1)}%:</span> <strong>{formatCurrency(gstAmount/2)}</strong>
                 </div>
               </>
             )}
-            <hr style={{ margin: '12px 0', borderColor: 'var(--border)' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.3rem', fontWeight: 800 }}>
-              <span>Grand Total Amount:</span> <span style={{ color: 'var(--primary)' }}>{formatCurrency(grandTotal)}</span>
+            <hr style={{ margin: '10px 0', borderColor: 'var(--border)' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1875rem', fontWeight: 800 }}>
+              <span>Grand Total Amount:</span> <span style={{ color: 'var(--brand-blue)' }}>{formatCurrency(grandTotal)}</span>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
             <button className="btn btn-secondary" onClick={() => setStep(2)}>← Back</button>
-            <button className="btn btn-primary btn-lg" onClick={() => setStep(4)}>Next: Payment Mode →</button>
+            <button className="btn btn-primary btn-lg" onClick={() => setStep(4)}>Next: Payment Terms →</button>
           </div>
         </div>
       )}
 
       {/* STEP 4: PAYMENT */}
       {step === 4 && (
-        <div className="card">
-          <div className="card-header">Step 4: Payment Terms</div>
+        <div className="card" style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <div className="card-header">Step 4: Payment Terms &amp; Notes</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div onClick={() => setPaymentMode('full')} style={{ border: `2px solid ${paymentMode === 'full' ? 'var(--success)' : 'var(--border)'}`, padding: '20px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'full' ? 'var(--success-light)' : 'white' }}>
-              <div style={{ fontSize: '2rem' }}>💰</div>
-              <div style={{ fontWeight: 700, marginTop: '8px' }}>FULL PAYMENT</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Entire amount paid now</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+            <div onClick={() => setPaymentMode('full')} style={{ border: `2px solid ${paymentMode === 'full' ? 'var(--success)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'full' ? 'var(--success-light)' : 'white' }}>
+              <div style={{ fontSize: '1.5rem' }}>💰</div>
+              <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>FULL PAYMENT</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Entire bill paid now</div>
             </div>
 
-            <div onClick={() => setPaymentMode('partial')} style={{ border: `2px solid ${paymentMode === 'partial' ? 'var(--warning)' : 'var(--border)'}`, padding: '20px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'partial' ? 'var(--warning-light)' : 'white' }}>
-              <div style={{ fontSize: '2rem' }}>📋</div>
-              <div style={{ fontWeight: 700, marginTop: '8px' }}>PARTIAL PAYMENT</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Part paid, part due</div>
+            <div onClick={() => setPaymentMode('partial')} style={{ border: `2px solid ${paymentMode === 'partial' ? 'var(--warning)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'partial' ? 'var(--warning-light)' : 'white' }}>
+              <div style={{ fontSize: '1.5rem' }}>📋</div>
+              <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>PARTIAL PAYMENT</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Part paid, part due</div>
             </div>
 
-            <div onClick={() => setPaymentMode('due')} style={{ border: `2px solid ${paymentMode === 'due' ? 'var(--danger)' : 'var(--border)'}`, padding: '20px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'due' ? 'var(--danger-light)' : 'white' }}>
-              <div style={{ fontSize: '2rem' }}>📅</div>
-              <div style={{ fontWeight: 700, marginTop: '8px' }}>FULL DUE</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>0 paid now, full due</div>
+            <div onClick={() => setPaymentMode('due')} style={{ border: `2px solid ${paymentMode === 'due' ? 'var(--danger)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'due' ? 'var(--danger-light)' : 'white' }}>
+              <div style={{ fontSize: '1.5rem' }}>📅</div>
+              <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>FULL DUE</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>₹0 paid, full balance due</div>
             </div>
           </div>
 
           {paymentMode === 'partial' && (
-            <div className="form-group" style={{ maxWidth: '300px' }}>
+            <div className="form-group" style={{ maxWidth: '280px' }}>
               <label className="form-label">Amount Paid Now (₹)</label>
               <input type="number" step="0.01" className="form-input" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} placeholder="₹0.00" autoFocus />
             </div>
           )}
 
           <div className="form-group">
-            <label className="form-label">Notes (Optional)</label>
-            <textarea className="form-textarea" rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Vehicle Truck No: MH-12-AB-1234" />
+            <label className="form-label">Vehicle No / Reference Notes (Optional)</label>
+            <textarea className="form-textarea" rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Truck No: MH-12-AB-1234" />
           </div>
 
-          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
               <span>Total Bill Amount:</span> <strong>{formatCurrency(grandTotal)}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: 'var(--success)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: 'var(--success)' }}>
               <span>Amount Paid Now:</span> <strong>{formatCurrency(actualPaid)}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: dueAmount > 0 ? 'var(--danger)' : 'inherit', fontWeight: dueAmount > 0 ? 700 : 400 }}>
@@ -433,20 +440,20 @@ export default function NewSalePage() {
 
       {/* STEP 5: REVIEW & SAVE */}
       {step === 5 && (
-        <div className="card">
-          <div className="card-header">Step 5: Review &amp; Create Invoice</div>
+        <div className="card" style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <div className="card-header">Step 5: Review &amp; Generate Invoice</div>
 
-          <div style={{ padding: '20px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', marginBottom: '20px' }}>
+          <div style={{ padding: '16px 20px', background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', marginBottom: '20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>CUSTOMER</h4>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{selectedCustomer?.name}</div>
-                <div>{selectedCustomer?.mobile}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>CUSTOMER</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{selectedCustomer?.name}</div>
+                <div style={{ fontSize: '0.84375rem', color: 'var(--text-secondary)' }}>{selectedCustomer?.mobile}</div>
               </div>
               <div>
-                <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>INVOICE SUMMARY</h4>
-                <div>GST: <strong>{gstEnabled ? `ON (${gstPercent}%)` : 'OFF (Plain Bill)'}</strong></div>
-                <div>Payment Mode: <span className={`badge badge-${paymentMode}`}>{paymentMode.toUpperCase()}</span></div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>INVOICE SUMMARY</div>
+                <div style={{ fontSize: '0.84375rem' }}>GST: <strong>{gstEnabled ? `ON (${gstPercent}%)` : 'OFF (Plain Bill)'}</strong></div>
+                <div style={{ fontSize: '0.84375rem', marginTop: '2px' }}>Payment Mode: <span className={`badge badge-${paymentMode}`}>{paymentMode.toUpperCase()}</span></div>
               </div>
             </div>
           </div>
@@ -474,14 +481,14 @@ export default function NewSalePage() {
             </tbody>
           </table>
 
-          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: 800 }}>
-              <span>Grand Total:</span> <span style={{ color: 'var(--primary)' }}>{formatCurrency(grandTotal)}</span>
+          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 800 }}>
+              <span>Grand Total:</span> <span style={{ color: 'var(--brand-blue)' }}>{formatCurrency(grandTotal)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', marginTop: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', marginTop: '4px', fontSize: '0.875rem' }}>
               <span>Paid Amount:</span> <span>{formatCurrency(actualPaid)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: dueAmount > 0 ? 'var(--danger)' : 'inherit', marginTop: '4px', fontWeight: dueAmount > 0 ? 700 : 400 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: dueAmount > 0 ? 'var(--danger)' : 'inherit', marginTop: '4px', fontSize: '0.875rem', fontWeight: dueAmount > 0 ? 700 : 400 }}>
               <span>Due Balance:</span> <span>{formatCurrency(dueAmount)}</span>
             </div>
           </div>
@@ -489,7 +496,7 @@ export default function NewSalePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <button className="btn btn-secondary" onClick={() => setStep(4)} disabled={saving}>← Back</button>
             <button className="btn btn-success btn-lg" onClick={handleSaveSale} disabled={saving}>
-              {saving ? 'Creating Sale Invoice...' : '✅ Save Sale &amp; Generate Invoice'}
+              {saving ? 'Creating Invoice...' : '✅ Save Sale &amp; Print Invoice'}
             </button>
           </div>
         </div>
@@ -500,7 +507,7 @@ export default function NewSalePage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Create New Customer</h3>
+              <h3>Create Customer Profile</h3>
               <button onClick={() => setShowNewCustModal(false)}>✕</button>
             </div>
             <form onSubmit={handleCreateCustomer}>
@@ -520,7 +527,7 @@ export default function NewSalePage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowNewCustModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save &amp; Select Customer</button>
+                <button type="submit" className="btn btn-primary">Save &amp; Select</button>
               </div>
             </form>
           </div>
