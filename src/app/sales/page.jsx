@@ -28,6 +28,18 @@ export default function SalesPage() {
     }
   }
 
+  const handleDeleteBill = async (id, invoiceNumber) => {
+    if (!confirm(`⚠️ Are you sure you want to permanently delete Invoice #${invoiceNumber}?\nThis action cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert(`Invoice #${invoiceNumber} deleted successfully.`);
+      loadSales();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -71,7 +83,7 @@ export default function SalesPage() {
                   <th>Grand Total</th>
                   <th>Paid</th>
                   <th>Due</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,9 +102,14 @@ export default function SalesPage() {
                       {formatCurrency(s.amount_due)}
                     </td>
                     <td>
-                      <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm">
-                        👁️ View Invoice
-                      </Link>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm">
+                          👁️ View
+                        </Link>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteBill(s.id, s.invoice_number)}>
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

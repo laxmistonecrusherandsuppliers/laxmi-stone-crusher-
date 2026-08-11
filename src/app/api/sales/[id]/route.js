@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, pool } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request, { params }) {
   try {
@@ -28,5 +30,33 @@ export async function GET(request, { params }) {
     return NextResponse.json({ data: sale });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const client = await pool.connect();
+  try {
+    const { id } = params;
+
+    await client.query('BEGIN');
+
+    // Delete sale items & payment logs first
+    await client.query('DELETE FROM sale_items WHERE sale_id = $1', [id]);
+    await client.query('DELETE FROM payment_logs WHERE sale_id = $1', [id]);
+
+    // Delete sale bill record
+    const result = await client.query('DELETE FROM sales WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return NextResponse.json({ error: 'Invoice bill not found' }, { status: 404 });
+    }
+
+    await client.query('COMMIT');
+    return NextResponse.json({ message: 'Sale invoice deleted successfully' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    client.release();
   }
 }

@@ -7,8 +7,12 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Modal State for Add & Edit
   const [showModal, setShowModal] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ name: '', mobile: '', address: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadCustomers();
@@ -25,20 +29,55 @@ export default function CustomersPage() {
     }
   }
 
-  const handleCreate = async (e) => {
+  const handleOpenAdd = () => {
+    setEditId(null);
+    setForm({ name: '', mobile: '', address: '' });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (customer) => {
+    setEditId(customer.id);
+    setForm({
+      name: customer.name || '',
+      mobile: customer.mobile || '',
+      address: customer.address || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) return alert('Customer name is required.');
+    setSaving(true);
     try {
-      const res = await fetch('/api/customers', {
-        method: 'POST',
+      const url = editId ? `/api/customers/${editId}` : '/api/customers';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       }).then(r => r.json());
-      if (res.data) {
-        setShowModal(false);
-        setForm({ name: '', mobile: '', address: '' });
-        loadCustomers();
-      }
+
+      if (res.error) throw new Error(res.error);
+
+      setShowModal(false);
+      setForm({ name: '', mobile: '', address: '' });
+      loadCustomers();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id, name) => {
+    if (!confirm(`Are you sure you want to delete customer "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert('Customer deleted successfully');
+      loadCustomers();
     } catch (err) {
       alert(err.message);
     }
@@ -48,7 +87,7 @@ export default function CustomersPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">👥 Customers Management</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={handleOpenAdd}>
           ➕ Add Customer
         </button>
       </div>
@@ -79,7 +118,7 @@ export default function CustomersPage() {
                   <th>Customer Name</th>
                   <th>Mobile Number</th>
                   <th>Address</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,9 +129,17 @@ export default function CustomersPage() {
                     <td>{c.mobile || 'N/A'}</td>
                     <td>{c.address || 'N/A'}</td>
                     <td>
-                      <Link href={`/customers/${c.id}`} className="btn btn-ghost btn-sm">
-                        📊 Sales &amp; Ledger
-                      </Link>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <Link href={`/customers/${c.id}`} className="btn btn-ghost btn-sm">
+                          📊 Ledger
+                        </Link>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(c)}>
+                          ✏️ Edit
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id, c.name)}>
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -106,10 +153,10 @@ export default function CustomersPage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>Create Customer Profile</h3>
+              <h3>{editId ? '✏️ Edit Customer Profile' : '➕ Create Customer Profile'}</h3>
               <button onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Customer Name *</label>
@@ -125,8 +172,10 @@ export default function CustomersPage() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Customer</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? 'Saving...' : editId ? 'Update Customer' : 'Save Customer'}
+                </button>
               </div>
             </form>
           </div>

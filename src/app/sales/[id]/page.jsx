@@ -84,6 +84,18 @@ export default function SaleDetailPage() {
     }
   };
 
+  const handleDeleteBill = async () => {
+    if (!confirm(`⚠️ Are you sure you want to permanently delete Invoice #${sale.invoice_number}?\nThis action cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/sales/${saleId}`, { method: 'DELETE' }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert(`Invoice #${sale.invoice_number} deleted successfully.`);
+      router.push('/sales');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading sale details...</div>;
   if (!sale) return <div style={{ padding: '40px', textAlign: 'center' }}>Sale invoice not found.</div>;
 
@@ -107,6 +119,9 @@ export default function SaleDetailPage() {
           </button>
           <button className="btn btn-primary" onClick={handleDownloadPdf}>
             📄 Download PDF
+          </button>
+          <button className="btn btn-danger" onClick={handleDeleteBill}>
+            🗑️ Delete Bill
           </button>
         </div>
       </div>
