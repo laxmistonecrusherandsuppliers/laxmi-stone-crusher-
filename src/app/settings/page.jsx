@@ -201,11 +201,9 @@ export default function SettingsPage() {
                       <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditMat(m)}>
                         ✏️ Edit Menu
                       </button>
-                      {!m.is_system && (
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMaterial(m.id, m.name)}>
-                          🗑️ Remove
-                        </button>
-                      )}
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMaterial(m.id, m.name)}>
+                        🗑️ Delete Item
+                      </button>
                     </div>
                   </td>
                 </tr>
