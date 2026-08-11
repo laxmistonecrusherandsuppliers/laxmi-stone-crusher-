@@ -42,7 +42,8 @@ export async function POST(request) {
   const client = await pool.connect();
   try {
     const body = await request.json();
-    const { customer_id, sale_date, gst_enabled, items, payment_mode, amount_paid, notes } = body;
+    const { customer_id, sale_date, gst_enabled, items, payment_mode, payment_method, amount_paid, notes } = body;
+    const payMethod = payment_method || 'cash';
 
     if (!customer_id || !items || !items.length) {
       return NextResponse.json({ error: 'Customer and items are required' }, { status: 400 });
@@ -107,10 +108,11 @@ export async function POST(request) {
       );
     }
 
+    const logNote = notes ? `Initial Payment (${payMethod.toUpperCase()}) - ${notes}` : `Initial Payment (${payMethod.toUpperCase()})`;
     await client.query(
-      `INSERT INTO payment_logs (sale_id, customer_id, amount_paid, balance_before, balance_after, notes)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [sale_id, customer_id, actual_paid, grand_total, due, 'Initial bill payment']
+      `INSERT INTO payment_logs (sale_id, customer_id, amount_paid, balance_before, balance_after, notes, payment_mode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [sale_id, customer_id, actual_paid, grand_total, due, logNote, payMethod]
     );
 
     await client.query(

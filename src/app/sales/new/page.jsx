@@ -24,6 +24,7 @@ export default function NewSalePage() {
   const [gstEnabled, setGstEnabled] = useState(false);
   const [gstPercent, setGstPercent] = useState(18);
   const [paymentMode, setPaymentMode] = useState('full');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -140,6 +141,7 @@ export default function NewSalePage() {
           rate: parseFloat(i.rate),
         })),
         payment_mode: paymentMode,
+        payment_method: paymentMethod,
         amount_paid: actualPaid,
         notes,
       };
@@ -448,6 +450,30 @@ export default function NewSalePage() {
             </div>
           </div>
 
+          {paymentMode !== 'due' && (
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label className="form-label">Payment Mode / Method *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                {[
+                  { id: 'cash', label: 'Cash' },
+                  { id: 'upi', label: 'UPI' },
+                  { id: 'bank', label: 'Bank Transfer' },
+                  { id: 'cheque', label: 'Cheque' },
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`btn ${paymentMethod === m.id ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                    onClick={() => setPaymentMethod(m.id)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {paymentMode === 'partial' && (
             <div className="form-group" style={{ maxWidth: '280px' }}>
               <label className="form-label">Amount Paid Now (₹)</label>
@@ -498,7 +524,9 @@ export default function NewSalePage() {
               <div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>INVOICE SUMMARY</div>
                 <div style={{ fontSize: '0.84375rem' }}>GST: <strong>{gstEnabled ? `ON (${gstPercent}%)` : 'OFF (Plain Bill)'}</strong></div>
-                <div style={{ fontSize: '0.84375rem', marginTop: '2px' }}>Payment Mode: <span className={`badge badge-${paymentMode}`}>{paymentMode.toUpperCase()}</span></div>
+                <div style={{ fontSize: '0.84375rem', marginTop: '2px' }}>
+                  Payment Mode: <span className={`badge badge-${paymentMode}`}>{paymentMode.toUpperCase()} {paymentMode !== 'due' ? `(${paymentMethod.toUpperCase()})` : ''}</span>
+                </div>
               </div>
             </div>
           </div>
