@@ -294,13 +294,39 @@ export default function NewSalePage() {
 
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Unit</label>
-                  <select className="form-select" value={item.unit} onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}>
+                  <select
+                    className="form-select"
+                    value={['Tonne', 'CFT', 'Brass', 'Trip', 'Load', 'Piece', 'KG', 'Cubic Meter', 'Sq Ft'].includes(item.unit) ? item.unit : 'Other'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'Other') {
+                        handleItemChange(idx, 'unit', '');
+                      } else {
+                        handleItemChange(idx, 'unit', val);
+                      }
+                    }}
+                  >
                     <option value="Tonne">Tonne</option>
                     <option value="CFT">CFT</option>
+                    <option value="Brass">Brass</option>
+                    <option value="Trip">Trip</option>
                     <option value="Load">Load</option>
                     <option value="Piece">Piece</option>
                     <option value="KG">KG</option>
+                    <option value="Cubic Meter">Cu.m</option>
+                    <option value="Sq Ft">Sq Ft</option>
+                    <option value="Other">Other...</option>
                   </select>
+                  {!['Tonne', 'CFT', 'Brass', 'Trip', 'Load', 'Piece', 'KG', 'Cubic Meter', 'Sq Ft'].includes(item.unit) && (
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ marginTop: '6px' }}
+                      placeholder="Custom unit..."
+                      value={item.unit}
+                      onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                    />
+                  )}
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>

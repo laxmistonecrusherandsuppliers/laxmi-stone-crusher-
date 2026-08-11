@@ -252,16 +252,38 @@ export default function SettingsPage() {
                     <label className="form-label">Default Unit</label>
                     <select
                       className="form-select"
-                      value={matForm.unit}
-                      onChange={(e) => setMatForm({ ...matForm, unit: e.target.value })}
+                      value={['Tonne', 'CFT', 'Brass', 'Trip', 'Load', 'Piece', 'KG', 'Cubic Meter', 'Sq Ft'].includes(matForm.unit) ? matForm.unit : 'Other'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Other') {
+                          setMatForm({ ...matForm, unit: '' });
+                        } else {
+                          setMatForm({ ...matForm, unit: val });
+                        }
+                      }}
                     >
                       <option value="Tonne">Tonne</option>
-                      <option value="CFT">CFT</option>
+                      <option value="CFT">CFT (Cubic Feet)</option>
+                      <option value="Brass">Brass</option>
+                      <option value="Trip">Trip</option>
                       <option value="Load">Load</option>
                       <option value="Piece">Piece</option>
                       <option value="KG">KG</option>
                       <option value="Cubic Meter">Cubic Meter</option>
+                      <option value="Sq Ft">Sq Ft</option>
+                      <option value="Other">Other (Type Custom Unit)...</option>
                     </select>
+                    {!['Tonne', 'CFT', 'Brass', 'Trip', 'Load', 'Piece', 'KG', 'Cubic Meter', 'Sq Ft'].includes(matForm.unit) && (
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ marginTop: '6px' }}
+                        placeholder="Type custom unit (e.g. Tractor, Box, Bag)..."
+                        value={matForm.unit}
+                        onChange={(e) => setMatForm({ ...matForm, unit: e.target.value })}
+                        autoFocus
+                      />
+                    )}
                   </div>
                 </div>
               </div>
