@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Check, Mountain, AlertCircle, Lock } from 'lucide-react';
 import './login.css';
 
 export default function LoginPage() {
@@ -55,16 +56,16 @@ export default function LoginPage() {
       <div className="login-left">
         <div className="login-brand">
           <div className="login-img-container">
-            <img src="/stone_crusher.png" alt="Lakshmi Stone Crusher Plant" className="login-crusher-img" />
+            <Mountain size={28} className="login-crusher-img" />
           </div>
           <h1 className="login-brand-name">Lakshmi Stone<br />Crusher &amp; Suppliers</h1>
           <p className="login-brand-tagline">Premium Stone Material Sales &amp; Business Management</p>
 
           <div className="login-features">
-            <div className="login-feature">✅ Multi-device real-time sync</div>
-            <div className="login-feature">✅ GST Invoice generation</div>
-            <div className="login-feature">✅ Customer due tracking</div>
-            <div className="login-feature">✅ PDF &amp; thermal print support</div>
+            <div className="login-feature"><Check size={14} /> Multi-device real-time sync</div>
+            <div className="login-feature"><Check size={14} /> GST Invoice generation</div>
+            <div className="login-feature"><Check size={14} /> Customer due tracking</div>
+            <div className="login-feature"><Check size={14} /> PDF &amp; thermal print support</div>
           </div>
         </div>
       </div>
@@ -74,14 +75,14 @@ export default function LoginPage() {
         <div className="login-form-wrapper">
           <div className="login-form-card">
             <div className="login-form-header">
-              <div className="login-logo-sm">⛰️</div>
+              <div className="login-logo-sm"><Mountain size={24} /></div>
               <h2>Welcome Back</h2>
               <p>Sign in to your account</p>
             </div>
 
             {error && (
               <div className="login-error">
-                <span>⚠️</span> {error}
+                <span><AlertCircle size={14} /></span> {error}
               </div>
             )}
 
@@ -124,10 +125,10 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="btn btn-primary btn-full btn-lg"
-                style={{ marginTop: '8px' }}
+                style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 disabled={loading}
               >
-                {loading ? 'Signing in...' : '🔐 Sign In'}
+                {loading ? 'Signing in...' : <><Lock size={14} /> Sign In</>}
               </button>
             </form>
 

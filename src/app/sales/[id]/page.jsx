@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useReactToPrint } from 'react-to-print';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+import { CreditCard, Printer, Download, Trash2, AlertTriangle, BarChart3, X, Check } from 'lucide-react';
 
 export default function SaleDetailPage() {
   const params = useParams();
@@ -85,7 +86,7 @@ export default function SaleDetailPage() {
   };
 
   const handleDeleteBill = async () => {
-    if (!confirm(`⚠️ Are you sure you want to permanently delete Invoice #${sale.invoice_number}?\nThis action cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to permanently delete Invoice #${sale.invoice_number}?\nThis action cannot be undone.`)) return;
     try {
       const res = await fetch(`/api/sales/${saleId}`, { method: 'DELETE' }).then(r => r.json());
       if (res.error) throw new Error(res.error);
@@ -110,18 +111,18 @@ export default function SaleDetailPage() {
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           {dueAmt > 0 && (
-            <button className="btn btn-success" onClick={() => { setPayAmount(dueAmt); setShowPayModal(true); }}>
-              💳 Settle Due (₹{formatCurrency(dueAmt)})
+            <button className="btn btn-success" onClick={() => { setPayAmount(dueAmt); setShowPayModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <CreditCard size={14} /> Settle Due (₹{formatCurrency(dueAmt)})
             </button>
           )}
-          <button className="btn btn-secondary" onClick={handlePrint}>
-            🖨️ Print Invoice
+          <button className="btn btn-secondary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Printer size={14} /> Print
           </button>
-          <button className="btn btn-primary" onClick={handleDownloadPdf}>
-            📄 Download PDF
+          <button className="btn btn-primary" onClick={handleDownloadPdf} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Download size={14} /> Download PDF
           </button>
-          <button className="btn btn-danger" onClick={handleDeleteBill}>
-            🗑️ Delete Bill
+          <button className="btn btn-danger" onClick={handleDeleteBill} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Trash2 size={14} /> Delete
           </button>
         </div>
       </div>
@@ -130,8 +131,8 @@ export default function SaleDetailPage() {
         <div className="card no-print" style={{ marginBottom: '20px', background: 'var(--danger-light)', borderColor: '#fecaca' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontWeight: 700, color: '#991b1b', fontSize: '1.1rem' }}>
-                ⚠️ Outstanding Balance Due: {formatCurrency(dueAmt)}
+              <div style={{ fontWeight: 700, color: '#991b1b', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertTriangle size={16} /> Outstanding Balance Due: {formatCurrency(dueAmt)}
               </div>
               <div style={{ color: '#b91c1c', fontSize: '0.85rem' }}>
                 Record full or partial payment to settle this invoice.
@@ -228,7 +229,9 @@ export default function SaleDetailPage() {
 
       {/* Payment History Ledger Box */}
       <div className="card no-print" style={{ maxWidth: '800px', margin: '24px auto 0 auto' }}>
-        <div className="card-header">📊 Invoice Payment History</div>
+        <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <BarChart3 size={16} /> Payment History
+        </div>
         {sale.payment_logs.length === 0 ? (
           <div style={{ padding: '20px', color: 'var(--text-muted)' }}>No payment logs recorded yet.</div>
         ) : (
@@ -268,8 +271,12 @@ export default function SaleDetailPage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>💳 Record Payment / Settle Due</h3>
-              <button onClick={() => setShowPayModal(false)}>✕</button>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CreditCard size={18} /> Record Payment / Settle Due
+              </h3>
+              <button onClick={() => setShowPayModal(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={16} />
+              </button>
             </div>
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
@@ -282,10 +289,10 @@ export default function SaleDetailPage() {
                   <label className="form-label">Payment Mode *</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                     {[
-                      { id: 'cash', label: '💵 Cash' },
-                      { id: 'upi', label: '📱 UPI' },
-                      { id: 'bank', label: '🏦 Bank' },
-                      { id: 'cheque', label: '📄 Cheque' },
+                      { id: 'cash', label: 'Cash' },
+                      { id: 'upi', label: 'UPI' },
+                      { id: 'bank', label: 'Bank Transfer' },
+                      { id: 'cheque', label: 'Cheque' },
                     ].map(m => (
                       <button
                         key={m.id}
@@ -337,8 +344,8 @@ export default function SaleDetailPage() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowPayModal(false)} disabled={recording}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-success" disabled={recording}>
-                  {recording ? 'Processing...' : '✅ Confirm &amp; Save Payment'}
+                <button type="submit" className="btn btn-success" disabled={recording} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {recording ? 'Processing...' : <><Check size={14} /> Confirm Payment</>}
                 </button>
               </div>
             </form>

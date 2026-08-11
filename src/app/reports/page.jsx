@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { Printer, Users, CalendarDays, Layers, AlertTriangle, RotateCcw, BarChart3, IndianRupee, CreditCard } from 'lucide-react';
 
 export default function ReportsPage() {
   const [type, setType] = useState('customer-wise');
@@ -70,37 +71,37 @@ export default function ReportsPage() {
   return (
     <div>
       <div className="page-header no-print">
-        <h1 className="page-title">📊 Business Sales Reports</h1>
+        <h1 className="page-title">Sales Reports</h1>
         <button className="btn btn-primary" onClick={handlePrint} disabled={loading || filteredData.length === 0}>
-          🖨️ Print {type === 'customer-wise' ? 'Customer-Wise' : ''} Report
+          <Printer size={14} /> Print {type === 'customer-wise' ? 'Customer-Wise' : ''} Report
         </button>
       </div>
 
       {/* Report Tabs */}
-      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div className="tabs no-print" style={{ marginBottom: '20px' }}>
         <button
-          className={`btn ${type === 'customer-wise' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${type === 'customer-wise' ? 'active' : ''}`}
           onClick={() => setType('customer-wise')}
         >
-          👥 Customer-Wise Sales
+          <Users size={14} /> Customer-Wise
         </button>
         <button
-          className={`btn ${type === 'daily' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${type === 'daily' ? 'active' : ''}`}
           onClick={() => setType('daily')}
         >
-          📅 Daily Sales
+          <CalendarDays size={14} /> Daily
         </button>
         <button
-          className={`btn ${type === 'material-wise' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${type === 'material-wise' ? 'active' : ''}`}
           onClick={() => setType('material-wise')}
         >
-          🪨 Material-Wise Sales
+          <Layers size={14} /> Material-Wise
         </button>
         <button
-          className={`btn ${type === 'due' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${type === 'due' ? 'active' : ''}`}
           onClick={() => setType('due')}
         >
-          ⚠️ Outstanding Dues
+          <AlertTriangle size={14} /> Outstanding Dues
         </button>
       </div>
 
@@ -144,7 +145,7 @@ export default function ReportsPage() {
               className="btn btn-secondary"
               onClick={() => { setFrom(''); setTo(''); setCustomerSearch(''); }}
             >
-              🔄 Reset Filters
+              <RotateCcw size={14} /> Reset
             </button>
           </div>
         </div>
@@ -174,35 +175,35 @@ export default function ReportsPage() {
         <div className="stat-cards-grid" style={{ marginBottom: '20px' }}>
           <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
             <div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Sales Billed</div>
+              <div className="stat-label">Total Sales Billed</div>
               <div className="stat-value" style={{ color: 'var(--primary)' }}>
                 {formatCurrency(totals.total_billed)}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              <div className="stat-meta">
                 {totals.total_orders} total orders
               </div>
             </div>
-            <div className="stat-icon no-print">📊</div>
+            <div className="stat-icon stat-icon-blue no-print"><BarChart3 size={20} /></div>
           </div>
 
           <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
             <div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Amount Paid</div>
+              <div className="stat-label">Total Amount Paid</div>
               <div className="stat-value" style={{ color: 'var(--success)' }}>
                 {formatCurrency(totals.total_paid)}
               </div>
             </div>
-            <div className="stat-icon no-print">💰</div>
+            <div className="stat-icon stat-icon-green no-print"><IndianRupee size={20} /></div>
           </div>
 
           <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
             <div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Remaining Due</div>
+              <div className="stat-label">Total Remaining Due</div>
               <div className="stat-value" style={{ color: totals.total_due > 0 ? 'var(--danger)' : 'inherit' }}>
                 {formatCurrency(totals.total_due)}
               </div>
             </div>
-            <div className="stat-icon no-print">⚠️</div>
+            <div className="stat-icon stat-icon-red no-print"><AlertTriangle size={20} /></div>
           </div>
         </div>
 
@@ -340,7 +341,7 @@ export default function ReportsPage() {
                         <td style={{ color: 'var(--danger)', fontWeight: 700 }}>{formatCurrency(row.amount_due)}</td>
                         <td className="no-print">
                           <a href={`/sales/${row.id}`} className="btn btn-danger btn-sm">
-                            💳 Settle Due
+                            <CreditCard size={14} /> Settle Due
                           </a>
                         </td>
                       </tr>

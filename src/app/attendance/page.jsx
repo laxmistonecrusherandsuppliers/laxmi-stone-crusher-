@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { CalendarDays, Users, Banknote, CalendarOff } from 'lucide-react';
 
 export default function AttendancePage() {
   const [tab, setTab] = useState('attendance');
@@ -107,22 +108,38 @@ export default function AttendancePage() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">📋 Staff &amp; Attendance Manager</h1>
+        <h1 className="page-title">Staff &amp; Attendance</h1>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        <button className={`btn ${tab === 'attendance' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('attendance')}>
-          📅 Daily Attendance
+      <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        <button 
+          className={`tab-btn ${tab === 'attendance' ? 'active' : ''}`} 
+          onClick={() => setTab('attendance')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <CalendarDays size={14} /> Attendance
         </button>
-        <button className={`btn ${tab === 'staff' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('staff')}>
-          👥 Staff Directory
+        <button 
+          className={`tab-btn ${tab === 'staff' ? 'active' : ''}`} 
+          onClick={() => setTab('staff')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <Users size={14} /> Staff Directory
         </button>
-        <button className={`btn ${tab === 'advance' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('advance')}>
-          💸 Salary Advances
+        <button 
+          className={`tab-btn ${tab === 'advance' ? 'active' : ''}`} 
+          onClick={() => setTab('advance')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <Banknote size={14} /> Advances
         </button>
-        <button className={`btn ${tab === 'leave' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setTab('leave')}>
-          🏖️ Leave Requests
+        <button 
+          className={`tab-btn ${tab === 'leave' ? 'active' : ''}`} 
+          onClick={() => setTab('leave')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <CalendarOff size={14} /> Leave Requests
         </button>
       </div>
 
@@ -160,10 +177,10 @@ export default function AttendancePage() {
                           value={st.status || 'present'}
                           onChange={(e) => handleSaveAttendance(st.id, e.target.value, st.notes)}
                         >
-                          <option value="present">✅ Present</option>
-                          <option value="absent">❌ Absent</option>
-                          <option value="half">🌓 Half Day</option>
-                          <option value="leave">🏖️ On Leave</option>
+                          <option value="present">Present</option>
+                          <option value="absent">Absent</option>
+                          <option value="half">Half Day</option>
+                          <option value="leave">On Leave</option>
                         </select>
                       </td>
                       <td>

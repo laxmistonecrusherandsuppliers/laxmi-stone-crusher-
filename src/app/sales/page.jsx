@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { Plus, Eye, Trash2, Search } from 'lucide-react';
 
 export default function SalesPage() {
   const [sales, setSales] = useState([]);
@@ -30,7 +31,7 @@ export default function SalesPage() {
   }
 
   const handleDeleteBill = async (id, invoiceNumber) => {
-    if (!confirm(`⚠️ Are you sure you want to permanently delete Invoice #${invoiceNumber}?\nThis action cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to permanently delete Invoice #${invoiceNumber}?\nThis action cannot be undone.`)) return;
     try {
       const res = await fetch(`/api/sales/${id}`, { method: 'DELETE' }).then(r => r.json());
       if (res.error) throw new Error(res.error);
@@ -59,8 +60,8 @@ export default function SalesPage() {
             Browse and manage all billing records
           </p>
         </div>
-        <Link href="/sales/new" className="btn btn-primary">
-          <span>➕</span> New Sale Invoice
+        <Link href="/sales/new" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Plus size={14} /> New Sale
         </Link>
       </div>
 
@@ -69,13 +70,17 @@ export default function SalesPage() {
         <div style={{ display: 'flex', gap: '16px', alignItems: 'end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '220px' }}>
             <label className="form-label">Search Invoice or Customer</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Filter by invoice no or customer name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                className="form-input"
+                style={{ paddingLeft: '32px' }}
+                placeholder="Filter by invoice no or customer name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
           <div>
             <label className="form-label">From Date</label>
@@ -121,7 +126,7 @@ export default function SalesPage() {
                     <td style={{ fontWeight: 600 }}>{s.invoice_number}</td>
                     <td style={{ fontWeight: 500 }}>{s.customer_name || 'N/A'}</td>
                     <td>{formatDate(s.sale_date)}</td>
-                    <td>{s.gst_enabled ? <span className="badge badge-admin">GST TAX</span> : <span className="badge badge-pending">PLAIN</span>}</td>
+                    <td>{s.gst_enabled ? <span className="badge badge-admin">GST</span> : <span className="badge badge-pending">Plain</span>}</td>
                     <td>
                       <span className={`badge badge-${s.payment_mode}`}>{s.payment_mode?.toUpperCase()}</span>
                     </td>
@@ -132,11 +137,11 @@ export default function SalesPage() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm">
-                          👁️ View
+                        <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Eye size={14} /> View
                         </Link>
-                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteBill(s.id, s.invoice_number)}>
-                          🗑️ Delete
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteBill(s.id, s.invoice_number)} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Trash2 size={14} /> Delete
                         </button>
                       </div>
                     </td>

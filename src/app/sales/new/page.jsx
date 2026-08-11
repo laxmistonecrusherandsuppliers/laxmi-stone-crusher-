@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/format';
+import { User, Phone, MapPin, Trash2, Plus, Banknote, FileText, Calendar, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -175,19 +176,19 @@ export default function NewSalePage() {
       {/* Step Indicator */}
       <div className="steps">
         <div className={`step-item ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-          <div className="step-number">{step > 1 ? '✓' : '1'}</div>
+          <div className="step-number">{step > 1 ? <Check size={12} /> : '1'}</div>
           <span>1. Customer</span>
         </div>
         <div className={`step-item ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-          <div className="step-number">{step > 2 ? '✓' : '2'}</div>
+          <div className="step-number">{step > 2 ? <Check size={12} /> : '2'}</div>
           <span>2. Materials</span>
         </div>
         <div className={`step-item ${step >= 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}>
-          <div className="step-number">{step > 3 ? '✓' : '3'}</div>
+          <div className="step-number">{step > 3 ? <Check size={12} /> : '3'}</div>
           <span>3. GST Tax</span>
         </div>
         <div className={`step-item ${step >= 4 ? 'active' : ''} ${step > 4 ? 'completed' : ''}`}>
-          <div className="step-number">{step > 4 ? '✓' : '4'}</div>
+          <div className="step-number">{step > 4 ? <Check size={12} /> : '4'}</div>
           <span>4. Payment</span>
         </div>
         <div className={`step-item ${step >= 5 ? 'active' : ''}`}>
@@ -204,9 +205,11 @@ export default function NewSalePage() {
           {selectedCustomer ? (
             <div style={{ background: 'var(--success-light)', border: '1px solid #a7f3d0', padding: '16px 20px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <div style={{ fontWeight: 700, color: 'var(--success-text)', fontSize: '1rem' }}>👤 {selectedCustomer.name}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.84375rem', marginTop: '2px' }}>
-                  📞 {selectedCustomer.mobile || 'No Mobile'} | 🏠 {selectedCustomer.address || 'No Address'}
+                <div style={{ fontWeight: 700, color: 'var(--success-text)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <User size={16} /> {selectedCustomer.name}
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.84375rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={14} /> {selectedCustomer.mobile || 'No Mobile'}</span> | <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} /> {selectedCustomer.address || 'No Address'}</span>
                 </div>
               </div>
               <button className="btn btn-secondary btn-sm" onClick={() => setSelectedCustomer(null)}>Change</button>
@@ -241,16 +244,16 @@ export default function NewSalePage() {
               )}
 
               <div style={{ textAlign: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--border)' }}>
-                <button className="btn btn-secondary" onClick={() => setShowNewCustModal(true)}>
-                  ➕ Create New Customer Profile
+                <button className="btn btn-secondary" onClick={() => setShowNewCustModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Plus size={14} /> Create New Customer Profile
                 </button>
               </div>
             </div>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-            <button className="btn btn-primary btn-lg" disabled={!selectedCustomer} onClick={() => setStep(2)}>
-              Next: Materials List →
+            <button className="btn btn-primary btn-lg" disabled={!selectedCustomer} onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Next: Materials List <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -342,13 +345,17 @@ export default function NewSalePage() {
                 </div>
 
                 <div>
-                  <button className="btn btn-danger btn-sm" onClick={() => removeItemRow(idx)} disabled={items.length === 1}>🗑️</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => removeItemRow(idx)} disabled={items.length === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             );
           })}
 
-          <button className="btn btn-secondary" onClick={addItemRow}>➕ Add Line Item</button>
+          <button className="btn btn-secondary" onClick={addItemRow} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Plus size={14} /> Add Line Item
+          </button>
 
           <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>Calculated Subtotal:</span>
@@ -356,8 +363,12 @@ export default function NewSalePage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(1)}>← Back</button>
-            <button className="btn btn-primary btn-lg" onClick={() => setStep(3)}>Next: GST Config →</button>
+            <button className="btn btn-secondary" onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <button className="btn btn-primary btn-lg" onClick={() => setStep(3)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Next: GST Config <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       )}
@@ -402,8 +413,12 @@ export default function NewSalePage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(2)}>← Back</button>
-            <button className="btn btn-primary btn-lg" onClick={() => setStep(4)}>Next: Payment Terms →</button>
+            <button className="btn btn-secondary" onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <button className="btn btn-primary btn-lg" onClick={() => setStep(4)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Next: Payment Terms <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       )}
@@ -415,19 +430,19 @@ export default function NewSalePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
             <div onClick={() => setPaymentMode('full')} style={{ border: `2px solid ${paymentMode === 'full' ? 'var(--success)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'full' ? 'var(--success-light)' : 'white' }}>
-              <div style={{ fontSize: '1.5rem' }}>💰</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><Banknote size={24} color={paymentMode === 'full' ? 'var(--success)' : 'currentColor'} /></div>
               <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>FULL PAYMENT</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Entire bill paid now</div>
             </div>
 
             <div onClick={() => setPaymentMode('partial')} style={{ border: `2px solid ${paymentMode === 'partial' ? 'var(--warning)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'partial' ? 'var(--warning-light)' : 'white' }}>
-              <div style={{ fontSize: '1.5rem' }}>📋</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><FileText size={24} color={paymentMode === 'partial' ? 'var(--warning)' : 'currentColor'} /></div>
               <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>PARTIAL PAYMENT</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Part paid, part due</div>
             </div>
 
             <div onClick={() => setPaymentMode('due')} style={{ border: `2px solid ${paymentMode === 'due' ? 'var(--danger)' : 'var(--border)'}`, padding: '16px 12px', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'center', background: paymentMode === 'due' ? 'var(--danger-light)' : 'white' }}>
-              <div style={{ fontSize: '1.5rem' }}>📅</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}><Calendar size={24} color={paymentMode === 'due' ? 'var(--danger)' : 'currentColor'} /></div>
               <div style={{ fontWeight: 700, fontSize: '0.875rem', marginTop: '4px' }}>FULL DUE</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>₹0 paid, full balance due</div>
             </div>
@@ -458,8 +473,12 @@ export default function NewSalePage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(3)}>← Back</button>
-            <button className="btn btn-primary btn-lg" onClick={() => setStep(5)}>Next: Final Review →</button>
+            <button className="btn btn-secondary" onClick={() => setStep(3)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <button className="btn btn-primary btn-lg" onClick={() => setStep(5)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Next: Final Review <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       )}
@@ -520,9 +539,11 @@ export default function NewSalePage() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button className="btn btn-secondary" onClick={() => setStep(4)} disabled={saving}>← Back</button>
-            <button className="btn btn-success btn-lg" onClick={handleSaveSale} disabled={saving}>
-              {saving ? 'Creating Invoice...' : '✅ Save Sale &amp; Print Invoice'}
+            <button className="btn btn-secondary" onClick={() => setStep(4)} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <button className="btn btn-success btn-lg" onClick={handleSaveSale} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {saving ? 'Creating Invoice...' : <><Check size={16} /> Save Sale &amp; Print Invoice</>}
             </button>
           </div>
         </div>
@@ -534,7 +555,7 @@ export default function NewSalePage() {
           <div className="modal">
             <div className="modal-header">
               <h3>Create Customer Profile</h3>
-              <button onClick={() => setShowNewCustModal(false)}>✕</button>
+              <button onClick={() => setShowNewCustModal(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
             </div>
             <form onSubmit={handleCreateCustomer}>
               <div className="modal-body">

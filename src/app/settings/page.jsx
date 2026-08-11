@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/format';
+import { Building2, Save, Layers, Plus, Pencil, Trash2, X } from 'lucide-react';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -117,12 +118,14 @@ export default function SettingsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">⚙️ Business Settings &amp; Materials Menu</h1>
+        <h1 className="page-title">Settings</h1>
       </div>
 
       {/* Business Profile */}
       <div className="card" style={{ maxWidth: '800px', marginBottom: '24px' }}>
-        <div className="card-header">🏢 Business Profile &amp; GST Configuration</div>
+        <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Building2 size={16} /> Business Profile
+        </div>
 
         <form onSubmit={handleSaveSettings}>
           <div className="form-group">
@@ -158,7 +161,7 @@ export default function SettingsPage() {
           </div>
 
           <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
-            {saving ? 'Saving...' : '💾 Save Settings'}
+            {saving ? 'Saving...' : <><Save size={14} /> Save Settings</>}
           </button>
         </form>
       </div>
@@ -166,9 +169,9 @@ export default function SettingsPage() {
       {/* Materials Menu Editor */}
       <div className="card" style={{ maxWidth: '800px' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>🪨 Materials Menu &amp; Default Saved Rates</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Layers size={16} /> Materials &amp; Rates</span>
           <button className="btn btn-primary btn-sm" onClick={handleOpenAddMat}>
-            ➕ Add Material Item
+            <Plus size={14} /> Add Material
           </button>
         </div>
 
@@ -199,10 +202,10 @@ export default function SettingsPage() {
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEditMat(m)}>
-                        ✏️ Edit Menu
+                        <Pencil size={14} /> Edit
                       </button>
                       <button className="btn btn-danger btn-sm" onClick={() => handleDeleteMaterial(m.id, m.name)}>
-                        🗑️ Delete Item
+                        <Trash2 size={14} /> Delete
                       </button>
                     </div>
                   </td>
@@ -218,8 +221,20 @@ export default function SettingsPage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>{editMatId ? '✏️ Edit Material Menu Item' : '➕ Add New Material Menu Item'}</h3>
-              <button onClick={() => setShowMatModal(false)}>✕</button>
+              <h3>
+                {editMatId ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Pencil size={16} /> Edit Material
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Plus size={16} /> Add Material
+                  </span>
+                )}
+              </h3>
+              <button onClick={() => setShowMatModal(false)} className="close-btn" style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={16} />
+              </button>
             </div>
             <form onSubmit={handleSaveMaterial}>
               <div className="modal-body">

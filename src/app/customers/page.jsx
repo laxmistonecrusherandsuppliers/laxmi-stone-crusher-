@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Plus, Search, BarChart3, Pencil, Trash2, X } from 'lucide-react';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
@@ -86,9 +87,9 @@ export default function CustomersPage() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">👥 Customers Management</h1>
+        <h1 className="page-title">Customers</h1>
         <button className="btn btn-primary" onClick={handleOpenAdd}>
-          ➕ Add Customer
+          <Plus size={14} /> Add Customer
         </button>
       </div>
 
@@ -97,7 +98,7 @@ export default function CustomersPage() {
           <input
             type="text"
             className="form-input"
-            placeholder="🔍 Search customer by name or mobile..."
+            placeholder="Search customer by name or mobile..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -131,13 +132,13 @@ export default function CustomersPage() {
                     <td>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <Link href={`/customers/${c.id}`} className="btn btn-ghost btn-sm">
-                          📊 Ledger
+                          <BarChart3 size={14} /> Ledger
                         </Link>
                         <button className="btn btn-secondary btn-sm" onClick={() => handleOpenEdit(c)}>
-                          ✏️ Edit
+                          <Pencil size={14} /> Edit
                         </button>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDelete(c.id, c.name)}>
-                          🗑️ Delete
+                          <Trash2 size={14} /> Delete
                         </button>
                       </div>
                     </td>
@@ -153,8 +154,20 @@ export default function CustomersPage() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>{editId ? '✏️ Edit Customer Profile' : '➕ Create Customer Profile'}</h3>
-              <button onClick={() => setShowModal(false)}>✕</button>
+              <h3>
+                {editId ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Pencil size={16} /> Edit Customer
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Plus size={16} /> New Customer
+                  </span>
+                )}
+              </h3>
+              <button onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={16} />
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">

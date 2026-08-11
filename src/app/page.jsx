@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { Plus, Receipt, IndianRupee, AlertTriangle, Users, ClipboardList, BarChart3, Eye } from 'lucide-react';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -44,7 +45,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Link href="/sales/new" className="btn btn-primary">
-          <span>➕</span> New Sale Invoice
+          <Plus size={16} /> New Sale Invoice
         </Link>
       </div>
 
@@ -52,50 +53,50 @@ export default function DashboardPage() {
       <div className="stat-cards-grid">
         <div className="stat-card" style={{ borderTop: '3px solid var(--brand-blue)' }}>
           <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', tracking: '0.04em' }}>Today's Billed Sales</div>
+            <div className="stat-label">Today's Billed Sales</div>
             <div className="stat-value">{formatCurrency(stats.today_sales_amount)}</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '2px', fontWeight: 500 }}>
+            <div className="stat-meta">
               {stats.today_sales_count} invoices created
             </div>
           </div>
-          <div className="stat-icon">🧾</div>
+          <div className="stat-icon stat-icon-blue"><Receipt size={20} /></div>
         </div>
 
         <div className="stat-card" style={{ borderTop: '3px solid var(--success)' }}>
           <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', tracking: '0.04em' }}>Today's Cash Collection</div>
+            <div className="stat-label">Today's Cash Collection</div>
             <div className="stat-value" style={{ color: 'var(--success)' }}>
               {formatCurrency(stats.today_collection)}
             </div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '2px', fontWeight: 500 }}>
+            <div className="stat-meta">
               Collected today
             </div>
           </div>
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon stat-icon-green"><IndianRupee size={20} /></div>
         </div>
 
         <div className="stat-card" style={{ borderTop: '3px solid var(--danger)' }}>
           <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', tracking: '0.04em' }}>Total Outstanding Due</div>
+            <div className="stat-label">Total Outstanding Due</div>
             <div className="stat-value" style={{ color: stats.total_outstanding > 0 ? 'var(--danger)' : 'inherit' }}>
               {formatCurrency(stats.total_outstanding)}
             </div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '2px', fontWeight: 500 }}>
+            <div className="stat-meta">
               Customer dues balance
             </div>
           </div>
-          <div className="stat-icon">⚠️</div>
+          <div className="stat-icon stat-icon-red"><AlertTriangle size={20} /></div>
         </div>
 
         <div className="stat-card" style={{ borderTop: '3px solid var(--warning)' }}>
           <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', tracking: '0.04em' }}>Active Customer Base</div>
+            <div className="stat-label">Active Customer Base</div>
             <div className="stat-value">{stats.total_customers}</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '2px', fontWeight: 500 }}>
+            <div className="stat-meta">
               Registered customers
             </div>
           </div>
-          <div className="stat-icon">👥</div>
+          <div className="stat-icon stat-icon-amber"><Users size={20} /></div>
         </div>
       </div>
 
@@ -103,23 +104,23 @@ export default function DashboardPage() {
       <div className="card" style={{ marginBottom: '20px', padding: '16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>⚡ Quick Shortcuts</span>
+            <span>Quick actions</span>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <Link href="/sales/new" className="btn btn-secondary btn-sm">
-              ➕ New Sale Bill
+              <Plus size={14} /> New Sale
             </Link>
             <Link href="/customers" className="btn btn-secondary btn-sm">
-              👥 View Customers
+              <Users size={14} /> Customers
             </Link>
             <Link href="/reports?type=due" className="btn btn-secondary btn-sm" style={{ color: 'var(--danger-text)' }}>
-              ⚠️ Outstanding Dues
+              <AlertTriangle size={14} /> Outstanding Dues
             </Link>
             <Link href="/attendance" className="btn btn-secondary btn-sm">
-              📋 Daily Attendance
+              <ClipboardList size={14} /> Attendance
             </Link>
             <Link href="/reports" className="btn btn-secondary btn-sm">
-              📈 Reports Hub
+              <BarChart3 size={14} /> Reports
             </Link>
           </div>
         </div>
@@ -173,7 +174,7 @@ export default function DashboardPage() {
                     </td>
                     <td>
                       <Link href={`/sales/${sale.id}`} className="btn btn-ghost btn-sm">
-                        👁️ View Bill
+                        <Eye size={14} /> View
                       </Link>
                     </td>
                   </tr>

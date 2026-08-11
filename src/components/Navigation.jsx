@@ -3,15 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { LayoutDashboard, PlusCircle, Receipt, Users, ClipboardList, BarChart3, Settings, LogOut, Menu, X, Mountain, ChevronRight } from 'lucide-react';
 
 const navItems = [
-  { to: '/', icon: '📊', label: 'Dashboard' },
-  { to: '/sales/new', icon: '➕', label: 'New Sale' },
-  { to: '/sales', icon: '🧾', label: 'Sales & Invoices' },
-  { to: '/customers', icon: '👥', label: 'Customers' },
-  { to: '/attendance', icon: '📋', label: 'Attendance' },
-  { to: '/reports', icon: '📈', label: 'Reports Hub' },
-  { to: '/settings', icon: '⚙️', label: 'Settings' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/sales/new', icon: PlusCircle, label: 'New Sale' },
+  { to: '/sales', icon: Receipt, label: 'Sales & Invoices' },
+  { to: '/customers', icon: Users, label: 'Customers' },
+  { to: '/attendance', icon: ClipboardList, label: 'Attendance' },
+  { to: '/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Navigation({ children }) {
@@ -42,11 +43,13 @@ export default function Navigation({ children }) {
 
   if (checkingAuth) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-        <div style={{ textAlign: 'center', background: 'white', padding: '32px 48px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>🔐</div>
-          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>Verifying Authentication...</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '4px' }}>Connecting securely</div>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-page)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--brand)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'white', marginBottom: 12 }}>
+            <Mountain size={22} />
+          </div>
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>Verifying authentication...</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Connecting securely</div>
         </div>
       </div>
     );
@@ -59,29 +62,36 @@ export default function Navigation({ children }) {
     }
   };
 
-  const activeNav = navItems.find(item => item.to === pathname) || { label: 'Management Workspace' };
+  const currentPage = navItems.find(item => item.to === pathname);
 
   return (
     <div className="app-container">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 99 }}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--brand-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '1.1rem' }}>
-              ⛰️
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+              <Mountain size={18} />
             </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'white', letterSpacing: '-0.01em' }}>Lakshmi Stone</div>
-              <div style={{ fontSize: '0.725rem', color: 'var(--sidebar-text)', fontWeight: 400 }}>Crusher &amp; Suppliers</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: 'white', lineHeight: 1.3 }}>Lakshmi Stone</div>
+              <div style={{ fontSize: 11, color: 'var(--sidebar-text)', fontWeight: 400 }}>Crusher & Suppliers</div>
             </div>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          <div style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', tracking: '0.05em', color: '#64748b', padding: '8px 12px 4px 12px' }}>
-            Main Menu
-          </div>
+          <div className="nav-section-label">Menu</div>
           {navItems.map((item) => {
             const isActive = pathname === item.to;
+            const Icon = item.icon;
             return (
               <Link
                 key={item.to}
@@ -89,7 +99,7 @@ export default function Navigation({ children }) {
                 className={`nav-item ${isActive ? 'active' : ''}`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                <Icon size={18} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -97,22 +107,22 @@ export default function Navigation({ children }) {
         </nav>
 
         <div className="sidebar-footer">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#60a5fa', flexShrink: 0 }}>
                 A
               </div>
-              <div>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'white' }}>Administrator</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--sidebar-text)' }}>Admin Account</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin</div>
+                <div style={{ fontSize: 11, color: 'var(--sidebar-text)' }}>Administrator</div>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              title="Logout"
-              style={{ color: '#ef4444', padding: '6px', borderRadius: '6px', fontSize: '0.9rem' }}
+              title="Sign out"
+              style={{ color: '#9ca3af', padding: 6, borderRadius: 6, display: 'flex', alignItems: 'center' }}
             >
-              🚪
+              <LogOut size={16} />
             </button>
           </div>
         </div>
@@ -120,24 +130,21 @@ export default function Navigation({ children }) {
 
       <div className="main-content">
         <header className="header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              ☰
+              <Menu size={20} />
             </button>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              {activeNav.label}
-            </div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>
+              {currentPage?.label || 'Lakshmi Stone Crusher'}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {pathname !== '/sales/new' && (
               <Link href="/sales/new" className="btn btn-primary btn-sm">
-                <span>➕</span> New Sale Bill
+                <PlusCircle size={14} /> New Sale
               </Link>
             )}
-            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-muted)', background: 'var(--bg-subtle)', padding: '4px 10px', borderRadius: '6px' }}>
-              FY 2026-27
-            </div>
           </div>
         </header>
 

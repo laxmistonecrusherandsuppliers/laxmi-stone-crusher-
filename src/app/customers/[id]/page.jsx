@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+import { MapPin, Phone, ChevronLeft, Receipt, IndianRupee, AlertTriangle, BarChart3, RotateCcw, Eye } from 'lucide-react';
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -54,11 +55,13 @@ export default function CustomerDetailPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">👤 {customer?.name || 'Customer'} Profile</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>📞 {customer?.mobile || 'No Mobile'} | 🏠 {customer?.address || 'No Address'}</p>
+          <h1 className="page-title">{customer?.name || 'Customer'} Profile</h1>
+          <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Phone size={14} /> {customer?.mobile || 'No Mobile'} | <MapPin size={14} /> {customer?.address || 'No Address'}
+          </p>
         </div>
-        <Link href="/customers" className="btn btn-secondary">
-          ← Back to Customers
+        <Link href="/customers" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <ChevronLeft size={14} /> Back to Customers
         </Link>
       </div>
 
@@ -69,7 +72,7 @@ export default function CustomerDetailPage() {
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Billed Amount</div>
             <div className="stat-value">{formatCurrency(ledger.summary?.total_billed)}</div>
           </div>
-          <div className="stat-icon">🧾</div>
+          <div className="stat-icon stat-icon-blue"><Receipt size={20} /></div>
         </div>
 
         <div className="stat-card">
@@ -77,7 +80,7 @@ export default function CustomerDetailPage() {
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Paid</div>
             <div className="stat-value" style={{ color: 'var(--success)' }}>{formatCurrency(ledger.summary?.total_paid)}</div>
           </div>
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon stat-icon-green"><IndianRupee size={20} /></div>
         </div>
 
         <div className="stat-card">
@@ -87,23 +90,25 @@ export default function CustomerDetailPage() {
               {formatCurrency(ledger.summary?.total_due)}
             </div>
           </div>
-          <div className="stat-icon">⚠️</div>
+          <div className="stat-icon stat-icon-red"><AlertTriangle size={20} /></div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+      <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
         <button
-          className={`btn ${activeTab === 'sales' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${activeTab === 'sales' ? 'active' : ''}`}
           onClick={() => setActiveTab('sales')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          🧾 Customer Sales History
+          <Receipt size={14} /> Sales History
         </button>
         <button
-          className={`btn ${activeTab === 'ledger' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
           onClick={() => setActiveTab('ledger')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          📊 Payment Ledger
+          <BarChart3 size={14} /> Payment Ledger
         </button>
       </div>
 
@@ -134,8 +139,9 @@ export default function CustomerDetailPage() {
                 <button
                   className="btn btn-secondary"
                   onClick={() => { setFrom(''); setTo(''); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  🔄 Reset Dates
+                  <RotateCcw size={14} /> Reset
                 </button>
               </div>
             </div>
@@ -181,8 +187,8 @@ export default function CustomerDetailPage() {
                           {formatCurrency(s.amount_due)}
                         </td>
                         <td>
-                          <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm">
-                            👁️ View Invoice
+                          <Link href={`/sales/${s.id}`} className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Eye size={14} /> View
                           </Link>
                         </td>
                       </tr>
@@ -198,7 +204,7 @@ export default function CustomerDetailPage() {
       {/* TAB 2: PAYMENT LEDGER */}
       {activeTab === 'ledger' && (
         <div className="card">
-          <div className="card-header">📊 Running Payment Ledger</div>
+          <div className="card-header">Payment Ledger</div>
           {ledger.logs.length === 0 ? (
             <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>No payment logs recorded for this customer.</div>
           ) : (
