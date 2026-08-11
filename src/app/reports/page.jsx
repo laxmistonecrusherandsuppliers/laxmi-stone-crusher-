@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { formatCurrency, formatDate } from '@/lib/format';
 
 export default function ReportsPage() {
@@ -9,7 +10,16 @@ export default function ReportsPage() {
   const [to, setTo] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [data, setData] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+
+  const reportPrintRef = useRef(null);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(res => { if (res.data) setSettings(res.data); });
+  }, []);
 
   useEffect(() => {
     loadReportData();
@@ -29,6 +39,11 @@ export default function ReportsPage() {
       setLoading(false);
     }
   }
+
+  const handlePrint = useReactToPrint({
+    contentRef: reportPrintRef,
+    documentTitle: `${type}-sales-report-${from || 'all'}-${to || 'all'}`,
+  });
 
   // Filter customer-wise data by client search input
   const filteredData = data.filter(item => {
@@ -54,12 +69,15 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header no-print">
         <h1 className="page-title">📊 Business Sales Reports</h1>
+        <button className="btn btn-primary" onClick={handlePrint} disabled={loading || filteredData.length === 0}>
+          🖨️ Print {type === 'customer-wise' ? 'Customer-Wise' : ''} Report
+        </button>
       </div>
 
       {/* Report Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button
           className={`btn ${type === 'customer-wise' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setType('customer-wise')}
@@ -87,7 +105,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Date Filter Card */}
-      <div className="card" style={{ marginBottom: '20px' }}>
+      <div className="card no-print" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'end', flexWrap: 'wrap' }}>
           <div>
             <label className="form-label">From Date</label>
@@ -132,183 +150,213 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="stat-cards-grid">
-        <div className="stat-card">
-          <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Sales Billed</div>
-            <div className="stat-value" style={{ color: 'var(--primary)' }}>
-              {formatCurrency(totals.total_billed)}
-            </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              {totals.total_orders} total orders
-            </div>
+      {/* PRINTABLE CONTAINER AREA */}
+      <div ref={reportPrintRef} style={{ padding: '10px' }}>
+        {/* Printable Header Letterhead (Visible during print & report view) */}
+        <div style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '2px solid var(--primary)', paddingBottom: '16px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary-dark)' }}>
+            {settings.business_name || 'Lakshmi Stone Crusher & Suppliers'}
+          </h2>
+          <div style={{ fontSize: '0.9rem', color: '#4b5563' }}>{settings.business_address}</div>
+          <div style={{ fontSize: '0.9rem', color: '#4b5563' }}>Ph: {settings.business_mobile} {settings.gstin ? `| GSTIN: ${settings.gstin}` : ''}</div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '10px', textTransform: 'uppercase' }}>
+            {type === 'customer-wise' && 'Customer-Wise Sales Summary Report'}
+            {type === 'daily' && 'Daily Sales Breakdown Report'}
+            {type === 'material-wise' && 'Material Sales Volume Report'}
+            {type === 'due' && 'Outstanding Customer Dues Report'}
+          </h3>
+          <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '4px' }}>
+            Period: {from ? formatDate(from) : 'Beginning'} to {to ? formatDate(to) : 'Present Date'} | Generated: {formatDate(new Date())}
           </div>
-          <div className="stat-icon">📊</div>
         </div>
 
-        <div className="stat-card">
-          <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Amount Paid</div>
-            <div className="stat-value" style={{ color: 'var(--success)' }}>
-              {formatCurrency(totals.total_paid)}
+        {/* Summary KPI Cards */}
+        <div className="stat-cards-grid" style={{ marginBottom: '20px' }}>
+          <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Sales Billed</div>
+              <div className="stat-value" style={{ color: 'var(--primary)' }}>
+                {formatCurrency(totals.total_billed)}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                {totals.total_orders} total orders
+              </div>
             </div>
+            <div className="stat-icon no-print">📊</div>
           </div>
-          <div className="stat-icon">💰</div>
-        </div>
 
-        <div className="stat-card">
-          <div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Remaining Due</div>
-            <div className="stat-value" style={{ color: totals.total_due > 0 ? 'var(--danger)' : 'inherit' }}>
-              {formatCurrency(totals.total_due)}
+          <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Amount Paid</div>
+              <div className="stat-value" style={{ color: 'var(--success)' }}>
+                {formatCurrency(totals.total_paid)}
+              </div>
             </div>
+            <div className="stat-icon no-print">💰</div>
           </div>
-          <div className="stat-icon">⚠️</div>
-        </div>
-      </div>
 
-      {/* Report Results Table */}
-      <div className="card">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>
-            {type === 'customer-wise' && '👥 Customer-Wise Sales Report'}
-            {type === 'daily' && '📅 Daily Sales Breakdown'}
-            {type === 'material-wise' && '🪨 Material Sales Volume Report'}
-            {type === 'due' && '⚠️ Outstanding Customer Dues'}
-          </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {from || to ? `Filtered: ${from || 'Start'} to ${to || 'Today'}` : 'All Time'}
-          </span>
+          <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total Remaining Due</div>
+              <div className="stat-value" style={{ color: totals.total_due > 0 ? 'var(--danger)' : 'inherit' }}>
+                {formatCurrency(totals.total_due)}
+              </div>
+            </div>
+            <div className="stat-icon no-print">⚠️</div>
+          </div>
         </div>
 
-        {loading ? (
-          <div style={{ padding: '36px', textAlign: 'center' }}>Generating report data...</div>
-        ) : filteredData.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            No sales records match the selected date range.
-          </div>
-        ) : (
-          <div className="table-container">
-            {/* TYPE 1: CUSTOMER WISE */}
-            {type === 'customer-wise' && (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Customer Name</th>
-                    <th>Mobile</th>
-                    <th>Total Orders</th>
-                    <th>Total Billed</th>
-                    <th>Total Paid</th>
-                    <th>Total Due Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{row.customer_name}</td>
-                      <td>{row.customer_mobile || 'N/A'}</td>
-                      <td>{row.total_orders} bills</td>
-                      <td style={{ fontWeight: 600 }}>{formatCurrency(row.total_billed)}</td>
-                      <td style={{ color: 'var(--success)' }}>{formatCurrency(row.total_paid)}</td>
-                      <td style={{ color: parseFloat(row.total_due) > 0 ? 'var(--danger)' : 'inherit', fontWeight: parseFloat(row.total_due) > 0 ? 700 : 400 }}>
-                        {formatCurrency(row.total_due)}
-                      </td>
+        {/* Report Results Table */}
+        <div className="card" style={{ border: '1px solid var(--border)' }}>
+          {loading ? (
+            <div style={{ padding: '36px', textAlign: 'center' }}>Generating report data...</div>
+          ) : filteredData.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No sales records match the selected date range.
+            </div>
+          ) : (
+            <div className="table-container">
+              {/* TYPE 1: CUSTOMER WISE */}
+              {type === 'customer-wise' && (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Customer Name</th>
+                      <th>Mobile</th>
+                      <th>Total Orders</th>
+                      <th>Total Billed</th>
+                      <th>Total Paid</th>
+                      <th>Total Due Balance</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {filteredData.map((row, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td style={{ fontWeight: 600 }}>{row.customer_name}</td>
+                        <td>{row.customer_mobile || 'N/A'}</td>
+                        <td>{row.total_orders} bills</td>
+                        <td style={{ fontWeight: 600 }}>{formatCurrency(row.total_billed)}</td>
+                        <td style={{ color: 'var(--success)' }}>{formatCurrency(row.total_paid)}</td>
+                        <td style={{ color: parseFloat(row.total_due) > 0 ? 'var(--danger)' : 'inherit', fontWeight: parseFloat(row.total_due) > 0 ? 700 : 400 }}>
+                          {formatCurrency(row.total_due)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: '#f8fafc', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+                      <td colSpan="3">TOTAL SUMMARY</td>
+                      <td>{totals.total_orders} bills</td>
+                      <td style={{ color: 'var(--primary)' }}>{formatCurrency(totals.total_billed)}</td>
+                      <td style={{ color: 'var(--success)' }}>{formatCurrency(totals.total_paid)}</td>
+                      <td style={{ color: totals.total_due > 0 ? 'var(--danger)' : 'inherit' }}>{formatCurrency(totals.total_due)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
 
-            {/* TYPE 2: DAILY SALES */}
-            {type === 'daily' && (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Orders Count</th>
-                    <th>Total Billed</th>
-                    <th>Collected</th>
-                    <th>Due Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{formatDate(row.sale_date)}</td>
-                      <td>{row.total_orders} bills</td>
-                      <td style={{ fontWeight: 600 }}>{formatCurrency(row.total_billed)}</td>
-                      <td style={{ color: 'var(--success)' }}>{formatCurrency(row.total_paid)}</td>
-                      <td style={{ color: parseFloat(row.total_due) > 0 ? 'var(--danger)' : 'inherit', fontWeight: parseFloat(row.total_due) > 0 ? 700 : 400 }}>
-                        {formatCurrency(row.total_due)}
-                      </td>
+              {/* TYPE 2: DAILY SALES */}
+              {type === 'daily' && (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Orders Count</th>
+                      <th>Total Billed</th>
+                      <th>Collected</th>
+                      <th>Due Amount</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {filteredData.map((row, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td style={{ fontWeight: 600 }}>{formatDate(row.sale_date)}</td>
+                        <td>{row.total_orders} bills</td>
+                        <td style={{ fontWeight: 600 }}>{formatCurrency(row.total_billed)}</td>
+                        <td style={{ color: 'var(--success)' }}>{formatCurrency(row.total_paid)}</td>
+                        <td style={{ color: parseFloat(row.total_due) > 0 ? 'var(--danger)' : 'inherit', fontWeight: parseFloat(row.total_due) > 0 ? 700 : 400 }}>
+                          {formatCurrency(row.total_due)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
 
-            {/* TYPE 3: MATERIAL WISE */}
-            {type === 'material-wise' && (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Material</th>
-                    <th>Total Quantity Sold</th>
-                    <th>Average Rate (₹)</th>
-                    <th>Total Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{row.material_name}</td>
-                      <td>{parseFloat(row.total_quantity).toFixed(3)} {row.unit || 'Tonne'}</td>
-                      <td>{formatCurrency(row.avg_rate)}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(row.total_amount)}</td>
+              {/* TYPE 3: MATERIAL WISE */}
+              {type === 'material-wise' && (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Material</th>
+                      <th>Total Quantity Sold</th>
+                      <th>Average Rate (₹)</th>
+                      <th>Total Revenue</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {filteredData.map((row, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td style={{ fontWeight: 600 }}>{row.material_name}</td>
+                        <td>{parseFloat(row.total_quantity).toFixed(3)} {row.unit || 'Tonne'}</td>
+                        <td>{formatCurrency(row.avg_rate)}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatCurrency(row.total_amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
 
-            {/* TYPE 4: OUTSTANDING DUES */}
-            {type === 'due' && (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Invoice No</th>
-                    <th>Customer Name</th>
-                    <th>Mobile</th>
-                    <th>Sale Date</th>
-                    <th>Grand Total</th>
-                    <th>Paid</th>
-                    <th>Outstanding Due</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{row.invoice_number}</td>
-                      <td>{row.customer_name}</td>
-                      <td>{row.customer_mobile || 'N/A'}</td>
-                      <td>{formatDate(row.sale_date)}</td>
-                      <td>{formatCurrency(row.grand_total)}</td>
-                      <td style={{ color: 'var(--success)' }}>{formatCurrency(row.amount_paid)}</td>
-                      <td style={{ color: 'var(--danger)', fontWeight: 700 }}>{formatCurrency(row.amount_due)}</td>
-                      <td>
-                        <a href={`/sales/${row.id}`} className="btn btn-danger btn-sm">
-                          💳 Settle Due
-                        </a>
-                      </td>
+              {/* TYPE 4: OUTSTANDING DUES */}
+              {type === 'due' && (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Invoice No</th>
+                      <th>Customer Name</th>
+                      <th>Mobile</th>
+                      <th>Sale Date</th>
+                      <th>Grand Total</th>
+                      <th>Paid</th>
+                      <th>Outstanding Due</th>
+                      <th className="no-print">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+                  </thead>
+                  <tbody>
+                    {filteredData.map((row, i) => (
+                      <tr key={i}>
+                        <td style={{ fontWeight: 600 }}>{row.invoice_number}</td>
+                        <td>{row.customer_name}</td>
+                        <td>{row.customer_mobile || 'N/A'}</td>
+                        <td>{formatDate(row.sale_date)}</td>
+                        <td>{formatCurrency(row.grand_total)}</td>
+                        <td style={{ color: 'var(--success)' }}>{formatCurrency(row.amount_paid)}</td>
+                        <td style={{ color: 'var(--danger)', fontWeight: 700 }}>{formatCurrency(row.amount_due)}</td>
+                        <td className="no-print">
+                          <a href={`/sales/${row.id}`} className="btn btn-danger btn-sm">
+                            💳 Settle Due
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Report Footer / Signature Line (Visible during print) */}
+        <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280', paddingTop: '16px', borderTop: '1px dashed #ccc' }}>
+          <div>Generated by Lakshmi Stone Crusher Software</div>
+          <div style={{ textAlign: 'right' }}>Authorized Signature: ______________________</div>
+        </div>
       </div>
     </div>
   );
