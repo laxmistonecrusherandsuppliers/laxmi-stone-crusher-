@@ -1,73 +1,68 @@
-# Lakshmi Stone Crusher & Suppliers — Business Management App
+# Lakshmi Stone Crusher & Suppliers — Static Web Application
 
-A full-stack business management system for stone crushing material sales.
+A zero-server, high-performance static business management system for stone crushing material sales, powered directly by **Supabase**.
 
-## Features (Phase 1)
-- 🔐 Multi-device login with JWT auth (Admin & Staff roles)
-- 👥 Customer management with full sales history & payment ledger
-- 🧾 New Sale flow — multi-item bills, GST ON/OFF, partial payments
-- 💰 Due tracking with running ledger per customer
-- 📄 PDF generation — plain bills & GST tax invoices
-- 🖨️ Print support — A4 and thermal (58mm/80mm)
-- 📊 Reports — Daily, Customer-wise, Material-wise, Due report (PDF export)
-- ⚙️ Admin settings — business info, GST%, saved material rates
+## Architecture & Hosting
 
-## Tech Stack
-- **Frontend**: React 18 + Vite, React Router v6, TanStack Query v5
-- **Backend**: Node.js + Express.js REST API
-- **Database**: PostgreSQL 15 (centralized — multi-device sync)
-- **Auth**: JWT tokens with bcrypt passwords
-- **PDF**: PDFKit (server-side generation)
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript, Tailwind CSS
+- **Backend / Database**: Supabase PostgreSQL Database (Direct Browser Access)
+- **Auth**: Client-side authentication with bcrypt password verification against Supabase `users` table
+- **PDF Generation**: Client-side `jsPDF` / `jspdf-autotable`
+- **Printing**: Native browser printing (`window.print()`) supporting A4 and Thermal paper sizes (58mm & 80mm)
+- **Runtime Requirement**: **NONE**. Requires no Node.js, Next.js, Express, or Vercel server functions.
 
 ---
 
-## Quick Start (Development)
+## Static Production Files Directory (`dist/`)
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL 15 (or Docker for one-command setup)
+Upload the contents of the `dist/` directory to any static file hosting service (cPanel, Netlify, Vercel Static, GitHub Pages, Cloudflare Pages, Nginx, or Apache).
 
-### Option A — With Docker (Recommended)
-
-```bash
-# 1. Clone/download the project
-cd "Laxmi Stone Crusher and Suplliers"
-
-# 2. Start everything with Docker
-docker-compose up -d
-
-# 3. Open in browser
-# Frontend: http://localhost:80
-# Backend API: http://localhost:5000/api
+```text
+dist/
+├── index.html            # Executive Dashboard
+├── login.html            # Sign-in portal
+├── sales.html            # Sales & Invoices Directory
+├── sale-new.html         # New Sale Invoice Creation Wizard
+├── sale-details.html     # Bill View, Thermal/A4 Printing, PDF Export & Payments
+├── customers.html        # Customer Directory & Management
+├── customer-details.html # Customer Running Ledger & Payment History
+├── attendance.html       # Staff Directory, Attendance, Advances & Leaves
+├── reports.html          # Business Reports (Daily, Customer, Material, Dues)
+├── settings.html         # Business Information, GST% & Material Rates
+└── assets/
+    ├── css/
+    │   └── style.css     # Design System & Styling
+    └── js/
+        ├── config.js          # Supabase Configuration
+        ├── supabase-client.js # Supabase JS Library Initializer
+        ├── auth.js            # Authentication Service
+        ├── db-service.js      # Data Access Layer
+        ├── pdf-generator.js   # Client-side PDF Export
+        ├── layout.js          # Shared Sidebar & Header Injector
+        └── utils.js           # Currency & Date Formatters
 ```
 
-### Option B — Manual Setup
+---
 
-**1. Start PostgreSQL and create database:**
-```bash
-psql -U postgres -c "CREATE USER lsc_user WITH PASSWORD 'lsc_pass';"
-psql -U postgres -c "CREATE DATABASE lsc_db OWNER lsc_user;"
-psql -U lsc_user -d lsc_db -f server/migrations/001_initial.sql
+## Quick Setup & Deployment
+
+### 1. Database Setup (Supabase)
+1. Open your project on [Supabase Dashboard](https://app.supabase.com).
+2. Navigate to **SQL Editor**.
+3. Paste and run the script from [`supabase/schema.sql`](file:///Users/sushant/Documents/Laxmi%20Stone%20Crusher%20and%20Suplliers%20/supabase/schema.sql).
+
+### 2. Configure Supabase Credentials
+Open `dist/assets/js/config.js` and set your Supabase Project URL and Anon/Publishable API Key:
+
+```javascript
+window.LSC_CONFIG = {
+  SUPABASE_URL: "https://your-project.supabase.co",
+  SUPABASE_ANON_KEY: "your-supabase-anon-key"
+};
 ```
 
-**2. Setup Backend:**
-```bash
-cd server
-cp .env.example .env
-# Edit .env with your database credentials
-npm install
-node scripts/seed.js    # Creates default admin user
-npm run dev             # Starts on http://localhost:5000
-```
-
-**3. Setup Frontend:**
-```bash
-cd client
-npm install
-npm run dev             # Starts on http://localhost:5173
-```
-
-**4. Open browser:** http://localhost:5173
+### 3. Deploy
+Simply upload the `dist/` folder to your web server or hosting service.
 
 ---
 
@@ -78,89 +73,13 @@ npm run dev             # Starts on http://localhost:5173
 | Admin | `admin` | `admin123` |
 | Staff | `staff1` | `staff123` |
 
-> ⚠️ **Change these passwords immediately after first login!**
-
 ---
 
-## Project Structure
+## Key Features
 
-```
-/
-├── server/                 # Node.js/Express backend
-│   ├── src/
-│   │   ├── config/         # DB connection
-│   │   ├── controllers/    # Route handlers
-│   │   ├── middleware/     # Auth, error handling
-│   │   ├── routes/         # API routes
-│   │   └── services/       # PDF generation
-│   ├── migrations/         # SQL schema files
-│   ├── scripts/            # Seed scripts
-│   └── package.json
-│
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── api/            # Axios API functions
-│   │   ├── components/     # Shared UI components
-│   │   ├── context/        # Auth context
-│   │   ├── pages/          # App pages
-│   │   └── utils/          # Helpers (currency format, dates)
-│   └── package.json
-│
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-## API Overview
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Current user |
-| GET | `/api/customers` | List customers |
-| POST | `/api/customers` | Create customer |
-| GET | `/api/customers/:id/ledger` | Payment ledger |
-| GET | `/api/materials` | List materials |
-| POST | `/api/sales` | Create sale |
-| GET | `/api/sales/:id/pdf` | Download bill PDF |
-| POST | `/api/sales/:id/payments` | Record payment |
-| GET | `/api/reports/daily` | Daily sales report |
-| GET | `/api/reports/due` | Outstanding dues |
-| GET | `/api/settings` | App settings |
-
----
-
-## GST Invoice
-
-When GST is enabled on a sale:
-- CGST = GST% / 2
-- SGST = GST% / 2
-- Grand Total = Subtotal + CGST + SGST
-
-GST percentage is configurable in Settings (default 18%).
-
-## Thermal Printing
-
-When printing, select paper size in your browser's print dialog:
-- **A4**: Standard invoice/bill
-- **80mm thermal**: Narrow receipt format
-- **58mm thermal**: Smallest thermal format
-
-The bill layout auto-adjusts via CSS `@media print` rules.
-
----
-
-## Phase 2 (Coming Soon)
-- Staff management (profiles, salary)
-- Daily attendance tracking (Present/Absent/Half-day/Leave)
-- Advance salary tracking
-- Leave request management
-- Granular staff permissions
-- Data backup & export
-
----
-
-## Support
-
-Business: Lakshmi Stone Crusher & Suppliers
+1. **Customers**: Add/edit customers, search by name/mobile, track customer-wise sales & payment history, view net due balance.
+2. **Sales & Materials**: Multi-item bills supporting 80-100mm, 40mm, 20mm, 10mm, 6mm, 1/8, Crush Sand, Wash Sand, and Custom materials with editable rates.
+3. **GST & Plain Invoices**: Configurable GST ON/OFF toggle (CGST 9% + SGST 9%).
+4. **Payment Ledgers**: Support full, partial, or due payments with full log retention without overwriting past payment records.
+5. **Staff Management**: Daily attendance tracking (Present, Absent, Half-day, Leave), salary advances, and leave requests.
+6. **Reports**: Daily sales, customer-wise sales, material-wise sales, and outstanding dues report with PDF export & print.

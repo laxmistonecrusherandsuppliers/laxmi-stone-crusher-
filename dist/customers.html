@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Directory - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Customer Directory</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Manage business clients and settle outstanding balance ledgers</p>
+      </div>
+      <button onclick="openAddCustomerModal()" class="btn btn-primary text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-4 shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span>+ Add New Customer</span>
+      </button>
+    </div>
+
+    <!-- Search Card -->
+    <div class="card mb-6 p-4">
+      <div>
+        <label class="form-label">Search Customer</label>
+        <input type="text" id="cust-search" class="form-input" placeholder="Search by name or mobile number...">
+      </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+      <div id="cust-loading" class="p-8 text-center text-gray-400 text-xs">Loading customer directory...</div>
+
+      <div id="cust-table-container" class="table-container hidden">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Customer Name</th>
+              <th>Mobile</th>
+              <th>Address / Location</th>
+              <th>Outstanding Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cust-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="cust-empty" class="hidden p-10 text-center text-gray-400 text-xs">No customers found.</div>
+    </div>
+
+    <!-- Customer Modal (Add / Edit) -->
+    <div id="modal-customer" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900" id="modal-title">Add Customer</h3>
+          <button type="button" onclick="closeCustomerModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+        <form id="customer-form">
+          <input type="hidden" id="edit-id">
+          <div class="modal-body space-y-4">
+            <div>
+              <label class="form-label">Customer Name <span class="text-red-500">*</span></label>
+              <input type="text" id="cust-name" required class="form-input" placeholder="Client or company name">
+            </div>
+            <div>
+              <label class="form-label">Mobile Number</label>
+              <input type="text" id="cust-mobile" class="form-input" placeholder="10-digit mobile">
+            </div>
+            <div>
+              <label class="form-label">Address / Location</label>
+              <textarea id="cust-address" class="form-textarea" rows="2" placeholder="Site or business address"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeCustomerModal()" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" id="save-cust-btn" class="btn btn-primary text-xs">Save Customer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allCustomers = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('customers', 'Customer Directory');
+      await fetchCustomers();
+
+      document.getElementById('cust-search').addEventListener('input', renderCustomers);
+      document.getElementById('customer-form').addEventListener('submit', handleSaveCustomer);
+    });
+
+    async function fetchCustomers() {
+      try {
+        const rawCustomers = await window.LSCDB.getCustomers();
+        const sales = await window.LSCDB.getSales();
+
+        allCustomers = rawCustomers.map(c => {
+          const custSales = sales.filter(s => s.customer_id == c.id);
+          const totalDue = custSales.reduce((acc, s) => acc + (parseFloat(s.amount_due) || 0), 0);
+          return { ...c, total_due: totalDue };
+        });
+
+        document.getElementById('cust-loading').classList.add('hidden');
+        renderCustomers();
+      } catch (err) {
+        console.error(err);
+        window.LSCUtils.showNotification('Error loading customers: ' + err.message, 'error');
+      }
+    }
+
+    function renderCustomers() {
+      const search = document.getElementById('cust-search').value.toLowerCase().trim();
+      const filtered = allCustomers.filter(c => {
+        if (!search) return true;
+        return (
+          (c.name && c.name.toLowerCase().includes(search)) ||
+          (c.mobile && c.mobile.toLowerCase().includes(search))
+        );
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('cust-table-container').classList.add('hidden');
+        document.getElementById('cust-empty').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('cust-empty').classList.add('hidden');
+      const tbody = document.getElementById('cust-tbody');
+
+      tbody.innerHTML = filtered.map(c => {
+        const dueVal = parseFloat(c.total_due) || 0;
+        return `
+          <tr>
+            <td class="font-semibold text-gray-900">${c.name}</td>
+            <td class="font-medium">${c.mobile || '-'}</td>
+            <td>${c.address || '-'}</td>
+            <td class="${dueVal > 0 ? 'text-red-600 font-bold' : 'text-gray-500'}">
+              ${window.LSCUtils.formatCurrency(dueVal)}
+            </td>
+            <td>
+              <div class="flex items-center gap-1.5">
+                ${dueVal > 0.01 ? `<a href="customer-details.html?id=${c.id}" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</a>` : ''}
+                <a href="customer-details.html?id=${c.id}" class="btn btn-secondary btn-sm text-xs">Ledger & History</a>
+                <button onclick="openEditCustomerModal(${c.id})" class="btn btn-ghost btn-sm text-xs">Edit</button>
+                <button onclick="handleDeleteCustomer(${c.id}, '${c.name}')" class="btn btn-ghost btn-sm text-xs text-red-600 hover:bg-red-50">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('cust-table-container').classList.remove('hidden');
+    }
+
+    function openAddCustomerModal() {
+      document.getElementById('modal-title').textContent = 'Add Customer';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('customer-form').reset();
+      document.getElementById('modal-customer').classList.remove('hidden');
+    }
+
+    function openEditCustomerModal(id) {
+      const c = allCustomers.find(item => item.id === id);
+      if (!c) return;
+
+      document.getElementById('modal-title').textContent = 'Edit Customer Details';
+      document.getElementById('edit-id').value = c.id;
+      document.getElementById('cust-name').value = c.name;
+      document.getElementById('cust-mobile').value = c.mobile || '';
+      document.getElementById('cust-address').value = c.address || '';
+      document.getElementById('modal-customer').classList.remove('hidden');
+    }
+
+    function closeCustomerModal() {
+      document.getElementById('modal-customer').classList.add('hidden');
+    }
+
+    async function handleSaveCustomer(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-id').value;
+      const data = {
+        name: document.getElementById('cust-name').value,
+        mobile: document.getElementById('cust-mobile').value,
+        address: document.getElementById('cust-address').value
+      };
+
+      try {
+        if (editId) {
+          await window.LSCDB.updateCustomer(editId, data);
+          window.LSCUtils.showNotification('Customer updated successfully!', 'success');
+        } else {
+          await window.LSCDB.addCustomer(data);
+          window.LSCUtils.showNotification('Customer created successfully!', 'success');
+        }
+        closeCustomerModal();
+        await fetchCustomers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function handleDeleteCustomer(id, name) {
+      if (!confirm(`Are you sure you want to delete customer "${name}"?`)) return;
+
+      try {
+        await window.LSCDB.deleteCustomer(id);
+        window.LSCUtils.showNotification(`Customer "${name}" deleted.`, 'success');
+        await fetchCustomers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

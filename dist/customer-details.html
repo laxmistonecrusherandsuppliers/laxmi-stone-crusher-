@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Ledger - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="cust-profile-title">Customer Ledger</h1>
+        <p class="text-xs text-gray-500 mt-0.5" id="cust-profile-sub">Complete payment history and running balance</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-settle-customer" onclick="openCustomerSettleModal()" class="btn btn-success text-xs hidden shadow-sm">
+          <span>💳 Settle Outstanding Balance</span>
+        </button>
+        <a id="btn-statement-report" href="reports.html?type=customer-statement" class="btn btn-primary text-xs flex items-center gap-1.5 shadow-sm">
+          <span>📊 View Statement Report</span>
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary text-xs">🖨️ Print Ledger</button>
+        <a href="customers.html" class="btn btn-secondary text-xs">Back to Customers</a>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-blue-600 shadow-sm">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Billed</div>
+        <div id="summary-billed" class="text-2xl font-extrabold text-gray-900 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-emerald-600 shadow-sm">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Paid</div>
+        <div id="summary-paid" class="text-2xl font-extrabold text-emerald-600 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-red-600 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Net Outstanding Balance</div>
+          <div id="summary-due" class="text-2xl font-extrabold text-red-600 mt-1">₹0.00</div>
+        </div>
+        <button id="card-settle-btn" onclick="openCustomerSettleModal()" class="btn btn-danger text-xs hidden py-1.5 px-3">
+          Settle Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Date Filter Bar -->
+    <div class="card mb-6 p-4 no-print">
+      <div class="flex flex-wrap items-end gap-4">
+        <div>
+          <label class="form-label text-xs">Filter From Date</label>
+          <input type="date" id="cust-from-date" class="form-input text-xs" onchange="loadCustomerData()">
+        </div>
+        <div>
+          <label class="form-label text-xs">Filter To Date</label>
+          <input type="date" id="cust-to-date" class="form-input text-xs" onchange="loadCustomerData()">
+        </div>
+        <div>
+          <button type="button" onclick="resetDateFilters()" class="btn btn-secondary text-xs">Reset Dates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs mb-6 no-print">
+      <button onclick="switchTab('sales')" id="tab-btn-sales" class="tab-btn active">Sales History</button>
+      <button onclick="switchTab('ledger')" id="tab-btn-ledger" class="tab-btn">Payment Ledger</button>
+    </div>
+
+    <!-- Tab 1: Sales History -->
+    <div id="tab-sales" class="card">
+      <div class="card-header">
+        <span>Sales Invoices History</span>
+      </div>
+      <div class="table-container">
+        <table class="table text-xs">
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Sale Date</th>
+              <th>Status</th>
+              <th>Grand Total</th>
+              <th>Paid Amount</th>
+              <th>Due Balance</th>
+              <th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+      <div id="sales-empty" class="hidden p-8 text-center text-gray-400 text-xs">No sales invoices recorded for this customer in selected date range.</div>
+    </div>
+
+    <!-- Tab 2: Running Payment Ledger -->
+    <div id="tab-ledger" class="card hidden">
+      <div class="card-header">
+        <span>Payment Settlement Ledger</span>
+      </div>
+      <div class="table-container">
+        <table class="table text-xs">
+          <thead>
+            <tr>
+              <th>Payment Date</th>
+              <th>Amount Paid</th>
+              <th>Balance Before</th>
+              <th>Balance After</th>
+              <th>Payment Mode</th>
+              <th>Notes / Details</th>
+            </tr>
+          </thead>
+          <tbody id="ledger-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ledger-empty" class="hidden p-8 text-center text-gray-400 text-xs">No payment transaction logs recorded for this customer yet.</div>
+    </div>
+
+    <!-- Record Payment / Settle Due Modal -->
+    <div id="modal-payment" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900">Settle Customer Bill Due</h3>
+          <button type="button" onclick="closePaymentModal()" class="text-gray-400">&times;</button>
+        </div>
+        <form id="payment-form" onsubmit="handleRecordPayment(event)">
+          <div class="modal-body space-y-4">
+            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs">
+              <span class="text-amber-800 font-medium">Invoice Number: </span>
+              <strong id="modal-inv-no" class="text-gray-900 text-xs"></strong>
+              <div class="mt-1">
+                <span class="text-amber-800 font-medium">Outstanding Balance: </span>
+                <strong id="modal-due-amt" class="text-red-600 text-sm font-bold">₹0.00</strong>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Payment Amount (₹) <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" id="pay-amt" required min="0.01" class="form-input" placeholder="0.00">
+            </div>
+            <div>
+              <label class="form-label">Payment Method</label>
+              <select id="pay-method" class="form-select">
+                <option value="cash">Cash</option>
+                <option value="upi">UPI / GPay / PhonePe</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="cheque">Cheque</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Payment Notes</label>
+              <input type="text" id="pay-notes" class="form-input" placeholder="e.g. Customer Ledger Settlement / Cash Receipt">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closePaymentModal()" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs">Confirm Payment Settlement</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentCustomerId = null;
+    let currentSalesList = [];
+    let selectedSaleForSettle = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('customers', 'Customer Ledger');
+      currentCustomerId = window.LSCUtils.getQueryParam('id');
+      if (!currentCustomerId) {
+        window.location.href = 'customers.html';
+        return;
+      }
+
+      document.getElementById('btn-statement-report').href = `reports.html?type=customer-statement&customer_id=${currentCustomerId}`;
+      await loadCustomerData();
+    });
+
+    function switchTab(tabKey) {
+      if (tabKey === 'sales') {
+        document.getElementById('tab-btn-sales').className = 'tab-btn active';
+        document.getElementById('tab-btn-ledger').className = 'tab-btn';
+        document.getElementById('tab-sales').classList.remove('hidden');
+        document.getElementById('tab-ledger').classList.add('hidden');
+      } else {
+        document.getElementById('tab-btn-sales').className = 'tab-btn';
+        document.getElementById('tab-btn-ledger').className = 'tab-btn active';
+        document.getElementById('tab-sales').classList.add('hidden');
+        document.getElementById('tab-ledger').classList.remove('hidden');
+      }
+    }
+
+    function resetDateFilters() {
+      document.getElementById('cust-from-date').value = '';
+      document.getElementById('cust-to-date').value = '';
+      loadCustomerData();
+    }
+
+    async function loadCustomerData() {
+      const from = document.getElementById('cust-from-date').value;
+      const to = document.getElementById('cust-to-date').value;
+
+      try {
+        const { logs, summary } = await window.LSCDB.getCustomerLedger(currentCustomerId);
+        currentSalesList = await window.LSCDB.getSales({ customer_id: currentCustomerId, from, to });
+        const customers = await window.LSCDB.getCustomers();
+        const cust = customers.find(c => c.id == currentCustomerId);
+
+        if (cust) {
+          document.getElementById('cust-profile-title').textContent = cust.name;
+          document.getElementById('cust-profile-sub').textContent = `${cust.mobile ? 'Ph: ' + cust.mobile + ' • ' : ''}${cust.address || ''}`;
+        }
+
+        document.getElementById('summary-billed').textContent = window.LSCUtils.formatCurrency(summary.total_billed);
+        document.getElementById('summary-paid').textContent = window.LSCUtils.formatCurrency(summary.total_paid);
+        document.getElementById('summary-due').textContent = window.LSCUtils.formatCurrency(summary.total_due);
+
+        const dueVal = parseFloat(summary.total_due) || 0;
+        if (dueVal > 0.01) {
+          document.getElementById('btn-settle-customer').classList.remove('hidden');
+          document.getElementById('card-settle-btn').classList.remove('hidden');
+        } else {
+          document.getElementById('btn-settle-customer').classList.add('hidden');
+          document.getElementById('card-settle-btn').classList.add('hidden');
+        }
+
+        // Render Sales Table
+        const salesTbody = document.getElementById('sales-tbody');
+        if (!currentSalesList || currentSalesList.length === 0) {
+          salesTbody.innerHTML = '';
+          document.getElementById('sales-empty').classList.remove('hidden');
+        } else {
+          document.getElementById('sales-empty').classList.add('hidden');
+          salesTbody.innerHTML = currentSalesList.map(s => {
+            const dueAmt = parseFloat(s.amount_due) || 0;
+            const statusClass = s.payment_mode === 'full' ? 'badge-full' : (s.payment_mode === 'partial' ? 'badge-partial' : 'badge-due');
+            return `
+              <tr>
+                <td class="font-semibold text-gray-900">${s.invoice_number}</td>
+                <td>${window.LSCUtils.formatDate(s.sale_date)}</td>
+                <td><span class="badge ${statusClass}">${(s.payment_mode || 'DUE').toUpperCase()}</span></td>
+                <td class="font-semibold">${window.LSCUtils.formatCurrency(s.grand_total)}</td>
+                <td class="text-emerald-600">${window.LSCUtils.formatCurrency(s.amount_paid)}</td>
+                <td class="${dueAmt > 0 ? 'text-red-600 font-bold' : ''}">${window.LSCUtils.formatCurrency(dueAmt)}</td>
+                <td class="no-print">
+                  <div class="flex items-center gap-1.5">
+                    ${dueAmt > 0.01 ? `<button onclick="openSettleModal(${s.id})" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</button>` : ''}
+                    <a href="sale-details.html?id=${s.id}" class="btn btn-ghost btn-sm text-xs">View Bill</a>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        // Render Ledger Logs Table
+        const ledgerTbody = document.getElementById('ledger-tbody');
+        if (!logs || logs.length === 0) {
+          ledgerTbody.innerHTML = '';
+          document.getElementById('ledger-empty').classList.remove('hidden');
+        } else {
+          document.getElementById('ledger-empty').classList.add('hidden');
+          ledgerTbody.innerHTML = logs.map(l => `
+            <tr>
+              <td>${new Date(l.payment_date).toLocaleString('en-IN')}</td>
+              <td class="text-emerald-600 font-semibold">${window.LSCUtils.formatCurrency(l.amount_paid)}</td>
+              <td>${window.LSCUtils.formatCurrency(l.balance_before)}</td>
+              <td>${window.LSCUtils.formatCurrency(l.balance_after)}</td>
+              <td class="uppercase font-medium">${l.payment_mode || 'cash'}</td>
+              <td>${l.notes || '-'}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error(err);
+        window.LSCUtils.showNotification('Error loading customer details: ' + err.message, 'error');
+      }
+    }
+
+    function openCustomerSettleModal() {
+      // Find oldest unpaid sale for this customer
+      const unpaidSale = currentSalesList.find(s => parseFloat(s.amount_due) > 0);
+      if (unpaidSale) {
+        openSettleModal(unpaidSale.id);
+      } else {
+        alert('No unpaid bills found for this customer.');
+      }
+    }
+
+    function openSettleModal(saleId) {
+      selectedSaleForSettle = currentSalesList.find(s => s.id == saleId);
+      if (!selectedSaleForSettle) return;
+
+      document.getElementById('modal-inv-no').textContent = selectedSaleForSettle.invoice_number;
+      document.getElementById('modal-due-amt').textContent = window.LSCUtils.formatCurrency(selectedSaleForSettle.amount_due);
+      document.getElementById('pay-amt').value = selectedSaleForSettle.amount_due;
+      document.getElementById('modal-payment').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+      document.getElementById('payment-form').reset();
+      selectedSaleForSettle = null;
+    }
+
+    async function handleRecordPayment(e) {
+      e.preventDefault();
+      if (!selectedSaleForSettle) return;
+
+      const saveBtn = document.getElementById('save-pay-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Processing Settlement...';
+
+      try {
+        const amt = document.getElementById('pay-amt').value;
+        const method = document.getElementById('pay-method').value;
+        const notes = document.getElementById('pay-notes').value;
+
+        await window.LSCDB.addPayment(selectedSaleForSettle.id, { amount_paid: amt, payment_method: method, notes });
+        window.LSCUtils.showNotification('Payment settled successfully!', 'success');
+        closePaymentModal();
+        await loadCustomerData();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Confirm Payment Settlement';
+      }
+    }
+  </script>
+</body>
+</html>

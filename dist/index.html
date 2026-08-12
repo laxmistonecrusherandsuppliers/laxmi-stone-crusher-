@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Dashboard - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/pdf-generator.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Executive Dashboard</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Real-time business performance summary • <span id="current-date"></span></p>
+      </div>
+      <a href="sale-new.html" class="btn btn-primary text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-4 shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span>New Sale Invoice</span>
+      </a>
+    </div>
+
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <!-- Today's Billed -->
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-blue-600 shadow-sm flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Billed Sales</div>
+          <div id="kpi-today-billed" class="text-2xl font-extrabold text-gray-900 mt-1">₹0.00</div>
+          <div id="kpi-today-count" class="text-xs text-gray-400 mt-1">0 invoices created</div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Today's Collection -->
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-emerald-600 shadow-sm flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Cash Collection</div>
+          <div id="kpi-today-collected" class="text-2xl font-extrabold text-emerald-600 mt-1">₹0.00</div>
+          <div class="text-xs text-gray-400 mt-1">Collected today</div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Outstanding Due -->
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-red-600 shadow-sm flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Outstanding Due</div>
+          <div id="kpi-total-due" class="text-2xl font-extrabold text-red-600 mt-1">₹0.00</div>
+          <div class="text-xs text-gray-400 mt-1">Customer dues balance</div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Active Customers -->
+      <div class="bg-white p-5 rounded-xl border border-gray-200 border-t-4 border-t-amber-500 shadow-sm flex justify-between items-start">
+        <div>
+          <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Customer Base</div>
+          <div id="kpi-customers" class="text-2xl font-extrabold text-gray-900 mt-1">0</div>
+          <div class="text-xs text-gray-400 mt-1">Registered customers</div>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5 5 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="bg-white p-4 rounded-xl border border-gray-200 mb-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="text-xs font-semibold text-gray-700 uppercase tracking-wider">Quick Actions</div>
+        <div class="flex flex-wrap gap-2">
+          <a href="sale-new.html" class="btn btn-secondary text-xs py-1.5 px-3">
+            <span>+ New Sale</span>
+          </a>
+          <a href="customers.html" class="btn btn-secondary text-xs py-1.5 px-3">
+            <span>Customers</span>
+          </a>
+          <a href="reports.html?type=due" class="btn btn-secondary text-xs py-1.5 px-3 text-red-600 hover:bg-red-50 border-red-200">
+            <span>Outstanding Dues</span>
+          </a>
+          <a href="attendance.html" class="btn btn-secondary text-xs py-1.5 px-3">
+            <span>Attendance</span>
+          </a>
+          <a href="reports.html" class="btn btn-secondary text-xs py-1.5 px-3">
+            <span>Reports</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Card -->
+    <div class="card">
+      <div class="card-header">
+        <span>Recent Sales Transactions</span>
+        <a href="sales.html" class="text-xs font-semibold text-blue-600 hover:underline">View All Sales Invoices →</a>
+      </div>
+
+      <div id="recent-sales-loading" class="p-8 text-center text-gray-400 text-xs">Loading recent sales data...</div>
+
+      <div id="recent-sales-container" class="table-container hidden">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Customer Name</th>
+              <th>Sale Date</th>
+              <th>Status</th>
+              <th>Grand Total</th>
+              <th>Paid</th>
+              <th>Due Balance</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="recent-sales-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="recent-sales-empty" class="hidden p-10 text-center text-gray-400 text-xs">
+        No sales transactions recorded yet. Click "+ New Sale Invoice" to create your first bill.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('dashboard', 'Executive Dashboard');
+      document.getElementById('current-date').textContent = window.LSCUtils.formatDate(new Date());
+
+      try {
+        // Load KPI stats
+        const stats = await window.LSCDB.getDashboardStats();
+        document.getElementById('kpi-today-billed').textContent = window.LSCUtils.formatCurrency(stats.today_sales_amount);
+        document.getElementById('kpi-today-count').textContent = `${stats.today_sales_count} invoices created`;
+        document.getElementById('kpi-today-collected').textContent = window.LSCUtils.formatCurrency(stats.today_collection);
+        document.getElementById('kpi-total-due').textContent = window.LSCUtils.formatCurrency(stats.total_outstanding);
+        document.getElementById('kpi-customers').textContent = stats.total_customers;
+
+        // Load recent sales
+        const recent = await window.LSCDB.getRecentSales(10);
+        document.getElementById('recent-sales-loading').classList.add('hidden');
+
+        if (!recent || recent.length === 0) {
+          document.getElementById('recent-sales-empty').classList.remove('hidden');
+        } else {
+          const tbody = document.getElementById('recent-sales-tbody');
+          tbody.innerHTML = recent.map(s => {
+            const dueAmt = parseFloat(s.amount_due) || 0;
+            const statusClass = s.payment_mode === 'full' ? 'badge-full' : (s.payment_mode === 'partial' ? 'badge-partial' : 'badge-due');
+            return `
+              <tr>
+                <td class="font-semibold text-gray-900">${s.invoice_number}</td>
+                <td class="font-medium">${s.customer_name}</td>
+                <td>${window.LSCUtils.formatDate(s.sale_date)}</td>
+                <td><span class="badge ${statusClass}">${(s.payment_mode || 'DUE').toUpperCase()}</span></td>
+                <td class="font-semibold">${window.LSCUtils.formatCurrency(s.grand_total)}</td>
+                <td class="text-emerald-600">${window.LSCUtils.formatCurrency(s.amount_paid)}</td>
+                <td class="${dueAmt > 0 ? 'text-red-600 font-bold' : ''}">${window.LSCUtils.formatCurrency(dueAmt)}</td>
+                <td>
+                  <a href="sale-details.html?id=${s.id}" class="btn btn-ghost btn-sm">View</a>
+                </td>
+              </tr>
+            `;
+          }).join('');
+          document.getElementById('recent-sales-container').classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+        window.LSCUtils.showNotification('Error loading dashboard data: ' + err.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

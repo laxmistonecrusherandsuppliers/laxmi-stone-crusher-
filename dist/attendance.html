@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance & Staff Management - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Attendance & Staff Management</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Track daily attendance, salary advances, and leave requests</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openAddStaffModal()" class="btn btn-secondary text-xs">+ Add Staff</button>
+        <button onclick="openAdvanceModal()" class="btn btn-secondary text-xs">+ Record Advance</button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs mb-6">
+      <button onclick="switchTab('att')" id="tab-btn-att" class="tab-btn active">Daily Attendance</button>
+      <button onclick="switchTab('staff')" id="tab-btn-staff" class="tab-btn">Staff List</button>
+      <button onclick="switchTab('adv')" id="tab-btn-adv" class="tab-btn">Salary Advances</button>
+      <button onclick="switchTab('leave')" id="tab-btn-leave" class="tab-btn">Leave Requests</button>
+    </div>
+
+    <!-- Tab 1: Daily Attendance -->
+    <div id="tab-att" class="space-y-6">
+      <div class="card p-4">
+        <div class="flex items-center gap-4">
+          <label class="form-label mb-0 text-xs">Attendance Date:</label>
+          <input type="date" id="att-date-picker" class="form-input w-44 text-xs" onchange="loadDailyAttendance()">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>Mark Staff Attendance</span>
+        </div>
+        <div class="table-container">
+          <table class="table text-xs">
+            <thead>
+              <tr>
+                <th>Staff Name</th>
+                <th>Mobile</th>
+                <th>Attendance Status</th>
+                <th>Notes / Remarks</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="att-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Staff Directory -->
+    <div id="tab-staff" class="card hidden">
+      <div class="card-header">
+        <span>Active Staff Members</span>
+        <button onclick="openAddStaffModal()" class="btn btn-primary btn-sm">+ Add New Staff</button>
+      </div>
+      <div class="table-container">
+        <table class="table text-xs">
+          <thead>
+            <tr>
+              <th>Staff Name</th>
+              <th>Mobile</th>
+              <th>Joining Date</th>
+              <th>Monthly Salary</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="staff-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 3: Advances -->
+    <div id="tab-adv" class="card hidden">
+      <div class="card-header">
+        <span>Salary Advance History</span>
+        <button onclick="openAdvanceModal()" class="btn btn-primary btn-sm">+ Record Advance</button>
+      </div>
+      <div class="table-container">
+        <table class="table text-xs">
+          <thead>
+            <tr>
+              <th>Advance Date</th>
+              <th>Staff Name</th>
+              <th>Amount Paid</th>
+              <th>Notes / Reason</th>
+            </tr>
+          </thead>
+          <tbody id="adv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 4: Leaves -->
+    <div id="tab-leave" class="card hidden">
+      <div class="card-header">
+        <span>Leave Requests & History</span>
+        <button onclick="openLeaveModal()" class="btn btn-primary btn-sm">+ Record Leave</button>
+      </div>
+      <div class="table-container">
+        <table class="table text-xs">
+          <thead>
+            <tr>
+              <th>Staff Name</th>
+              <th>From Date</th>
+              <th>To Date</th>
+              <th>Leave Type</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leave-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div id="modal-staff" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900">Add Staff Member</h3>
+          <button type="button" onclick="closeModal('modal-staff')" class="text-gray-400">&times;</button>
+        </div>
+        <form id="form-staff">
+          <div class="modal-body space-y-4">
+            <div>
+              <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+              <input type="text" id="staff-name" required class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Mobile Number</label>
+              <input type="text" id="staff-mobile" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Joining Date</label>
+              <input type="date" id="staff-joining" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Monthly Salary (₹)</label>
+              <input type="number" id="staff-salary" step="0.01" class="form-input" placeholder="0.00">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeModal('modal-staff')" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs">Save Staff</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Advance Modal -->
+    <div id="modal-adv" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900">Record Salary Advance</h3>
+          <button type="button" onclick="closeModal('modal-adv')" class="text-gray-400">&times;</button>
+        </div>
+        <form id="form-adv">
+          <div class="modal-body space-y-4">
+            <div>
+              <label class="form-label">Select Staff <span class="text-red-500">*</span></label>
+              <select id="adv-staff-select" required class="form-select"></select>
+            </div>
+            <div>
+              <label class="form-label">Advance Amount (₹) <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" min="1" id="adv-amount" required class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Advance Date</label>
+              <input type="date" id="adv-date" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Notes / Reason</label>
+              <input type="text" id="adv-notes" class="form-input">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeModal('modal-adv')" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs">Save Advance</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Leave Modal -->
+    <div id="modal-leave" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900">Record Leave Request</h3>
+          <button type="button" onclick="closeModal('modal-leave')" class="text-gray-400">&times;</button>
+        </div>
+        <form id="form-leave">
+          <div class="modal-body space-y-4">
+            <div>
+              <label class="form-label">Select Staff <span class="text-red-500">*</span></label>
+              <select id="leave-staff-select" required class="form-select"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">From Date <span class="text-red-500">*</span></label>
+                <input type="date" id="leave-from" required class="form-input">
+              </div>
+              <div>
+                <label class="form-label">To Date <span class="text-red-500">*</span></label>
+                <input type="date" id="leave-to" required class="form-input">
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Leave Type</label>
+              <select id="leave-type" class="form-select">
+                <option value="Casual">Casual Leave</option>
+                <option value="Sick">Sick Leave</option>
+                <option value="Emergency">Emergency</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Reason</label>
+              <input type="text" id="leave-reason" class="form-input">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeModal('modal-leave')" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" class="btn btn-primary text-xs">Record Leave</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let staffListCache = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('attendance', 'Attendance & Staff Management');
+      document.getElementById('att-date-picker').value = window.LSCUtils.formatISO(new Date());
+
+      await loadStaffCache();
+      await loadDailyAttendance();
+
+      document.getElementById('form-staff').addEventListener('submit', handleAddStaff);
+      document.getElementById('form-adv').addEventListener('submit', handleAddAdvance);
+      document.getElementById('form-leave').addEventListener('submit', handleAddLeave);
+    });
+
+    function switchTab(tabKey) {
+      const tabs = ['att', 'staff', 'adv', 'leave'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-${t}`);
+        if (t === tabKey) {
+          btn.classList.add('active');
+          content.classList.remove('hidden');
+        } else {
+          btn.classList.remove('active');
+          content.classList.add('hidden');
+        }
+      });
+
+      if (tabKey === 'staff') loadStaffDirectory();
+      if (tabKey === 'adv') loadAdvances();
+      if (tabKey === 'leave') loadLeaves();
+    }
+
+    async function loadStaffCache() {
+      try {
+        staffListCache = await window.LSCDB.getStaff();
+        const options = '<option value="">-- Choose Staff --</option>' +
+          staffListCache.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('adv-staff-select').innerHTML = options;
+        document.getElementById('leave-staff-select').innerHTML = options;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadDailyAttendance() {
+      const date = document.getElementById('att-date-picker').value;
+      try {
+        const list = await window.LSCDB.getAttendance(date);
+        const tbody = document.getElementById('att-tbody');
+
+        tbody.innerHTML = list.map(st => `
+          <tr data-staff-id="${st.id}">
+            <td class="font-semibold text-gray-900">${st.name}</td>
+            <td>${st.mobile || '-'}</td>
+            <td>
+              <select class="att-status-select form-select text-xs w-36">
+                <option value="present" ${st.status === 'present' ? 'selected' : ''}>Present</option>
+                <option value="absent" ${st.status === 'absent' ? 'selected' : ''}>Absent</option>
+                <option value="half" ${st.status === 'half' ? 'selected' : ''}>Half-day</option>
+                <option value="leave" ${st.status === 'leave' ? 'selected' : ''}>On Leave</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" class="att-notes-input form-input text-xs" value="${st.notes || ''}" placeholder="Optional notes...">
+            </td>
+            <td>
+              <button onclick="saveSingleAttendance(${st.id})" class="btn btn-primary btn-sm text-xs">Save</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function saveSingleAttendance(staffId) {
+      const row = document.querySelector(`tr[data-staff-id="${staffId}"]`);
+      const date = document.getElementById('att-date-picker').value;
+      const status = row.querySelector('.att-status-select').value;
+      const notes = row.querySelector('.att-notes-input').value;
+
+      try {
+        await window.LSCDB.saveAttendance(staffId, date, status, notes);
+        window.LSCUtils.showNotification('Attendance saved!', 'success');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadStaffDirectory() {
+      try {
+        const list = await window.LSCDB.getStaff();
+        const tbody = document.getElementById('staff-tbody');
+        tbody.innerHTML = list.map(s => `
+          <tr>
+            <td class="font-semibold text-gray-900">${s.name}</td>
+            <td>${s.mobile || '-'}</td>
+            <td>${window.LSCUtils.formatDate(s.joining_date)}</td>
+            <td class="font-semibold">${window.LSCUtils.formatCurrency(s.salary)}</td>
+            <td><span class="badge badge-full">ACTIVE</span></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadAdvances() {
+      try {
+        const list = await window.LSCDB.getAdvances();
+        const tbody = document.getElementById('adv-tbody');
+        tbody.innerHTML = list.map(a => `
+          <tr>
+            <td>${window.LSCUtils.formatDate(a.advance_date)}</td>
+            <td class="font-semibold text-gray-900">${a.staff_name}</td>
+            <td class="text-red-600 font-bold">${window.LSCUtils.formatCurrency(a.amount)}</td>
+            <td>${a.notes || '-'}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadLeaves() {
+      try {
+        const list = await window.LSCDB.getLeaves();
+        const tbody = document.getElementById('leave-tbody');
+        tbody.innerHTML = list.map(l => `
+          <tr>
+            <td class="font-semibold text-gray-900">${l.staff_name}</td>
+            <td>${window.LSCUtils.formatDate(l.from_date)}</td>
+            <td>${window.LSCUtils.formatDate(l.to_date)}</td>
+            <td><span class="badge badge-admin">${l.type || 'Casual'}</span></td>
+            <td>${l.reason || '-'}</td>
+            <td><span class="badge badge-full">APPROVED</span></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openAddStaffModal() { document.getElementById('modal-staff').classList.remove('hidden'); }
+    function openAdvanceModal() { document.getElementById('modal-adv').classList.remove('hidden'); }
+    function openLeaveModal() { document.getElementById('modal-leave').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    async function handleAddStaff(e) {
+      e.preventDefault();
+      try {
+        await window.LSCDB.addStaff({
+          name: document.getElementById('staff-name').value,
+          mobile: document.getElementById('staff-mobile').value,
+          joining_date: document.getElementById('staff-joining').value,
+          salary: document.getElementById('staff-salary').value
+        });
+        closeModal('modal-staff');
+        await loadStaffCache();
+        loadStaffDirectory();
+        window.LSCUtils.showNotification('Staff added successfully!', 'success');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function handleAddAdvance(e) {
+      e.preventDefault();
+      try {
+        await window.LSCDB.addAdvance({
+          staff_id: document.getElementById('adv-staff-select').value,
+          amount: document.getElementById('adv-amount').value,
+          advance_date: document.getElementById('adv-date').value,
+          notes: document.getElementById('adv-notes').value
+        });
+        closeModal('modal-adv');
+        loadAdvances();
+        window.LSCUtils.showNotification('Salary advance recorded!', 'success');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function handleAddLeave(e) {
+      e.preventDefault();
+      try {
+        await window.LSCDB.addLeave({
+          staff_id: document.getElementById('leave-staff-select').value,
+          from_date: document.getElementById('leave-from').value,
+          to_date: document.getElementById('leave-to').value,
+          type: document.getElementById('leave-type').value,
+          reason: document.getElementById('leave-reason').value
+        });
+        closeModal('modal-leave');
+        loadLeaves();
+        window.LSCUtils.showNotification('Leave request recorded!', 'success');
+      } catch (err) { alert(err.message); }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Settings - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Application Settings</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Configure business info, tax rates, materials & invoice numbering</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Business Profile Settings -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="card">
+          <div class="card-header">
+            <span>Business Information & Billing Profile</span>
+          </div>
+
+          <form id="settings-form" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label class="form-label">Business Name <span class="text-red-500">*</span></label>
+                <input type="text" id="set-name" required class="form-input">
+              </div>
+              <div class="sm:col-span-2">
+                <label class="form-label">Business Address</label>
+                <textarea id="set-address" class="form-textarea" rows="2"></textarea>
+              </div>
+              <div>
+                <label class="form-label">Contact Mobile / Phone</label>
+                <input type="text" id="set-mobile" class="form-input">
+              </div>
+              <div>
+                <label class="form-label">GSTIN Number</label>
+                <input type="text" id="set-gstin" class="form-input">
+              </div>
+              <div>
+                <label class="form-label">Default GST Percentage (%)</label>
+                <input type="number" step="0.1" id="set-gstpercent" class="form-input">
+              </div>
+              <div>
+                <label class="form-label">Invoice Prefix</label>
+                <input type="text" id="set-prefix" class="form-input" placeholder="e.g. LSC">
+              </div>
+              <div>
+                <label class="form-label">Financial Year Tag</label>
+                <input type="text" id="set-fy" class="form-input" placeholder="e.g. 2526">
+              </div>
+              <div>
+                <label class="form-label">Next Invoice Number Sequence</label>
+                <input type="number" id="set-nextnum" class="form-input">
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-200">
+              <button type="submit" id="save-settings-btn" class="btn btn-primary text-xs py-2.5 px-5 shadow-sm">
+                Save Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Material Rates Configuration -->
+        <div class="card">
+          <div class="card-header">
+            <span>Saved Material Types & Default Rates</span>
+            <button onclick="openAddMatModal()" class="btn btn-secondary btn-sm">+ Add New Material</button>
+          </div>
+
+          <div class="table-container">
+            <table class="table text-xs">
+              <thead>
+                <tr>
+                  <th>Material Name</th>
+                  <th>Category</th>
+                  <th>Default Unit</th>
+                  <th>Default Rate (₹)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="materials-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Account & System Status -->
+      <div class="space-y-6">
+        <div class="card">
+          <div class="card-header">
+            <span>User Account Profile</span>
+          </div>
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between py-1 border-b border-gray-100">
+              <span class="text-gray-500">Username:</span>
+              <span id="user-uname" class="font-bold text-gray-900"></span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-gray-100">
+              <span class="text-gray-500">Role:</span>
+              <span id="user-role" class="badge badge-admin uppercase"></span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-gray-100">
+              <span class="text-gray-500">Session Status:</span>
+              <span class="text-emerald-600 font-semibold">Active & Secure</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>Database Connection</span>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+              <span>Supabase Cloud DB</span>
+              <span>Connected</span>
+            </div>
+            <p class="text-gray-500 text-[11px]">All data is synchronized directly with your Supabase PostgreSQL database via browser HTTPS client.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Material Modal (Add / Edit) -->
+    <div id="modal-mat" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900" id="mat-modal-title">Add Material Type</h3>
+          <button type="button" onclick="closeMatModal()" class="text-gray-400">&times;</button>
+        </div>
+        <form id="mat-form">
+          <input type="hidden" id="edit-mat-id">
+          <div class="modal-body space-y-4">
+            <div>
+              <label class="form-label">Material Name <span class="text-red-500">*</span></label>
+              <input type="text" id="mat-name" required class="form-input" placeholder="e.g. 20mm Aggregates">
+            </div>
+            <div>
+              <label class="form-label">Default Rate per Unit (₹) <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" id="mat-rate" required class="form-input" placeholder="0.00">
+            </div>
+            <div>
+              <label class="form-label">Unit</label>
+              <select id="mat-unit" class="form-select">
+                <option value="Tonne">Tonne</option>
+                <option value="Brass">Brass</option>
+                <option value="CFT">CFT</option>
+                <option value="Trip">Trip</option>
+                <option value="Load">Load</option>
+                <option value="Piece">Piece</option>
+                <option value="KG">KG</option>
+                <option value="Cu.m">Cu.m</option>
+                <option value="Sq Ft">Sq Ft</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeMatModal()" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" id="save-mat-btn" class="btn btn-primary text-xs">Save Material</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let materialsListCache = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('settings', 'Application Settings');
+
+      const user = window.LSCAuth.getCurrentUser();
+      if (user) {
+        document.getElementById('user-uname').textContent = user.username;
+        document.getElementById('user-role').textContent = user.role;
+      }
+
+      await loadSettings();
+      await loadMaterialsTable();
+
+      document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
+      document.getElementById('mat-form').addEventListener('submit', handleSaveMaterial);
+    });
+
+    async function loadSettings() {
+      try {
+        const s = await window.LSCDB.getSettings();
+        document.getElementById('set-name').value = s.business_name || '';
+        document.getElementById('set-address').value = s.business_address || '';
+        document.getElementById('set-mobile').value = s.business_mobile || '';
+        document.getElementById('set-gstin').value = s.gstin || '';
+        document.getElementById('set-gstpercent').value = s.gst_percent || '18';
+        document.getElementById('set-prefix').value = s.invoice_prefix || 'LSC';
+        document.getElementById('set-fy').value = s.financial_year || '2526';
+        document.getElementById('set-nextnum').value = s.next_invoice_number || '1';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadMaterialsTable() {
+      try {
+        materialsListCache = await window.LSCDB.getMaterials();
+        const tbody = document.getElementById('materials-tbody');
+        tbody.innerHTML = materialsListCache.map(m => `
+          <tr>
+            <td class="font-semibold text-gray-900">${m.name}</td>
+            <td>${m.is_system ? '<span class="badge badge-pending">System</span>' : '<span class="badge badge-admin">Custom</span>'}</td>
+            <td>${m.unit || 'Tonne'}</td>
+            <td class="font-semibold">${window.LSCUtils.formatCurrency(m.rate_per_unit)}</td>
+            <td>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openEditMatModal(${m.id})" class="btn btn-ghost btn-sm text-xs">Edit</button>
+                <button onclick="handleDeleteMaterial(${m.id}, '${m.name}')" class="btn btn-ghost btn-sm text-xs text-red-600 hover:bg-red-50">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function handleSaveSettings(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-settings-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        await window.LSCDB.updateSettings({
+          business_name: document.getElementById('set-name').value,
+          business_address: document.getElementById('set-address').value,
+          business_mobile: document.getElementById('set-mobile').value,
+          gstin: document.getElementById('set-gstin').value,
+          gst_percent: document.getElementById('set-gstpercent').value,
+          invoice_prefix: document.getElementById('set-prefix').value,
+          financial_year: document.getElementById('set-fy').value,
+          next_invoice_number: document.getElementById('set-nextnum').value
+        });
+        window.LSCUtils.showNotification('Business settings updated successfully!', 'success');
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Settings';
+      }
+    }
+
+    function openAddMatModal() {
+      document.getElementById('mat-modal-title').textContent = 'Add Material Type';
+      document.getElementById('edit-mat-id').value = '';
+      document.getElementById('mat-form').reset();
+      document.getElementById('modal-mat').classList.remove('hidden');
+    }
+
+    function openEditMatModal(id) {
+      const mat = materialsListCache.find(m => m.id == id);
+      if (!mat) return;
+
+      document.getElementById('mat-modal-title').textContent = 'Edit Material Details & Default Rate';
+      document.getElementById('edit-mat-id').value = mat.id;
+      document.getElementById('mat-name').value = mat.name;
+      document.getElementById('mat-rate').value = mat.rate_per_unit || 0;
+      document.getElementById('mat-unit').value = mat.unit || 'Tonne';
+      document.getElementById('modal-mat').classList.remove('hidden');
+    }
+
+    function closeMatModal() { document.getElementById('modal-mat').classList.add('hidden'); }
+
+    async function handleSaveMaterial(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-mat-id').value;
+      const data = {
+        name: document.getElementById('mat-name').value,
+        rate_per_unit: document.getElementById('mat-rate').value,
+        unit: document.getElementById('mat-unit').value
+      };
+
+      try {
+        if (editId) {
+          await window.LSCDB.updateMaterial(editId, data);
+          window.LSCUtils.showNotification('Material updated successfully!', 'success');
+        } else {
+          await window.LSCDB.addMaterial(data);
+          window.LSCUtils.showNotification('Material added successfully!', 'success');
+        }
+        closeMatModal();
+        await loadMaterialsTable();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function handleDeleteMaterial(id, name) {
+      if (!confirm(`Are you sure you want to delete material type "${name}"?`)) return;
+
+      try {
+        await window.LSCDB.deleteMaterial(id);
+        window.LSCUtils.showNotification(`Material "${name}" deleted.`, 'success');
+        await loadMaterialsTable();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

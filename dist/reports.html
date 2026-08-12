@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Account Statement & Reports - Lakshmi Stone Crusher & Suppliers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/db-service.js"></script>
+  <script src="assets/js/pdf-generator.js"></script>
+  <script src="assets/js/layout.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Screen Header (Hidden on Print) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Customer Account Statement & Reports</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Filter past bills by customer name & date range, view totals, export PDF & print statement</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="exportPDF()" class="btn btn-primary text-xs flex items-center gap-1.5 shadow-sm">
+          <span>📄 Download PDF</span>
+        </button>
+        <button onclick="window.print()" class="btn btn-secondary text-xs flex items-center gap-1.5">
+          <span>🖨️ Print Statement</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Card (Hidden on Print) -->
+    <div class="card mb-6 p-4 no-print">
+      <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
+        <div>
+          <label class="form-label">Report Type</label>
+          <select id="report-type" class="form-select text-xs" onchange="onReportTypeChange()">
+            <option value="customer-statement">Customer Bills Statement</option>
+            <option value="daily">Daily Sales Summary</option>
+            <option value="customer-wise">Customer-wise Sales</option>
+            <option value="material-wise">Material-wise Sales</option>
+            <option value="due">Outstanding Dues Report</option>
+          </select>
+        </div>
+
+        <div id="customer-select-box">
+          <label class="form-label">Select Customer Name</label>
+          <select id="rep-customer-select" class="form-select text-xs" onchange="runReport()">
+            <option value="">-- All Customers --</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">From Date</label>
+          <input type="date" id="rep-from" class="form-input text-xs" onchange="runReport()">
+        </div>
+        <div>
+          <label class="form-label">To Date</label>
+          <input type="date" id="rep-to" class="form-input text-xs" onchange="runReport()">
+        </div>
+        <div>
+          <button onclick="resetFilters()" class="btn btn-secondary text-xs w-full">Reset Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statement Summary Cards (Screen View) -->
+    <div id="customer-statement-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 hidden no-print">
+      <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-blue-600 shadow-sm">
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Total Billed</div>
+        <div id="stat-billed" class="text-xl font-extrabold text-gray-900 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-emerald-600 shadow-sm">
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Total Paid</div>
+        <div id="stat-paid" class="text-xl font-extrabold text-emerald-600 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-red-600 shadow-sm">
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Outstanding Due</div>
+        <div id="stat-due" class="text-xl font-extrabold text-red-600 mt-1">₹0.00</div>
+      </div>
+    </div>
+
+    <!-- Printable Official Executive Letterhead Box -->
+    <div class="print-only hidden text-center mb-6 border-b-2 border-slate-800 pb-4">
+      <div class="bg-slate-900 text-white p-4 rounded-lg text-center mb-3">
+        <h1 class="text-2xl font-black tracking-wide uppercase" id="print-biz-name">LAKSHMI STONE CRUSHER & SUPPLIERS</h1>
+        <p class="text-xs text-slate-300 mt-1" id="print-biz-sub">At Post Crusher Zone, Highway Road • Ph: +91 98765 43210 • GSTIN: 27AAAAA0000A1Z5</p>
+      </div>
+
+      <div class="flex justify-between items-end px-2 text-xs">
+        <div class="text-left">
+          <span class="text-[10px] font-bold text-gray-400 uppercase">REPORT TITLE</span>
+          <h2 class="text-base font-extrabold text-gray-900 uppercase tracking-wide" id="print-report-heading">CUSTOMER ACCOUNT STATEMENT</h2>
+        </div>
+        <div class="text-right text-gray-600">
+          <div><strong class="text-gray-800">Date Generated:</strong> <span id="print-date"></span></div>
+          <div><strong class="text-gray-800">Statement Period:</strong> <span id="print-period">All Time</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Table Container Card -->
+    <div class="card">
+      <div class="card-header no-print">
+        <span id="report-title-label" class="font-bold text-gray-900">Customer Account Bills Statement</span>
+      </div>
+
+      <div id="rep-loading" class="p-8 text-center text-gray-400 text-xs no-print">Generating statement...</div>
+
+      <div id="rep-table-container" class="table-container hidden">
+        <table class="table text-xs">
+          <thead id="rep-thead"></thead>
+          <tbody id="rep-tbody"></tbody>
+          <tfoot id="rep-tfoot" class="bg-slate-50 font-bold border-t-2 border-slate-300"></tfoot>
+        </table>
+      </div>
+
+      <div id="rep-empty" class="hidden p-10 text-center text-gray-400 text-xs">No bill records found for the selected customer & date filters.</div>
+
+      <!-- Printable Financial Summary & Signatory Section -->
+      <div id="print-footer-section" class="print-only hidden mt-8 pt-4 border-t border-gray-200 text-xs space-y-4">
+        <div class="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div>
+            <div class="font-bold text-slate-800 uppercase text-[11px] mb-1">Bank Payment Settlement Details</div>
+            <div>Bank Name: <strong class="text-slate-900">State Bank of India</strong></div>
+            <div>Account No: <strong class="text-slate-900">38920192810</strong></div>
+            <div>IFSC Code: <strong class="text-slate-900">SBIN0001234</strong></div>
+            <div>UPI ID: <strong class="text-slate-900">lakshmistonecrusher@sbi</strong></div>
+          </div>
+          <div class="text-right flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-slate-800 uppercase text-[11px] mb-1">Statement Balance Summary</div>
+              <div>Net Total Billed: <strong id="print-sum-billed" class="text-slate-900">₹0.00</strong></div>
+              <div>Net Total Paid: <strong id="print-sum-paid" class="text-emerald-600">₹0.00</strong></div>
+              <div class="text-sm font-extrabold text-red-600 mt-1">Outstanding Balance Due: <span id="print-sum-due">₹0.00</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-end pt-8">
+          <div class="text-gray-400 italic text-[10px]">
+            This is a computer generated account statement. Lakshmi Stone Crusher & Suppliers.
+          </div>
+          <div class="text-center">
+            <div class="w-48 border-b border-gray-400 mb-1"></div>
+            <div class="font-bold text-slate-800 text-[11px]">Authorized Signatory</div>
+            <div class="text-[10px] text-gray-500">Lakshmi Stone Crusher & Suppliers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Record Payment / Settle Due Modal -->
+    <div id="modal-payment" class="modal-overlay hidden no-print">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="font-semibold text-gray-900">Settle Customer Bill Due</h3>
+          <button type="button" onclick="closePaymentModal()" class="text-gray-400">&times;</button>
+        </div>
+        <form id="payment-form" onsubmit="handleRecordPayment(event)">
+          <div class="modal-body space-y-4">
+            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs">
+              <span class="text-amber-800 font-medium">Invoice Number: </span>
+              <strong id="modal-inv-no" class="text-gray-900 text-xs"></strong>
+              <div class="mt-1">
+                <span class="text-amber-800 font-medium">Outstanding Balance: </span>
+                <strong id="modal-due-amt" class="text-red-600 text-sm font-bold">₹0.00</strong>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Payment Amount (₹) <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" id="pay-amt" required min="0.01" class="form-input" placeholder="0.00">
+            </div>
+            <div>
+              <label class="form-label">Payment Method</label>
+              <select id="pay-method" class="form-select">
+                <option value="cash">Cash</option>
+                <option value="upi">UPI / GPay / PhonePe</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="cheque">Cheque</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Payment Notes</label>
+              <input type="text" id="pay-notes" class="form-input" placeholder="e.g. Statement Due Settlement">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closePaymentModal()" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs">Confirm Payment Settlement</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentReportHeaders = [];
+    let currentReportRows = [];
+    let currentRawData = [];
+    let currentReportTitle = 'Customer Bills Statement';
+    let currentSummaryObj = null;
+    let selectedSaleForSettle = null;
+    let appSettings = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.LSCLayout.init('reports', 'Customer Account Statement & Reports');
+      appSettings = await window.LSCDB.getSettings();
+
+      if (appSettings) {
+        document.getElementById('print-biz-name').textContent = (appSettings.business_name || 'LAKSHMI STONE CRUSHER & SUPPLIERS').toUpperCase();
+        document.getElementById('print-biz-sub').textContent = `${appSettings.business_address || ''} • Ph: ${appSettings.business_mobile || ''} • GSTIN: ${appSettings.gstin || ''}`;
+      }
+
+      document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-IN');
+
+      await loadCustomerDropdown();
+
+      const urlType = window.LSCUtils.getQueryParam('type');
+      const urlCust = window.LSCUtils.getQueryParam('customer_id');
+
+      if (urlType) document.getElementById('report-type').value = urlType;
+      if (urlCust) document.getElementById('rep-customer-select').value = urlCust;
+
+      onReportTypeChange();
+    });
+
+    async function loadCustomerDropdown() {
+      try {
+        const customers = await window.LSCDB.getCustomers();
+        const select = document.getElementById('rep-customer-select');
+        select.innerHTML = '<option value="">-- All Customers --</option>' +
+          customers.map(c => `<option value="${c.id}">${c.name} ${c.mobile ? '(' + c.mobile + ')' : ''}</option>`).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function onReportTypeChange() {
+      runReport();
+    }
+
+    async function runReport() {
+      const type = document.getElementById('report-type').value;
+      const from = document.getElementById('rep-from').value;
+      const to = document.getElementById('rep-to').value;
+      const customer_id = document.getElementById('rep-customer-select').value;
+
+      document.getElementById('print-period').textContent = (from || to) ? `${from || 'Start'} to ${to || 'Today'}` : 'All Time';
+
+      document.getElementById('rep-loading').classList.remove('hidden');
+      document.getElementById('rep-table-container').classList.add('hidden');
+      document.getElementById('rep-empty').classList.add('hidden');
+
+      try {
+        currentRawData = await window.LSCDB.getReports(type, { from, to, customer_id });
+        document.getElementById('rep-loading').classList.add('hidden');
+
+        if (!currentRawData || currentRawData.length === 0) {
+          document.getElementById('rep-empty').classList.remove('hidden');
+          document.getElementById('customer-statement-summary').classList.add('hidden');
+          return;
+        }
+
+        renderReportTable(type, currentRawData);
+      } catch (err) {
+        console.error(err);
+        window.LSCUtils.showNotification('Error generating statement: ' + err.message, 'error');
+      }
+    }
+
+    function renderReportTable(type, data) {
+      const thead = document.getElementById('rep-thead');
+      const tbody = document.getElementById('rep-tbody');
+      const tfoot = document.getElementById('rep-tfoot');
+      const label = document.getElementById('report-title-label');
+      const printHeading = document.getElementById('print-report-heading');
+      const custSelect = document.getElementById('rep-customer-select');
+      const selectedCustText = custSelect.options[custSelect.selectedIndex]?.text || '';
+
+      if (type === 'customer-statement') {
+        currentReportTitle = `Customer Account Statement ${selectedCustText && selectedCustText !== '-- All Customers --' ? '(' + selectedCustText + ')' : ''}`;
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+
+        currentReportHeaders = ['Invoice No', 'Sale Date', 'Customer Name', 'Materials Particulars', 'Grand Total (₹)', 'Amount Paid (₹)', 'Due Balance (₹)'];
+
+        thead.innerHTML = `
+          <tr>
+            <th>Invoice No</th>
+            <th>Sale Date</th>
+            <th>Customer Name</th>
+            <th>Materials Particulars</th>
+            <th>Grand Total (₹)</th>
+            <th>Amount Paid (₹)</th>
+            <th>Due Balance (₹)</th>
+            <th class="no-print">Actions</th>
+          </tr>
+        `;
+
+        let totBilled = 0, totPaid = 0, totDue = 0;
+        currentReportRows = data.map(s => {
+          totBilled += s.grand_total;
+          totPaid += s.amount_paid;
+          totDue += s.amount_due;
+          return [
+            s.invoice_number,
+            window.LSCUtils.formatDate(s.sale_date),
+            s.customer_name,
+            s.material_summary || 'Stone Crusher Materials',
+            window.LSCUtils.formatCurrency(s.grand_total),
+            window.LSCUtils.formatCurrency(s.amount_paid),
+            window.LSCUtils.formatCurrency(s.amount_due)
+          ];
+        });
+
+        tbody.innerHTML = data.map(s => `
+          <tr>
+            <td class="font-bold text-gray-900">${s.invoice_number}</td>
+            <td>${window.LSCUtils.formatDate(s.sale_date)}</td>
+            <td class="font-semibold text-gray-900">${s.customer_name}</td>
+            <td class="text-gray-600 max-w-xs">${s.material_summary || 'Stone Crusher Materials'}</td>
+            <td class="font-semibold text-gray-900">${window.LSCUtils.formatCurrency(s.grand_total)}</td>
+            <td class="text-emerald-600 font-semibold">${window.LSCUtils.formatCurrency(s.amount_paid)}</td>
+            <td class="${s.amount_due > 0 ? 'text-red-600 font-bold' : 'text-gray-400'}">${window.LSCUtils.formatCurrency(s.amount_due)}</td>
+            <td class="no-print">
+              <div class="flex items-center gap-1.5">
+                ${s.amount_due > 0.01 ? `<button onclick="openSettleModal(${s.id})" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</button>` : ''}
+                <a href="sale-details.html?id=${s.id}" class="btn btn-ghost btn-sm text-xs">View Bill</a>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-right font-extrabold uppercase">TOTAL STATEMENT SUMMARY:</td>
+            <td class="text-gray-900 font-extrabold">${window.LSCUtils.formatCurrency(totBilled)}</td>
+            <td class="text-emerald-600 font-extrabold">${window.LSCUtils.formatCurrency(totPaid)}</td>
+            <td class="text-red-600 font-extrabold">${window.LSCUtils.formatCurrency(totDue)}</td>
+            <td class="no-print"></td>
+          </tr>
+        `;
+
+        currentSummaryObj = {
+          billed: window.LSCUtils.formatCurrency(totBilled),
+          paid: window.LSCUtils.formatCurrency(totPaid),
+          due: window.LSCUtils.formatCurrency(totDue)
+        };
+
+        document.getElementById('stat-billed').textContent = window.LSCUtils.formatCurrency(totBilled);
+        document.getElementById('stat-paid').textContent = window.LSCUtils.formatCurrency(totPaid);
+        document.getElementById('stat-due').textContent = window.LSCUtils.formatCurrency(totDue);
+        document.getElementById('customer-statement-summary').classList.remove('hidden');
+
+        document.getElementById('print-sum-billed').textContent = window.LSCUtils.formatCurrency(totBilled);
+        document.getElementById('print-sum-paid').textContent = window.LSCUtils.formatCurrency(totPaid);
+        document.getElementById('print-sum-due').textContent = window.LSCUtils.formatCurrency(totDue);
+
+      } else if (type === 'due') {
+        document.getElementById('customer-statement-summary').classList.add('hidden');
+        currentReportTitle = 'Outstanding Dues Report';
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+        currentReportHeaders = ['Invoice No', 'Customer Name', 'Mobile', 'Sale Date', 'Grand Total (₹)', 'Amount Paid (₹)', 'Due Balance (₹)'];
+
+        thead.innerHTML = `
+          <tr>
+            <th>Invoice No</th>
+            <th>Customer Name</th>
+            <th>Mobile</th>
+            <th>Sale Date</th>
+            <th>Grand Total (₹)</th>
+            <th>Amount Paid (₹)</th>
+            <th>Due Balance (₹)</th>
+            <th class="no-print">Actions</th>
+          </tr>
+        `;
+
+        let totDue = 0;
+        currentReportRows = data.map(r => {
+          totDue += parseFloat(r.amount_due) || 0;
+          return [
+            r.invoice_number,
+            r.customer_name,
+            r.customer_mobile || '-',
+            window.LSCUtils.formatDate(r.sale_date),
+            window.LSCUtils.formatCurrency(r.grand_total),
+            window.LSCUtils.formatCurrency(r.amount_paid),
+            window.LSCUtils.formatCurrency(r.amount_due)
+          ];
+        });
+
+        tbody.innerHTML = data.map(r => `
+          <tr>
+            <td class="font-semibold text-gray-900">${r.invoice_number}</td>
+            <td class="font-medium">${r.customer_name}</td>
+            <td>${r.customer_mobile || '-'}</td>
+            <td>${window.LSCUtils.formatDate(r.sale_date)}</td>
+            <td>${window.LSCUtils.formatCurrency(r.grand_total)}</td>
+            <td class="text-emerald-600">${window.LSCUtils.formatCurrency(r.amount_paid)}</td>
+            <td class="text-red-600 font-bold">${window.LSCUtils.formatCurrency(r.amount_due)}</td>
+            <td class="no-print">
+              <div class="flex items-center gap-1.5">
+                <button onclick="openSettleModal(${r.id})" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</button>
+                <a href="sale-details.html?id=${r.id}" class="btn btn-ghost btn-sm text-xs">View</a>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-right font-bold">TOTAL OUTSTANDING DUE BALANCE:</td>
+            <td class="text-red-600 text-base font-bold">${window.LSCUtils.formatCurrency(totDue)}</td>
+            <td class="no-print"></td>
+          </tr>
+        `;
+      } else {
+        document.getElementById('customer-statement-summary').classList.add('hidden');
+        currentReportTitle = type === 'customer-wise' ? 'Customer-wise Sales Report' : (type === 'material-wise' ? 'Material-wise Sales Report' : 'Daily Sales Summary Report');
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+      }
+
+      document.getElementById('rep-table-container').classList.remove('hidden');
+    }
+
+    function openSettleModal(saleId) {
+      selectedSaleForSettle = currentRawData.find(s => s.id == saleId);
+      if (!selectedSaleForSettle) return;
+
+      document.getElementById('modal-inv-no').textContent = selectedSaleForSettle.invoice_number;
+      document.getElementById('modal-due-amt').textContent = window.LSCUtils.formatCurrency(selectedSaleForSettle.amount_due);
+      document.getElementById('pay-amt').value = selectedSaleForSettle.amount_due;
+      document.getElementById('modal-payment').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+      document.getElementById('payment-form').reset();
+      selectedSaleForSettle = null;
+    }
+
+    async function handleRecordPayment(e) {
+      e.preventDefault();
+      if (!selectedSaleForSettle) return;
+
+      const saveBtn = document.getElementById('save-pay-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Processing Settlement...';
+
+      try {
+        const amt = document.getElementById('pay-amt').value;
+        const method = document.getElementById('pay-method').value;
+        const notes = document.getElementById('pay-notes').value;
+
+        await window.LSCDB.addPayment(selectedSaleForSettle.id, { amount_paid: amt, payment_method: method, notes });
+        window.LSCUtils.showNotification('Payment settled successfully!', 'success');
+        closePaymentModal();
+        await runReport();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Confirm Payment Settlement';
+      }
+    }
+
+    function exportPDF() {
+      if (currentReportHeaders.length && currentReportRows.length) {
+        window.LSCPDF.downloadReportPDF(currentReportTitle, currentReportHeaders, currentReportRows, currentSummaryObj);
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById('report-type').value = 'customer-statement';
+      document.getElementById('rep-customer-select').value = '';
+      document.getElementById('rep-from').value = '';
+      document.getElementById('rep-to').value = '';
+      runReport();
+    }
+  </script>
+</body>
+</html>

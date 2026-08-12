@@ -12,8 +12,6 @@ server/node_modules/
 
 # BUILD & CACHE OUTPUTS
 .next/
-dist/
-client/dist/
 build/
 *.log
 *.pid

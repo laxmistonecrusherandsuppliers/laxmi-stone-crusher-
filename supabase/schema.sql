@@ -173,12 +173,34 @@ INSERT INTO users (username, mobile, password_hash, role) VALUES
   ('staff1', '8888888888', '$2a$10$wT8KskY78FmFqfG83gXg2.1wH496P27wO0v8Xj801Vj9pG28c/0tO', 'staff')
 ON CONFLICT (username) DO NOTHING;
 
--- DISABLE RLS FOR DIRECT API QUERY ACCESS (Or enable with public read/write policy)
-ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
-ALTER TABLE sales DISABLE ROW LEVEL SECURITY;
-ALTER TABLE sale_items DISABLE ROW LEVEL SECURITY;
-ALTER TABLE payment_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE materials DISABLE ROW LEVEL SECURITY;
-ALTER TABLE saved_rates DISABLE ROW LEVEL SECURITY;
-ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+-- ========================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES FOR SUPABASE FRONTEND ACCESS
+-- ========================================================
+
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_rates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE staff ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE advances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE leave_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Allow anon and authenticated roles full read and write access for operational tables
+CREATE POLICY "Allow public read/write access to customers" ON customers FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to sales" ON sales FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to sale_items" ON sale_items FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to payment_logs" ON payment_logs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to materials" ON materials FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to saved_rates" ON saved_rates FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to settings" ON settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to staff" ON staff FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to attendance" ON attendance FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to advances" ON advances FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write access to leave_requests" ON leave_requests FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public select access to users" ON users FOR SELECT USING (true);
+
