@@ -11,6 +11,39 @@ export async function GET(request) {
     const to = searchParams.get('to');
     const customer_id = searchParams.get('customer_id');
 
+    if (type === 'customer-statement') {
+      let sql = `
+        SELECT s.id as sale_id, s.invoice_number, s.sale_date, s.payment_mode, s.amount_paid, s.amount_due, s.grand_total,
+               c.id as customer_id, c.name as customer_name, c.mobile as customer_mobile, c.address as customer_address,
+               si.id as item_id, COALESCE(si.custom_material_name, m.name, 'Material Item') as material_name,
+               si.quantity, si.unit, si.rate, si.amount as item_amount
+        FROM sales s
+        JOIN customers c ON s.customer_id = c.id
+        LEFT JOIN sale_items si ON s.id = si.sale_id
+        LEFT JOIN materials m ON si.material_id = m.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (customer_id) {
+        params.push(customer_id);
+        sql += ` AND c.id = $${params.length}`;
+      }
+      if (from) {
+        params.push(from);
+        sql += ` AND s.sale_date >= $${params.length}`;
+      }
+      if (to) {
+        params.push(to);
+        sql += ` AND s.sale_date <= $${params.length}`;
+      }
+
+      sql += ' ORDER BY s.sale_date DESC, s.id DESC, si.id ASC';
+
+      const { rows } = await query(sql, params);
+      return NextResponse.json({ data: rows });
+    }
+
     if (type === 'customer-wise') {
       let sql = `
         SELECT c.id as customer_id, c.name as customer_name, c.mobile as customer_mobile,

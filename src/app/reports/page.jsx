@@ -3,13 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { formatCurrency, formatDate } from '@/lib/format';
-import { Printer, Users, CalendarDays, Layers, AlertTriangle, RotateCcw, BarChart3, IndianRupee, CreditCard } from 'lucide-react';
+import { Printer, Users, CalendarDays, Layers, AlertTriangle, RotateCcw, BarChart3, IndianRupee, CreditCard, FileText, Search } from 'lucide-react';
 
 export default function ReportsPage() {
-  const [type, setType] = useState('customer-wise');
+  const [type, setType] = useState('customer-statement');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const [customersList, setCustomersList] = useState([]);
   const [data, setData] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -17,14 +19,23 @@ export default function ReportsPage() {
   const reportPrintRef = useRef(null);
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(res => { if (res.data) setSettings(res.data); });
+    Promise.all([
+      fetch('/api/settings').then(r => r.json()),
+      fetch('/api/customers').then(r => r.json()),
+    ]).then(([setRes, custRes]) => {
+      if (setRes.data) setSettings(setRes.data);
+      if (custRes.data) {
+        setCustomersList(custRes.data);
+        if (custRes.data.length > 0 && !selectedCustomerId) {
+          setSelectedCustomerId(String(custRes.data[0].id));
+        }
+      }
+    }).catch(err => console.error(err));
   }, []);
 
   useEffect(() => {
     loadReportData();
-  }, [type, from, to]);
+  }, [type, from, to, selectedCustomerId]);
 
   async function loadReportData() {
     setLoading(true);
@@ -32,6 +43,9 @@ export default function ReportsPage() {
       let endpoint = `/api/reports?type=${type}&`;
       if (from) endpoint += `from=${from}&`;
       if (to) endpoint += `to=${to}&`;
+      if (type === 'customer-statement' && selectedCustomerId) {
+        endpoint += `customer_id=${selectedCustomerId}&`;
+      }
       const res = await fetch(endpoint).then(r => r.json());
       if (res.data) setData(res.data);
     } catch (err) {
@@ -48,7 +62,7 @@ export default function ReportsPage() {
 
   // Filter customer-wise data by client search input
   const filteredData = data.filter(item => {
-    if (!customerSearch.trim()) return true;
+    if (type !== 'customer-wise' || !customerSearch.trim()) return true;
     const searchLower = customerSearch.toLowerCase();
     return (
       item.customer_name?.toLowerCase().includes(searchLower) ||
@@ -57,39 +71,71 @@ export default function ReportsPage() {
     );
   });
 
+  // Calculate totals
   const totals = filteredData.reduce(
     (acc, r) => {
-      acc.total_billed += parseFloat(r.total_billed || r.grand_total || r.total_amount || 0);
+      acc.total_billed += parseFloat(r.total_billed || r.grand_total || r.total_amount || r.item_amount || 0);
       acc.total_paid += parseFloat(r.total_paid || r.amount_paid || 0);
       acc.total_due += parseFloat(r.total_due || r.amount_due || 0);
       acc.total_orders += parseInt(r.total_orders || r.count || 1);
+      acc.total_qty += parseFloat(r.quantity || r.total_quantity || 0);
       return acc;
     },
-    { total_billed: 0, total_paid: 0, total_due: 0, total_orders: 0 }
+    { total_billed: 0, total_paid: 0, total_due: 0, total_orders: 0, total_qty: 0 }
   );
+
+  // Bill-level totals for Customer Statement map
+  const selectedCustomerInfo = customersList.find(c => String(c.id) === String(selectedCustomerId));
+  const statementSalesMap = new Map();
+  if (type === 'customer-statement') {
+    filteredData.forEach(r => {
+      if (r.sale_id && !statementSalesMap.has(r.sale_id)) {
+        statementSalesMap.set(r.sale_id, {
+          grand_total: parseFloat(r.grand_total || 0),
+          amount_paid: parseFloat(r.amount_paid || 0),
+          amount_due: parseFloat(r.amount_due || 0),
+        });
+      }
+    });
+  }
+
+  let statementTotalBilled = 0;
+  let statementTotalPaid = 0;
+  let statementTotalDue = 0;
+  statementSalesMap.forEach(s => {
+    statementTotalBilled += s.grand_total;
+    statementTotalPaid += s.amount_paid;
+    statementTotalDue += s.amount_due;
+  });
 
   return (
     <div>
       <div className="page-header no-print">
-        <h1 className="page-title">Sales Reports</h1>
+        <h1 className="page-title">Sales Reports &amp; Customer Statement</h1>
         <button className="btn btn-primary" onClick={handlePrint} disabled={loading || filteredData.length === 0}>
-          <Printer size={14} /> Print {type === 'customer-wise' ? 'Customer-Wise' : ''} Report
+          <Printer size={14} /> Print {type === 'customer-statement' ? 'Customer Statement' : 'Report'}
         </button>
       </div>
 
       {/* Report Tabs */}
       <div className="tabs no-print" style={{ marginBottom: '20px' }}>
         <button
+          className={`tab-btn ${type === 'customer-statement' ? 'active' : ''}`}
+          onClick={() => setType('customer-statement')}
+        >
+          <FileText size={14} /> Customer Statement (Itemized)
+        </button>
+        <button
           className={`tab-btn ${type === 'customer-wise' ? 'active' : ''}`}
           onClick={() => setType('customer-wise')}
         >
-          <Users size={14} /> Customer-Wise
+          <Users size={14} /> Customer-Wise Summary
         </button>
         <button
           className={`tab-btn ${type === 'daily' ? 'active' : ''}`}
           onClick={() => setType('daily')}
         >
-          <CalendarDays size={14} /> Daily
+          <CalendarDays size={14} /> Daily Sales
         </button>
         <button
           className={`tab-btn ${type === 'material-wise' ? 'active' : ''}`}
@@ -105,9 +151,27 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      {/* Date Filter Card */}
+      {/* Date & Customer Filter Card */}
       <div className="card no-print" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'end', flexWrap: 'wrap' }}>
+          {type === 'customer-statement' && (
+            <div style={{ flex: 1, minWidth: '240px' }}>
+              <label className="form-label">Select Customer Account *</label>
+              <select
+                className="form-select"
+                value={selectedCustomerId}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+              >
+                <option value="">Select Customer...</option>
+                {customersList.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.mobile ? `(${c.mobile})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="form-label">From Date</label>
             <input
@@ -161,6 +225,7 @@ export default function ReportsPage() {
           <div style={{ fontSize: '0.9rem', color: '#4b5563' }}>{settings.business_address}</div>
           <div style={{ fontSize: '0.9rem', color: '#4b5563' }}>Ph: {settings.business_mobile} {settings.gstin ? `| GSTIN: ${settings.gstin}` : ''}</div>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '10px', textTransform: 'uppercase' }}>
+            {type === 'customer-statement' && `Customer Detailed Statement (${selectedCustomerInfo?.name || 'Customer'})`}
             {type === 'customer-wise' && 'Customer-Wise Sales Summary Report'}
             {type === 'daily' && 'Daily Sales Breakdown Report'}
             {type === 'material-wise' && 'Material Sales Volume Report'}
@@ -171,16 +236,36 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {/* Customer Info Box for Customer Statement */}
+        {type === 'customer-statement' && selectedCustomerInfo && (
+          <div className="card" style={{ marginBottom: '20px', padding: '16px 20px', background: '#f8fafc' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '0.875rem' }}>
+              <div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Customer Name</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{selectedCustomerInfo.name}</div>
+              </div>
+              <div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Contact Mobile</div>
+                <div>{selectedCustomerInfo.mobile || 'N/A'}</div>
+              </div>
+              <div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Address</div>
+                <div>{selectedCustomerInfo.address || 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Summary KPI Cards */}
         <div className="stat-cards-grid" style={{ marginBottom: '20px' }}>
           <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
             <div>
               <div className="stat-label">Total Sales Billed</div>
               <div className="stat-value" style={{ color: 'var(--primary)' }}>
-                {formatCurrency(totals.total_billed)}
+                {formatCurrency(type === 'customer-statement' ? statementTotalBilled : totals.total_billed)}
               </div>
               <div className="stat-meta">
-                {totals.total_orders} total orders
+                {type === 'customer-statement' ? `${statementSalesMap.size} invoices` : `${totals.total_orders} total orders`}
               </div>
             </div>
             <div className="stat-icon stat-icon-blue no-print"><BarChart3 size={20} /></div>
@@ -190,7 +275,7 @@ export default function ReportsPage() {
             <div>
               <div className="stat-label">Total Amount Paid</div>
               <div className="stat-value" style={{ color: 'var(--success)' }}>
-                {formatCurrency(totals.total_paid)}
+                {formatCurrency(type === 'customer-statement' ? statementTotalPaid : totals.total_paid)}
               </div>
             </div>
             <div className="stat-icon stat-icon-green no-print"><IndianRupee size={20} /></div>
@@ -199,8 +284,8 @@ export default function ReportsPage() {
           <div className="stat-card" style={{ border: '1px solid var(--border)' }}>
             <div>
               <div className="stat-label">Total Remaining Due</div>
-              <div className="stat-value" style={{ color: totals.total_due > 0 ? 'var(--danger)' : 'inherit' }}>
-                {formatCurrency(totals.total_due)}
+              <div className="stat-value" style={{ color: (type === 'customer-statement' ? statementTotalDue : totals.total_due) > 0 ? 'var(--danger)' : 'inherit' }}>
+                {formatCurrency(type === 'customer-statement' ? statementTotalDue : totals.total_due)}
               </div>
             </div>
             <div className="stat-icon stat-icon-red no-print"><AlertTriangle size={20} /></div>
@@ -213,11 +298,51 @@ export default function ReportsPage() {
             <div style={{ padding: '36px', textAlign: 'center' }}>Generating report data...</div>
           ) : filteredData.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              No sales records match the selected date range.
+              No sales records match the selected customer and date range.
             </div>
           ) : (
             <div className="table-container">
-              {/* TYPE 1: CUSTOMER WISE */}
+              {/* TYPE 0: CUSTOMER DETAILED STATEMENT (Sr No, Date, Item, Price/Rate, Quantity, Total Amount + Bottom Total) */}
+              {type === 'customer-statement' && (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Sr No</th>
+                      <th>Date</th>
+                      <th>Invoice No</th>
+                      <th>Item / Material</th>
+                      <th>Quantity</th>
+                      <th style={{ textAlign: 'right' }}>Price / Rate (₹)</th>
+                      <th style={{ textAlign: 'right' }}>Total Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map((row, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td>{formatDate(row.sale_date)}</td>
+                        <td style={{ fontWeight: 600 }}>{row.invoice_number}</td>
+                        <td style={{ fontWeight: 500 }}>{row.material_name}</td>
+                        <td>{parseFloat(row.quantity || 0).toFixed(3)} {row.unit || 'Tonne'}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(row.rate)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(row.item_amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ background: '#f8fafc', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+                      <td colSpan="4" style={{ textTransform: 'uppercase' }}>TOTAL OF ALL BILLS / ITEMS</td>
+                      <td>{totals.total_qty.toFixed(3)} Units</td>
+                      <td style={{ textAlign: 'right' }}>-</td>
+                      <td style={{ textAlign: 'right', color: 'var(--brand-blue)', fontSize: '1rem' }}>
+                        {formatCurrency(totals.total_billed)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+
+              {/* TYPE 1: CUSTOMER WISE SUMMARY */}
               {type === 'customer-wise' && (
                 <table className="table">
                   <thead>
