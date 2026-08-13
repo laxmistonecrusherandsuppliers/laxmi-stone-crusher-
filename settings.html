@@ -19,7 +19,7 @@
     <div class="flex items-center justify-between gap-4 mb-6">
       <div>
         <h1 class="text-xl font-bold text-gray-900 tracking-tight">Application Settings</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Configure business info, tax rates, materials & Supabase Cloud key</p>
+        <p class="text-xs text-gray-500 mt-0.5">Configure business info, tax rates, materials & invoice numbering</p>
       </div>
     </div>
 
@@ -121,23 +121,17 @@
           </div>
         </div>
 
-        <!-- Supabase Cloud Connection Box -->
         <div class="card">
           <div class="card-header">
-            <span>Supabase Cloud Database Key</span>
+            <span>Database Connection</span>
           </div>
-          <form id="supabase-key-form" class="space-y-3 text-xs">
-            <div>
-              <label class="form-label text-xs">Supabase URL</label>
-              <input type="text" id="supa-url-input" class="form-input text-xs" value="https://ibhgxgvxxfqxtoavofef.supabase.co" readonly>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+              <span>Supabase Cloud DB</span>
+              <span>Connected</span>
             </div>
-            <div>
-              <label class="form-label text-xs">Supabase Anon API Key (public)</label>
-              <input type="text" id="supa-key-input" class="form-input text-xs font-mono" placeholder="Paste eyJ... anon key here">
-              <p class="text-[11px] text-gray-400 mt-1">Get this key from: Supabase Dashboard -> Settings -> API -> anon public key.</p>
-            </div>
-            <button type="submit" class="btn btn-primary text-xs w-full py-2">Save Supabase Key</button>
-          </form>
+            <p class="text-gray-500 text-[11px]">All data is synchronized directly with your Supabase PostgreSQL database via HTTPS API client.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -196,17 +190,11 @@
         document.getElementById('user-role').textContent = user.role;
       }
 
-      const existingKey = localStorage.getItem('lsc_supabase_key') || window.LSC_CONFIG?.SUPABASE_ANON_KEY || '';
-      if (existingKey && !existingKey.includes('placeholder')) {
-        document.getElementById('supa-key-input').value = existingKey;
-      }
-
       await loadSettings();
       await loadMaterialsTable();
 
       document.getElementById('settings-form').addEventListener('submit', handleSaveSettings);
       document.getElementById('mat-form').addEventListener('submit', handleSaveMaterial);
-      document.getElementById('supabase-key-form').addEventListener('submit', handleSaveSupabaseKey);
     });
 
     async function loadSettings() {
@@ -272,16 +260,6 @@
         saveBtn.disabled = false;
         saveBtn.textContent = 'Save Settings';
       }
-    }
-
-    function handleSaveSupabaseKey(e) {
-      e.preventDefault();
-      const keyVal = document.getElementById('supa-key-input').value.trim();
-      if (!keyVal) return alert('Please enter a valid Supabase Anon Key.');
-
-      localStorage.setItem('lsc_supabase_key', keyVal);
-      window.LSCUtils.showNotification('Supabase Key saved! Reloading application...', 'success');
-      setTimeout(() => { window.location.reload(); }, 600);
     }
 
     function openAddMatModal() {
