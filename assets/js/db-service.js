@@ -537,14 +537,13 @@ window.LSCDB = {
     this.initLocalSeed();
     const supabase = this.getClient();
 
-    try {
-      if (supabase) {
-        let query = supabase.from('customers').select('*').order('name', { ascending: true });
-        if (search.trim()) query = query.or(`name.ilike.%${search.trim()}%,mobile.ilike.%${search.trim()}%`);
-        const { data, error } = await query;
-        if (!error && data) return data;
-      }
-    } catch (e) {}
+    if (supabase) {
+      let query = supabase.from('customers').select('*').order('name', { ascending: true });
+      if (search.trim()) query = query.or(`name.ilike.%${search.trim()}%,mobile.ilike.%${search.trim()}%`);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      if (data) return data;
+    }
 
     let customers = this.getLocalData('customers', []);
     if (search.trim()) {
@@ -559,15 +558,14 @@ window.LSCDB = {
     const supabase = this.getClient();
     if (!name || !name.trim()) throw new Error('Customer name is required');
 
-    try {
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('customers')
-          .insert([{ name: name.trim(), mobile: mobile || null, address: address || null }])
-          .select();
-        if (!error && data) return data[0];
-      }
-    } catch (e) {}
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('customers')
+        .insert([{ name: name.trim(), mobile: mobile || null, address: address || null }])
+        .select();
+      if (error) throw new Error(error.message);
+      if (data) return data[0];
+    }
 
     const customers = this.getLocalData('customers', []);
     const newCust = {
