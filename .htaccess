@@ -1,0 +1,14 @@
+# Apache / Hostinger Rewrite Configuration for Static Dist Directory
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Serve files directly from dist folder if available
+  RewriteCond %{REQUEST_URI} !^/dist/
+  RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
+  RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -d
+  RewriteRule ^(.*)$ /dist/$1 [L]
+
+  # Route root homepage to dist/index.html
+  RewriteRule ^$ /dist/index.html [L]
+</IfModule>
