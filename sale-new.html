@@ -144,6 +144,44 @@
       }
     });
 
+    function onCustSearch(val) {
+      const box = document.getElementById('cust-results');
+      if (!val.trim()) { box.classList.add('hidden'); return; }
+      
+      const term = val.toLowerCase();
+      const matches = customers.filter(c => (c.name||'').toLowerCase().includes(term) || (c.mobile||'').includes(term));
+      
+      if (matches.length === 0) {
+        box.innerHTML = '<div class="p-3 text-gray-400 text-xs">No match found</div>';
+      } else {
+        box.innerHTML = matches.map(c => `
+          <div onclick="selectCust(${c.id})" class="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-0">
+            <span class="font-bold text-slate-800">${c.name}</span>
+            <span class="text-slate-500 text-xs">${c.mobile || ''}</span>
+          </div>
+        `).join('');
+      }
+      box.classList.remove('hidden');
+    }
+
+    function selectCust(id) {
+      const c = customers.find(x => x.id === id);
+      if(!c) return;
+      selCustId = c.id;
+      document.getElementById('disp-cust-name').textContent = c.name;
+      document.getElementById('disp-cust-mobile').textContent = c.mobile || c.address || 'No details';
+      document.getElementById('customer-search-container').classList.add('hidden');
+      document.getElementById('selected-customer-display').classList.remove('hidden');
+      document.getElementById('cust-results').classList.add('hidden');
+    }
+
+    function clearCustomer() {
+      selCustId = null;
+      document.getElementById('cust-search').value = '';
+      document.getElementById('selected-customer-display').classList.add('hidden');
+      document.getElementById('customer-search-container').classList.remove('hidden');
+    }
+
     function getMaterialOptions() {
       return materials.map(m => `<option value="${m.id}" data-rate="${m.rate_per_unit || 0}" data-unit="${m.unit || 'Brass'}">${m.name}</option>`).join('');
     }
