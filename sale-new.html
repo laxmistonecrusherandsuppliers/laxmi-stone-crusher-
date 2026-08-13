@@ -28,70 +28,70 @@
       <div class="card-header bg-blue-50 border-b border-blue-100 text-blue-900 text-sm py-3 px-6">Create New Bill</div>
       
       <form id="quick-bill-form" class="p-6 space-y-6" onsubmit="handleCreateBill(event)">
-        <!-- Top Row: Customer & Date & Vehicle -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="md:col-span-1 relative">
-            <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Customer *</label>
-            <div id="selected-customer-display" class="hidden flex items-center justify-between border border-emerald-300 bg-emerald-50 rounded-lg p-2.5">
-              <div>
-                <div class="font-bold text-sm text-emerald-900 leading-tight" id="disp-cust-name"></div>
-                <div class="text-[11px] text-emerald-700 mt-0.5 font-medium" id="disp-cust-mobile"></div>
-              </div>
-              <button type="button" onclick="clearCustomer()" class="text-red-600 text-xs font-bold hover:underline">Change</button>
+        <!-- Top Row: Customer -->
+        <div class="mb-4 relative max-w-xl">
+          <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Customer Name *</label>
+          <div id="selected-customer-display" class="hidden flex items-center justify-between border border-emerald-300 bg-emerald-50 rounded-lg p-2.5">
+            <div>
+              <div class="font-bold text-sm text-emerald-900 leading-tight" id="disp-cust-name"></div>
+              <div class="text-[11px] text-emerald-700 mt-0.5 font-medium" id="disp-cust-mobile"></div>
             </div>
-            
-            <div id="customer-search-container">
-              <input type="text" id="cust-search" class="form-input" placeholder="Search name or mobile..." autocomplete="off" oninput="onCustSearch(this.value)">
-              <div id="cust-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100 text-sm"></div>
-              <button type="button" onclick="openNewCustModal()" class="text-[11px] text-blue-600 font-bold hover:underline mt-2 inline-block">+ Add New Customer</button>
-            </div>
+            <button type="button" onclick="clearCustomer()" class="text-red-600 text-xs font-bold hover:underline">Change</button>
           </div>
           
-          <div>
-            <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Invoice Date *</label>
-            <input type="date" id="bill-date" required class="form-input text-sm">
-          </div>
-          
-          <div>
-            <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Vehicle No (Optional)</label>
-            <input type="text" id="bill-vehicle" placeholder="e.g. MH12AB1234" class="form-input text-sm uppercase">
+          <div id="customer-search-container">
+            <input type="text" id="cust-search" class="form-input text-sm" placeholder="Search name or mobile..." autocomplete="off" oninput="onCustSearch(this.value)">
+            <div id="cust-results" class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100 text-sm"></div>
+            <button type="button" onclick="openNewCustModal()" class="text-[11px] text-blue-600 font-bold hover:underline mt-2 inline-block">+ Add New Customer</button>
           </div>
         </div>
 
         <hr class="border-gray-100 border-dashed">
 
-        <!-- Bottom Row: Material, Qty, Rate, Total -->
-        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-inner">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <!-- Bottom Row: All features in one line -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
+          <div class="grid grid-cols-2 md:grid-cols-12 gap-3 items-end">
+            
+            <div class="md:col-span-2">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Date *</label>
+              <input type="date" id="bill-date" required class="form-input text-xs px-2 h-9">
+            </div>
+            
+            <div class="md:col-span-2">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Vehicle No</label>
+              <input type="text" id="bill-vehicle" placeholder="MH12AB1234" class="form-input text-xs uppercase px-2 h-9">
+            </div>
+
             <div class="md:col-span-3">
-              <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Material Type *</label>
-              <select id="bill-material" required class="form-select text-sm font-semibold text-slate-800" onchange="onMaterialChange()">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Material Type *</label>
+              <select id="bill-material" required class="form-select text-xs font-semibold text-slate-800 px-2 h-9" onchange="onMaterialChange()">
                 <option value="">-- Select Material --</option>
                 <!-- populated via js -->
               </select>
             </div>
             
-            <div class="md:col-span-3">
-              <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Quantity (Brass/Tonne) *</label>
-              <div class="flex">
-                <input type="number" id="bill-qty" required step="0.001" min="0.001" placeholder="0.000" class="form-input text-sm font-semibold rounded-r-none border-r-0" oninput="calcTotal()">
-                <select id="bill-unit" class="form-select rounded-l-none bg-gray-100 w-24 text-[11px] px-2 font-bold" onchange="onMaterialChange()">
+            <div class="md:col-span-2">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Qty (Brass) *</label>
+              <div class="flex h-9">
+                <input type="number" id="bill-qty" required step="0.001" min="0.001" placeholder="0.00" class="form-input text-xs font-semibold rounded-r-none border-r-0 px-2 w-16 flex-1" oninput="calcTotal()">
+                <select id="bill-unit" class="form-select rounded-l-none bg-gray-200 text-[10px] px-1 w-14 font-bold border-l-gray-300" onchange="onMaterialChange()">
                   <option value="Brass">Brass</option>
                   <option value="Tonne">Tonne</option>
                   <option value="Trip">Trip</option>
-                  <option value="Piece">Piece</option>
                 </select>
               </div>
             </div>
             
-            <div class="md:col-span-2">
-              <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Rate (₹) *</label>
-              <input type="number" id="bill-rate" required step="0.01" min="0" placeholder="0.00" class="form-input text-sm font-semibold" oninput="calcTotal()">
+            <div class="md:col-span-1">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Rate (₹) *</label>
+              <input type="number" id="bill-rate" required step="0.01" min="0" placeholder="0" class="form-input text-xs font-semibold px-2 h-9 w-full" oninput="calcTotal()">
             </div>
             
-            <div class="md:col-span-4 bg-emerald-600 rounded-lg p-3 text-white shadow flex flex-col justify-center h-[46px] border border-emerald-700">
-               <div class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider leading-none mb-1">Total Amount</div>
-               <div class="text-xl font-black leading-none tracking-tight" id="bill-total">₹0.00</div>
+            <div class="md:col-span-2">
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5 text-right">Total Amount</label>
+              <div class="bg-emerald-600 rounded px-2 text-white shadow-sm flex items-center justify-end h-9 border border-emerald-700">
+                 <div class="text-[14px] font-black tracking-tight" id="bill-total">₹0.00</div>
+              </div>
             </div>
           </div>
         </div>
