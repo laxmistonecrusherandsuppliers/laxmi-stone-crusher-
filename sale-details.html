@@ -96,11 +96,13 @@
             <thead>
               <tr>
                 <th class="w-10">#</th>
-                <th>Material Description</th>
+                <th class="w-24">Date</th>
+                <th class="w-28">Vehicle No</th>
+                <th>Material</th>
                 <th class="w-20">Qty</th>
-                <th class="w-20">Unit</th>
-                <th class="text-right w-28">Rate (₹)</th>
-                <th class="text-right w-32">Amount (₹)</th>
+                <th class="w-16">Unit</th>
+                <th class="text-right w-24">Rate (₹)</th>
+                <th class="text-right w-28">Amount (₹)</th>
               </tr>
             </thead>
             <tbody id="items-tbody"></tbody>
@@ -297,16 +299,32 @@
 
         // Render Items Table
         const itemsTbody = document.getElementById('items-tbody');
-        itemsTbody.innerHTML = (currentSale.items || []).map((item, i) => `
+        itemsTbody.innerHTML = (currentSale.items || []).map((item, i) => {
+          let matName = item.custom_material_name || item.material_name || 'N/A';
+          let itemDate = '-';
+          let itemVeh = '-';
+          
+          // Extract (Dt: ..., Veh: ...)
+          const regex = /\(Dt:\s*(.*?)(?:,\s*Veh:\s*(.*?))?\)$/;
+          const match = matName.match(regex);
+          if (match) {
+             itemDate = match[1] || '-';
+             itemVeh = match[2] || '-';
+             matName = matName.replace(regex, '').trim();
+          }
+
+          return `
           <tr>
             <td>${i + 1}</td>
-            <td class="font-medium text-gray-900">${item.custom_material_name || item.material_name || 'N/A'}</td>
+            <td class="text-gray-600 whitespace-nowrap text-[10px]">${itemDate}</td>
+            <td class="text-gray-600 text-[10px] uppercase">${itemVeh}</td>
+            <td class="font-medium text-gray-900">${matName}</td>
             <td>${parseFloat(item.quantity).toFixed(3)}</td>
             <td>${item.unit || 'Tonne'}</td>
             <td class="text-right">${window.LSCUtils.formatCurrency(item.rate)}</td>
             <td class="text-right font-semibold">${window.LSCUtils.formatCurrency(item.amount)}</td>
           </tr>
-        `).join('');
+        `}).join('');
 
         // Render Logs Table
         const logsTbody = document.getElementById('logs-tbody');
@@ -358,12 +376,29 @@
           <div>Mob: ${currentSale.customer_mobile || '-'}</div>
         </div>
         <div class="border-t border-dashed py-1 text-[9pt]">
-          ${(currentSale.items || []).map(i => `
-            <div class="flex justify-between">
-              <span>${i.custom_material_name || i.material_name} x ${i.quantity} ${i.unit}</span>
-              <span>₹${parseFloat(i.amount).toFixed(2)}</span>
+          ${(currentSale.items || []).map(i => {
+            let matName = i.custom_material_name || i.material_name || 'N/A';
+            let itemDate = '';
+            let itemVeh = '';
+            const regex = /\(Dt:\s*(.*?)(?:,\s*Veh:\s*(.*?))?\)$/;
+            const match = matName.match(regex);
+            if (match) {
+               itemDate = match[1] || '';
+               itemVeh = match[2] || '';
+               matName = matName.replace(regex, '').trim();
+            }
+            return `
+            <div class="mb-1 pb-1 border-b border-dashed border-gray-200 last:border-0">
+              <div class="flex justify-between font-bold">
+                <span>${matName} x ${i.quantity} ${i.unit}</span>
+                <span>₹${parseFloat(i.amount).toFixed(2)}</span>
+              </div>
+              ${(itemDate || itemVeh) ? `<div class="text-[8pt] text-gray-600 flex justify-between">
+                <span>${itemDate ? 'Dt: '+itemDate : ''}</span>
+                <span>${itemVeh ? 'Veh: '+itemVeh : ''}</span>
+              </div>` : ''}
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
         <div class="border-t border-dashed pt-1 text-[9pt] space-y-0.5">
           <div class="flex justify-between font-bold"><span>Total:</span> <span>₹${parseFloat(currentSale.grand_total).toFixed(2)}</span></div>
