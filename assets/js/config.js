@@ -1,9 +1,9 @@
 // Lakshmi Stone Crusher & Suppliers - Supabase Configuration
 
 window.LSC_CONFIG = {
-  // Public Supabase URL & Anon Key
+  // Public Supabase URL & Publishable Key
   SUPABASE_URL: "https://ibhgxgvxxfqxtoavofef.supabase.co",
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliaGd4Z3Z4eGZxeHRvYXZvZmVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNTg2MDEsImV4cCI6MjEwMTkzNDYwMX0.JLYck_jpkYZRX6IH5AJBvytqyfL3w5n8gLlcOManZM8",
+  SUPABASE_ANON_KEY: "sb_publishable_GgdWzWwHY5HC1w-RjM6vQA_fNPZIL2U",
 
   // App Defaults
   BUSINESS_NAME: "Lakshmi Stone Crusher & Suppliers",
