@@ -6,8 +6,15 @@
     return;
   }
 
+  // Clear leftover placeholder keys from localStorage
+  let storedKey = localStorage.getItem('lsc_supabase_key');
+  if (storedKey && storedKey.includes('placeholder')) {
+    localStorage.removeItem('lsc_supabase_key');
+    storedKey = null;
+  }
+
   const url = localStorage.getItem('lsc_supabase_url') || window.LSC_CONFIG?.SUPABASE_URL || 'https://ibhgxgvxxfqxtoavofef.supabase.co';
-  const key = localStorage.getItem('lsc_supabase_key') || window.LSC_CONFIG?.SUPABASE_ANON_KEY || '';
+  const key = storedKey || window.LSC_CONFIG?.SUPABASE_ANON_KEY || '';
 
   // Only create active client if key is valid (not empty and not placeholder)
   if (key && key.trim() !== '' && !key.includes('placeholder')) {
