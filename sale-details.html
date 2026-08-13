@@ -98,9 +98,9 @@
                 <th class="w-10">#</th>
                 <th class="w-24">Date</th>
                 <th class="w-28">Vehicle No</th>
-                <th>Material</th>
                 <th class="w-20">Qty</th>
                 <th class="w-16">Unit</th>
+                <th>Material / Item</th>
                 <th class="text-right w-24">Rate (₹)</th>
                 <th class="text-right w-28">Amount (₹)</th>
               </tr>
@@ -318,9 +318,9 @@
             <td>${i + 1}</td>
             <td class="text-gray-600 whitespace-nowrap text-[10px]">${itemDate}</td>
             <td class="text-gray-600 text-[10px] uppercase">${itemVeh}</td>
-            <td class="font-medium text-gray-900">${matName}</td>
             <td>${parseFloat(item.quantity).toFixed(3)}</td>
             <td>${item.unit || 'Tonne'}</td>
+            <td class="font-medium text-gray-900">${matName}</td>
             <td class="text-right">${window.LSCUtils.formatCurrency(item.rate)}</td>
             <td class="text-right font-semibold">${window.LSCUtils.formatCurrency(item.amount)}</td>
           </tr>
