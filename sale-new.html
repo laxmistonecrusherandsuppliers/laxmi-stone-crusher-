@@ -188,9 +188,15 @@
           <input type="number" step="0.01" id="partial-amount-input" class="form-input w-48" placeholder="₹0.00" oninput="calculateTotals()">
         </div>
 
-        <div>
-          <label class="form-label">Vehicle No / Reference Notes (Optional)</label>
-          <textarea id="vehicle-notes-input" class="form-textarea" rows="2" placeholder="e.g. Truck No: MH-12-AB-1234"></textarea>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Invoice Date (Default is Today)</label>
+            <input type="date" id="invoice-date-input" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Vehicle No / Reference Notes (Optional)</label>
+            <textarea id="vehicle-notes-input" class="form-textarea" rows="2" placeholder="e.g. Truck No: MH-12-AB-1234"></textarea>
+          </div>
         </div>
 
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5 text-xs">
@@ -662,9 +668,12 @@
         else if (paymentMode === 'due') paid = 0;
         else paid = parseFloat(document.getElementById('partial-amount-input').value) || 0;
 
+        const dateInput = document.getElementById('invoice-date-input').value;
+        const saleDate = dateInput ? window.LSCUtils.formatISO(new Date(dateInput)) : window.LSCUtils.formatISO(new Date());
+
         const res = await window.LSCDB.createSale({
           customer_id: selectedCustomer.id,
-          sale_date: window.LSCUtils.formatISO(new Date()),
+          sale_date: saleDate,
           gst_enabled: gstEnabled,
           gst_percent: gstPercent,
           items,
