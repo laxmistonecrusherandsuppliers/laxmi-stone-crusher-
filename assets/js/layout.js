@@ -35,8 +35,8 @@ window.LSCLayout = {
         <aside id="app-sidebar" class="sidebar">
           <div class="sidebar-header">
             <div class="sidebar-brand">
-              <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-white shadow-sm">
+                <img src="assets/images/logo.png" alt="LSC Logo" class="w-full h-full object-cover">
               </div>
               <div class="min-w-0">
                 <div class="font-bold text-sm text-white leading-snug truncate">Lakshmi Stone</div>

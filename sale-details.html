@@ -64,6 +64,7 @@
       <div id="bill-content" class="hidden">
         <!-- Business Header -->
         <div class="text-center pb-6 border-b border-gray-200 mb-6">
+          <img src="assets/images/logo.png" alt="Logo" class="w-16 h-16 mx-auto mb-3 object-contain">
           <h2 class="text-2xl font-bold text-gray-900 tracking-tight" id="biz-name">Lakshmi Stone Crusher & Suppliers</h2>
           <p class="text-xs text-gray-600 mt-1" id="biz-address"></p>
           <p class="text-xs text-gray-600" id="biz-mobile"></p>
@@ -342,6 +343,9 @@
     function renderThermalReceipt() {
       if (!currentSale) return;
       const html = `
+        <div class="flex justify-center mb-1">
+          <img src="assets/images/logo.png" style="width: 48px; height: 48px; object-fit: contain; filter: grayscale(100%);">
+        </div>
         <div class="text-center font-bold text-sm">${appSettings.business_name || 'Lakshmi Stone Crusher'}</div>
         <div class="text-center text-[9pt]">${appSettings.business_address || ''}</div>
         <div class="text-center text-[9pt] mb-2">Ph: ${appSettings.business_mobile || ''}</div>
