@@ -65,26 +65,24 @@
           </div>
         </div>
 
-        <!-- Hidden toggles for advanced options (Payment/GST) -->
-        <details class="text-[11px] text-gray-500 group no-print">
-          <summary class="cursor-pointer hover:text-gray-800 font-bold select-none inline-flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            Advanced Options (GST / Payment Status)
-          </summary>
-          <div class="p-4 mt-3 border border-gray-200 rounded-lg bg-white grid grid-cols-2 gap-4 shadow-sm">
-             <div>
-               <label class="form-label text-[10px] uppercase font-bold text-gray-500">GST Invoice</label>
-               <select id="adv-gst" class="form-select text-xs font-semibold" onchange="calculateGrandTotal()"><option value="0">NO GST (Plain Bill)</option><option value="18">18% GST</option></select>
-             </div>
-             <div>
-               <label class="form-label text-[10px] uppercase font-bold text-gray-500">Payment Status</label>
-               <select id="adv-pay" class="form-select text-xs font-semibold text-emerald-700">
-                 <option value="full">Full Paid (Cash)</option>
-                 <option value="due">Unpaid (Add to Ledger)</option>
-               </select>
-             </div>
-          </div>
-        </details>
+        <!-- Billing & Payment Options -->
+        <div class="p-4 mt-2 border border-gray-200 rounded-lg bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-6 shadow-sm no-print">
+           <div>
+             <label class="form-label text-[11px] uppercase font-bold text-gray-600 mb-1.5">GST Settings</label>
+             <select id="adv-gst" class="form-select text-sm font-semibold h-10" onchange="calculateGrandTotal()">
+               <option value="0">NO GST (Plain Bill)</option>
+               <option value="18">18% GST (Tax Invoice)</option>
+             </select>
+           </div>
+           <div>
+             <label class="form-label text-[11px] uppercase font-bold text-gray-600 mb-1.5">Payment Method *</label>
+             <select id="adv-pay" class="form-select text-sm font-semibold h-10 text-emerald-700">
+               <option value="cash">💰 Cash (Full Paid)</option>
+               <option value="upi">📱 UPI / Online (Full Paid)</option>
+               <option value="due">📒 Keep Due (Add to Ledger)</option>
+             </select>
+           </div>
+        </div>
 
         <div class="pt-2 flex justify-end">
           <button type="submit" id="btn-submit" class="btn btn-primary py-3 px-8 text-sm font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2 hover:scale-105 transition-transform">
@@ -149,7 +147,13 @@
           selectCust(sale.customer_id);
           
           document.getElementById('adv-gst').value = sale.gst_enabled ? (sale.gst_percent || "18") : "0";
-          document.getElementById('adv-pay').value = sale.payment_mode === 'full' ? 'full' : 'due';
+          
+          let payVal = 'due';
+          if (sale.payment_mode === 'full' || sale.payment_mode === 'partial') {
+             const firstLog = sale.payment_logs && sale.payment_logs.length > 0 ? sale.payment_logs[0] : null;
+             payVal = (firstLog && firstLog.payment_mode === 'upi') ? 'upi' : 'cash';
+          }
+          document.getElementById('adv-pay').value = payVal;
 
           // Group items by entry (date + vehicle)
           const entriesMap = {};
@@ -453,7 +457,9 @@
         const isGst = gstVal > 0;
         const grandTotalWithGst = finalGrandTotal + (isGst ? finalGrandTotal * (gstVal/100) : 0);
         
-        const payStatus = document.getElementById('adv-pay').value; // full or due
+        const paySelection = document.getElementById('adv-pay').value; 
+        const payStatus = paySelection === 'due' ? 'due' : 'full';
+        const payMethod = paySelection === 'due' ? 'cash' : paySelection;
         const amtPaid = payStatus === 'full' ? grandTotalWithGst : 0;
         
         // Join all unique vehicles to store in parent notes
@@ -466,7 +472,7 @@
           gst_percent: isGst ? gstVal : 18,
           items: allItems,
           payment_mode: payStatus,
-          payment_method: 'cash',
+          payment_method: payMethod,
           amount_paid: amtPaid,
           notes: notes
         };
