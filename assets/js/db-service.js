@@ -436,6 +436,115 @@ window.LSCDB = {
     return { sale_id: newSaleId, invoice_number };
   },
 
+  updateSale: async function (saleId, saleData) {
+    this.initLocalSeed();
+    const supabase = this.getClient();
+    const materials = this.getLocalData('materials', []);
+    const { customer_id, sale_date, gst_enabled, gst_percent, items, notes } = saleData;
+
+    if (!customer_id || !items || !items.length) {
+      throw new Error('Customer and bill items are required.');
+    }
+
+    // Get existing sale to retain payments and invoice number
+    const existingSale = await this.getSaleById(saleId);
+    
+    let subtotal = 0;
+    items.forEach(item => {
+      subtotal += (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0);
+    });
+
+    let gst_amount = gst_enabled ? subtotal * ((parseFloat(gst_percent) || 18) / 100) : 0;
+    const grand_total = subtotal + gst_amount;
+    
+    const actual_paid = parseFloat(existingSale.amount_paid) || 0;
+    let due = Math.max(0, grand_total - actual_paid);
+    
+    let payment_mode = 'due';
+    if (due <= 0.01) payment_mode = 'full';
+    else if (actual_paid > 0) payment_mode = 'partial';
+
+    try {
+      if (supabase) {
+        // Update main sale record
+        const { error: saleErr } = await supabase
+          .from('sales')
+          .update({
+            customer_id: parseInt(customer_id),
+            sale_date: sale_date || new Date().toISOString().split('T')[0],
+            gst_enabled: !!gst_enabled,
+            gst_percent: parseFloat(gst_percent) || 18,
+            subtotal,
+            gst_amount,
+            grand_total,
+            payment_mode,
+            amount_due: due,
+            notes
+          })
+          .eq('id', saleId);
+
+        if (!saleErr) {
+          // Replace all items
+          await supabase.from('sale_items').delete().eq('sale_id', saleId);
+          
+          const itemsToInsert = items.map(item => ({
+            sale_id: saleId,
+            material_id: item.material_id || null,
+            custom_material_name: item.custom_material_name || null,
+            quantity: parseFloat(item.quantity),
+            unit: item.unit || 'Tonne',
+            rate: parseFloat(item.rate),
+            amount: (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
+          }));
+          await supabase.from('sale_items').insert(itemsToInsert);
+
+          return { sale_id: saleId, invoice_number: existingSale.invoice_number };
+        } else {
+            throw saleErr;
+        }
+      }
+    } catch (e) {
+      console.warn('Using local updateSale fallback:', e);
+    }
+
+    // Local Storage Fallback
+    const localSales = this.getLocalData('sales', []);
+    const idx = localSales.findIndex(s => s.id == saleId);
+    if (idx !== -1) {
+      localSales[idx] = {
+        ...localSales[idx],
+        customer_id: parseInt(customer_id),
+        sale_date: sale_date || new Date().toISOString().split('T')[0],
+        gst_enabled: !!gst_enabled,
+        gst_percent: parseFloat(gst_percent) || 18,
+        subtotal,
+        gst_amount,
+        grand_total,
+        payment_mode,
+        amount_due: due,
+        notes,
+        items: items.map((item, i) => {
+          const matObj = materials.find(m => m.id == item.material_id);
+          const name = item.custom_material_name || (matObj ? matObj.name : null) || 'Stone Material';
+          return {
+            id: Date.now() + i,
+            sale_id: saleId,
+            material_id: item.material_id || null,
+            material_name: name,
+            custom_material_name: item.custom_material_name || null,
+            quantity: parseFloat(item.quantity),
+            unit: item.unit || 'Tonne',
+            rate: parseFloat(item.rate),
+            amount: (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
+          };
+        })
+      };
+      this.saveLocalData('sales', localSales);
+    }
+    
+    return { sale_id: saleId, invoice_number: existingSale.invoice_number };
+  },
+
   addPayment: async function (saleId, { amount_paid, payment_method, notes }) {
     this.initLocalSeed();
     const supabase = this.getClient();

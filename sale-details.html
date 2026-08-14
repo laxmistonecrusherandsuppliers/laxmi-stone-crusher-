@@ -35,6 +35,9 @@
         <button onclick="openThermalModal()" class="btn btn-secondary text-xs">
           🧾 Thermal Receipt
         </button>
+        <button onclick="editBill()" class="btn btn-secondary text-xs border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100">
+          ✏️ Edit
+        </button>
         <button onclick="handleDeleteBill()" class="btn btn-ghost text-xs text-red-600 hover:bg-red-50">
           🗑️ Delete
         </button>
@@ -465,6 +468,11 @@
       } catch (err) {
         alert('Failed to delete sale: ' + err.message);
       }
+    }
+
+    function editBill() {
+      if (!currentSale) return;
+      window.location.href = `sale-new.html?edit_id=${currentSale.id}`;
     }
   </script>
 </body>
