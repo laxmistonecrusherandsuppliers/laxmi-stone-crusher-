@@ -874,7 +874,8 @@ window.LSCDB = {
       name: st.name,
       mobile: st.mobile,
       status: attMap[st.id]?.status || 'present',
-      notes: attMap[st.id]?.notes || ''
+      notes: attMap[st.id]?.notes || '',
+      isMarked: !!attMap[st.id]
     }));
   },
 

@@ -298,8 +298,15 @@
     async function loadDailyAttendance() {
       const date = document.getElementById('att-date-picker').value;
       try {
-        const list = await window.LSCDB.getAttendance(date);
+        let list = await window.LSCDB.getAttendance(date);
+        list = list.filter(st => !st.isMarked);
+        
         const tbody = document.getElementById('att-tbody');
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-6">All staff attendance marked for this date.</td></tr>`;
+          return;
+        }
 
         tbody.innerHTML = list.map(st => `
           <tr data-staff-id="${st.id}">
@@ -335,6 +342,7 @@
       try {
         await window.LSCDB.saveAttendance(staffId, date, status, notes);
         window.LSCUtils.showNotification('Attendance saved!', 'success');
+        loadDailyAttendance(); // Refresh to remove marked staff
       } catch (err) {
         alert(err.message);
       }
@@ -362,6 +370,7 @@
       
       if(count > 0) {
         window.LSCUtils.showNotification(`Marked ${count} staff as Present!`, 'success');
+        loadDailyAttendance(); // Refresh to remove all marked staff
       }
     }
 
