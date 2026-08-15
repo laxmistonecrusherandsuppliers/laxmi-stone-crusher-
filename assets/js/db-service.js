@@ -848,6 +848,19 @@ window.LSCDB = {
     return newSt;
   },
 
+  deleteStaff: async function (staffId) {
+    this.initLocalSeed();
+    let staff = this.getLocalData('staff', []);
+    const idx = staff.findIndex(s => s.id == staffId);
+    if (idx !== -1) {
+      staff.splice(idx, 1);
+      this.saveLocalData('staff', staff);
+      return true;
+    }
+    throw new Error('Staff not found');
+  },
+
+
   getAttendance: async function (dateStr) {
     this.initLocalSeed();
     const date = dateStr || new Date().toISOString().split('T')[0];

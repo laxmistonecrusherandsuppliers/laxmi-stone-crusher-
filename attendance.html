@@ -45,8 +45,9 @@
       </div>
 
       <div class="card">
-        <div class="card-header">
+        <div class="card-header flex justify-between items-center">
           <span>Mark Staff Attendance</span>
+          <button onclick="markAllPresent()" class="btn btn-primary btn-sm text-xs bg-emerald-600 border-emerald-700 hover:bg-emerald-700">✓ Mark All Present</button>
         </div>
         <div class="table-container">
           <table class="table text-xs">
@@ -80,6 +81,7 @@
               <th>Joining Date</th>
               <th>Monthly Salary</th>
               <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="staff-tbody"></tbody>
@@ -335,6 +337,46 @@
       }
     }
 
+    async function markAllPresent() {
+      const rows = document.querySelectorAll('#att-tbody tr');
+      if(rows.length === 0) return;
+      
+      const date = document.getElementById('att-date-picker').value;
+      let count = 0;
+      
+      for(const row of rows) {
+        const staffId = row.getAttribute('data-staff-id');
+        const sel = row.querySelector('.att-status-select');
+        sel.value = 'present'; // Update UI
+        const notes = row.querySelector('.att-notes-input').value;
+        try {
+           await window.LSCDB.saveAttendance(staffId, date, 'present', notes);
+           count++;
+        } catch(e) {
+           console.error("Failed to mark present for staff id", staffId, e);
+        }
+      }
+      
+      if(count > 0) {
+        window.LSCUtils.showNotification(`Marked ${count} staff as Present!`, 'success');
+      }
+    }
+
+    async function removeStaff(id) {
+      if(!confirm("Are you sure you want to remove this staff member? This action cannot be undone.")) return;
+      
+      try {
+         await window.LSCDB.deleteStaff(id);
+         window.LSCUtils.showNotification('Staff removed successfully', 'success');
+         await loadStaffCache(); // refresh cache
+         loadStaffDirectory(); // refresh UI table
+         // also refresh attendance if we're looking at today
+         loadDailyAttendance(); 
+      } catch(e) {
+         alert("Error removing staff: " + e.message);
+      }
+    }
+
     async function loadStaffDirectory() {
       try {
         const list = await window.LSCDB.getStaff();
@@ -345,7 +387,8 @@
             <td>${s.mobile || '-'}</td>
             <td>${window.LSCUtils.formatDate(s.joining_date)}</td>
             <td class="font-semibold">${window.LSCUtils.formatCurrency(s.salary)}</td>
-            <td><span class="badge badge-full">ACTIVE</span></td>
+            <td><span class="badge badge-full bg-emerald-100 text-emerald-800 border border-emerald-200">ACTIVE</span></td>
+            <td><button onclick="removeStaff(${s.id})" class="btn btn-ghost text-xs text-red-600 hover:bg-red-50 p-1">🗑️ Remove</button></td>
           </tr>
         `).join('');
       } catch (err) {
