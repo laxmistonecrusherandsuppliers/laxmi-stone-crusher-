@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Account Statement & Reports - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1786617001">
+  <link rel="stylesheet" href="assets/css/style.css?v=1786617002">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="assets/js/config.js?v=1786617001"></script>
-  <script src="assets/js/supabase-client.js?v=1786617001"></script>
-  <script src="assets/js/utils.js?v=1786617001"></script>
-  <script src="assets/js/auth.js?v=1786617001"></script>
-  <script src="assets/js/db-service.js?v=1786617001"></script>
-  <script src="assets/js/pdf-generator.js?v=1786617001"></script>
-  <script src="assets/js/layout.js?v=1786617001"></script>
+  <script src="assets/js/config.js?v=1786617002"></script>
+  <script src="assets/js/supabase-client.js?v=1786617002"></script>
+  <script src="assets/js/utils.js?v=1786617002"></script>
+  <script src="assets/js/auth.js?v=1786617002"></script>
+  <script src="assets/js/db-service.js?v=1786617002"></script>
+  <script src="assets/js/pdf-generator.js?v=1786617002"></script>
+  <script src="assets/js/layout.js?v=1786617002"></script>
 </head>
 <body>
   <div id="app">
@@ -43,7 +43,8 @@
             <option value="customer-wise">Customer-wise Sales</option>
             <option value="material-wise">Material-wise Sales</option>
             <option value="due">Outstanding Dues Report</option>
-            <option value="attendance">Staff Attendance Report</option>
+            <option value="attendance">Staff Attendance Log</option>
+            <option value="staff-summary">Staff Summary (Payroll)</option>
           </select>
         </div>
 
@@ -235,7 +236,7 @@
       const currentVal = select.value;
 
       try {
-        if (type === 'attendance') {
+        if (type === 'attendance' || type === 'staff-summary') {
           selectBoxLabel.textContent = 'Select Staff Name';
           const staff = await window.LSCDB.getStaff();
           select.innerHTML = '<option value="">-- All Staff --</option>' + 
@@ -281,6 +282,48 @@
            if(entity_id) attData = attData.filter(a => a.staff_id == entity_id);
            
            currentRawData = attData;
+        } else if (type === 'staff-summary') {
+           const staffList = await window.LSCDB.getStaff();
+           let attData = await window.LSCDB.getAllAttendance();
+           let advData = await window.LSCDB.getAdvances();
+           
+           if(from) {
+               attData = attData.filter(a => a.date >= from);
+               advData = advData.filter(a => a.advance_date >= from);
+           }
+           if(to) {
+               attData = attData.filter(a => a.date <= to);
+               advData = advData.filter(a => a.advance_date <= to);
+           }
+           if(entity_id) {
+               attData = attData.filter(a => a.staff_id == entity_id);
+               advData = advData.filter(a => a.staff_id == entity_id);
+           }
+           
+           currentRawData = staffList.filter(st => entity_id ? st.id == entity_id : true).map(st => {
+               const staffAtt = attData.filter(a => a.staff_id == st.id);
+               const staffAdv = advData.filter(a => a.staff_id == st.id);
+               
+               let present = 0, absent = 0, half = 0, leave = 0;
+               staffAtt.forEach(a => {
+                   if(a.status === 'present') present++;
+                   if(a.status === 'absent') absent++;
+                   if(a.status === 'half') half++;
+                   if(a.status === 'leave') leave++;
+               });
+               
+               const totalAdvance = staffAdv.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+               
+               return {
+                   staff_name: st.name,
+                   mobile: st.mobile,
+                   present,
+                   absent,
+                   half,
+                   leave,
+                   totalAdvance
+               };
+           });
         } else {
            currentRawData = await window.LSCDB.getReports(type, { from, to, customer_id: entity_id });
         }
@@ -486,6 +529,57 @@
         `}).join('');
 
         tfoot.innerHTML = ``;
+      } else if (type === 'staff-summary') {
+        currentReportTitle = 'Staff Summary (Payroll) Report';
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+        currentReportHeaders = ['Staff Name', 'Mobile', 'Total Present', 'Total Absent', 'Total Half-day', 'Total Leave', 'Total Advances (₹)'];
+
+        thead.innerHTML = `
+          <tr>
+            <th>Staff Name</th>
+            <th>Mobile</th>
+            <th>Present</th>
+            <th>Absent</th>
+            <th>Half-day</th>
+            <th>Leave</th>
+            <th>Total Advances (₹)</th>
+          </tr>
+        `;
+
+        let grandAdvance = 0;
+        
+        currentReportRows = data.map(r => {
+          grandAdvance += r.totalAdvance;
+          return [
+            r.staff_name,
+            r.mobile || '-',
+            r.present,
+            r.absent,
+            r.half,
+            r.leave,
+            window.LSCUtils.formatCurrency(r.totalAdvance)
+          ];
+        });
+
+        tbody.innerHTML = data.map(r => `
+          <tr>
+            <td class="font-bold text-gray-900">${r.staff_name}</td>
+            <td class="text-gray-500">${r.mobile || '-'}</td>
+            <td class="text-emerald-700 font-bold">${r.present}</td>
+            <td class="text-red-700 font-bold">${r.absent}</td>
+            <td class="text-amber-700 font-bold">${r.half}</td>
+            <td class="text-blue-700 font-bold">${r.leave}</td>
+            <td class="text-gray-900 font-semibold">${window.LSCUtils.formatCurrency(r.totalAdvance)}</td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-right font-bold">TOTAL ADVANCES DISTRIBUTED:</td>
+            <td class="text-gray-900 font-extrabold">${window.LSCUtils.formatCurrency(grandAdvance)}</td>
+          </tr>
+        `;
       } else {
         currentReportTitle = type === 'customer-wise' ? 'Customer-wise Sales Report' : (type === 'material-wise' ? 'Material-wise Sales Report' : 'Daily Sales Summary Report');
         label.textContent = currentReportTitle;
