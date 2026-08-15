@@ -43,6 +43,7 @@
             <option value="customer-wise">Customer-wise Sales</option>
             <option value="material-wise">Material-wise Sales</option>
             <option value="due">Outstanding Dues Report</option>
+            <option value="attendance">Staff Attendance Report</option>
           </select>
         </div>
 
@@ -217,8 +218,6 @@
 
       document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-IN');
 
-      await loadCustomerDropdown();
-
       const urlType = window.LSCUtils.getQueryParam('type');
       const urlCust = window.LSCUtils.getQueryParam('customer_id');
 
@@ -228,18 +227,34 @@
       onReportTypeChange();
     });
 
-    async function loadCustomerDropdown() {
+    async function onReportTypeChange() {
+      const type = document.getElementById('report-type').value;
+      const selectBoxLabel = document.querySelector('#customer-select-box .form-label');
+      const select = document.getElementById('rep-customer-select');
+      
+      const currentVal = select.value;
+
       try {
-        const customers = await window.LSCDB.getCustomers();
-        const select = document.getElementById('rep-customer-select');
-        select.innerHTML = '<option value="">-- All Customers --</option>' +
-          customers.map(c => `<option value="${c.id}">${c.name} ${c.mobile ? '(' + c.mobile + ')' : ''}</option>`).join('');
+        if (type === 'attendance') {
+          selectBoxLabel.textContent = 'Select Staff Name';
+          const staff = await window.LSCDB.getStaff();
+          select.innerHTML = '<option value="">-- All Staff --</option>' + 
+            staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        } else {
+          selectBoxLabel.textContent = 'Select Customer Name';
+          const customers = await window.LSCDB.getCustomers();
+          select.innerHTML = '<option value="">-- All Customers --</option>' +
+            customers.map(c => `<option value="${c.id}">${c.name} ${c.mobile ? '(' + c.mobile + ')' : ''}</option>`).join('');
+        }
       } catch (e) {
         console.error(e);
       }
-    }
+      
+      // Preserve selection if possible, otherwise it resets
+      if(Array.from(select.options).some(o => o.value === currentVal)) {
+          select.value = currentVal;
+      }
 
-    function onReportTypeChange() {
       runReport();
     }
 
@@ -247,21 +262,33 @@
       const type = document.getElementById('report-type').value;
       const from = document.getElementById('rep-from').value;
       const to = document.getElementById('rep-to').value;
-      const customer_id = document.getElementById('rep-customer-select').value;
+      const entity_id = document.getElementById('rep-customer-select').value;
 
       document.getElementById('print-period').textContent = (from || to) ? `${from || 'Start'} to ${to || 'Today'}` : 'All Time';
 
       document.getElementById('rep-loading').classList.remove('hidden');
       document.getElementById('rep-table-container').classList.add('hidden');
       document.getElementById('rep-empty').classList.add('hidden');
+      document.getElementById('customer-statement-summary').classList.add('hidden');
 
       try {
-        currentRawData = await window.LSCDB.getReports(type, { from, to, customer_id });
+        if (type === 'attendance') {
+           let attData = await window.LSCDB.getAllAttendance();
+           // Filter by date
+           if(from) attData = attData.filter(a => a.date >= from);
+           if(to) attData = attData.filter(a => a.date <= to);
+           // Filter by staff
+           if(entity_id) attData = attData.filter(a => a.staff_id == entity_id);
+           
+           currentRawData = attData;
+        } else {
+           currentRawData = await window.LSCDB.getReports(type, { from, to, customer_id: entity_id });
+        }
+        
         document.getElementById('rep-loading').classList.add('hidden');
 
         if (!currentRawData || currentRawData.length === 0) {
           document.getElementById('rep-empty').classList.remove('hidden');
-          document.getElementById('customer-statement-summary').classList.add('hidden');
           return;
         }
 
@@ -419,8 +446,47 @@
             <td class="no-print"></td>
           </tr>
         `;
+      } else if (type === 'attendance') {
+        currentReportTitle = 'Staff Attendance Report';
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+        currentReportHeaders = ['Date', 'Staff Name', 'Status', 'Notes / Remarks'];
+
+        thead.innerHTML = `
+          <tr>
+            <th>Date</th>
+            <th>Staff Name</th>
+            <th>Status</th>
+            <th>Notes / Remarks</th>
+          </tr>
+        `;
+
+        currentReportRows = data.map(r => [
+          window.LSCUtils.formatDate(r.date),
+          r.staff_name,
+          r.status.toUpperCase(),
+          r.notes || '-'
+        ]);
+
+        tbody.innerHTML = data.map(r => {
+          let statusBadge = '';
+          if (r.status === 'present') statusBadge = '<span class="badge badge-full bg-emerald-100 text-emerald-800 border-emerald-200">PRESENT</span>';
+          else if (r.status === 'absent') statusBadge = '<span class="badge badge-full bg-red-100 text-red-800 border-red-200">ABSENT</span>';
+          else if (r.status === 'half') statusBadge = '<span class="badge badge-full bg-amber-100 text-amber-800 border-amber-200">HALF-DAY</span>';
+          else if (r.status === 'leave') statusBadge = '<span class="badge badge-full bg-blue-100 text-blue-800 border-blue-200">ON LEAVE</span>';
+          else statusBadge = r.status.toUpperCase();
+          
+          return `
+          <tr>
+            <td class="font-semibold text-gray-900">${window.LSCUtils.formatDate(r.date)}</td>
+            <td class="font-medium">${r.staff_name}</td>
+            <td>${statusBadge}</td>
+            <td>${r.notes || '-'}</td>
+          </tr>
+        `}).join('');
+
+        tfoot.innerHTML = ``;
       } else {
-        document.getElementById('customer-statement-summary').classList.add('hidden');
         currentReportTitle = type === 'customer-wise' ? 'Customer-wise Sales Report' : (type === 'material-wise' ? 'Material-wise Sales Report' : 'Daily Sales Summary Report');
         label.textContent = currentReportTitle;
         printHeading.textContent = currentReportTitle;

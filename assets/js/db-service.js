@@ -878,6 +878,21 @@ window.LSCDB = {
     }));
   },
 
+  getAllAttendance: async function () {
+    this.initLocalSeed();
+    const attendance = this.getLocalData('attendance', []);
+    const staff = this.getLocalData('staff', []);
+    
+    // Join with staff names
+    return attendance.map(a => {
+      const st = staff.find(s => s.id == a.staff_id);
+      return {
+        ...a,
+        staff_name: st ? st.name : 'Unknown Staff'
+      };
+    }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort latest first
+  },
+
   saveAttendance: async function (staffId, date, status, notes) {
     this.initLocalSeed();
     const attendance = this.getLocalData('attendance', []);
