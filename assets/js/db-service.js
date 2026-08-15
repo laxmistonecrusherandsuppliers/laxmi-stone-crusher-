@@ -909,6 +909,12 @@ window.LSCDB = {
     this.saveLocalData('attendance', attendance);
   },
 
+  clearAttendanceLogs: async function () {
+    this.initLocalSeed();
+    this.saveLocalData('attendance', []);
+    return true;
+  },
+
   getAdvances: async function () {
     this.initLocalSeed();
     const advances = this.getLocalData('advances', []);

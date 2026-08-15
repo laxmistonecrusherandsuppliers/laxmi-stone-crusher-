@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance & Staff Management - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1786617003">
+  <link rel="stylesheet" href="assets/css/style.css?v=1786617004">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=1786617003"></script>
-  <script src="assets/js/supabase-client.js?v=1786617003"></script>
-  <script src="assets/js/utils.js?v=1786617003"></script>
-  <script src="assets/js/auth.js?v=1786617003"></script>
-  <script src="assets/js/db-service.js?v=1786617003"></script>
-  <script src="assets/js/layout.js?v=1786617003"></script>
+  <script src="assets/js/config.js?v=1786617004"></script>
+  <script src="assets/js/supabase-client.js?v=1786617004"></script>
+  <script src="assets/js/utils.js?v=1786617004"></script>
+  <script src="assets/js/auth.js?v=1786617004"></script>
+  <script src="assets/js/db-service.js?v=1786617004"></script>
+  <script src="assets/js/layout.js?v=1786617004"></script>
 </head>
 <body>
   <div id="app">
@@ -48,9 +48,12 @@
       </div>
 
       <div class="card">
-        <div class="card-header flex justify-between items-center">
+        <div class="card-header flex justify-between items-center flex-wrap gap-2">
           <span>Mark Staff Attendance</span>
-          <button onclick="markAllPresent()" class="btn btn-primary btn-sm text-xs bg-emerald-600 border-emerald-700 hover:bg-emerald-700">✓ Mark All Present</button>
+          <div class="flex gap-2">
+            <button onclick="clearAllAttendance()" class="btn btn-danger btn-sm text-xs">⚠️ Clear All Logs</button>
+            <button onclick="markAllPresent()" class="btn btn-primary btn-sm text-xs bg-emerald-600 border-emerald-700 hover:bg-emerald-700">✓ Mark All Present</button>
+          </div>
         </div>
         <div class="table-container">
           <table class="table text-xs">
@@ -371,6 +374,17 @@
       if(count > 0) {
         window.LSCUtils.showNotification(`Marked ${count} staff as Present!`, 'success');
         loadDailyAttendance(); // Refresh to remove all marked staff
+      }
+    }
+
+    async function clearAllAttendance() {
+      if(!confirm("Are you sure you want to permanently clear all historical attendance logs? This action cannot be undone.")) return;
+      try {
+         await window.LSCDB.clearAttendanceLogs();
+         window.LSCUtils.showNotification('All attendance logs have been cleared!', 'success');
+         loadDailyAttendance(); 
+      } catch(e) {
+         alert("Error clearing logs: " + e.message);
       }
     }
 
