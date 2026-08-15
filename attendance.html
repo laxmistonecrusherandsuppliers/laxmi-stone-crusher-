@@ -21,7 +21,10 @@
         <h1 class="text-xl font-bold text-gray-900 tracking-tight">Attendance & Staff Management</h1>
         <p class="text-xs text-gray-500 mt-0.5">Track daily attendance, salary advances, and leave requests</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
+        <a href="reports.html?type=attendance" class="btn btn-secondary text-xs bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 flex items-center gap-1">
+          📊 View Report
+        </a>
         <button onclick="openAddStaffModal()" class="btn btn-secondary text-xs">+ Add Staff</button>
         <button onclick="openAdvanceModal()" class="btn btn-secondary text-xs">+ Record Advance</button>
       </div>
