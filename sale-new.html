@@ -161,32 +161,31 @@
             let matName = item.custom_material_name || item.material_name || 'N/A';
             let itemDate = sale.sale_date.split('T')[0];
             let itemVeh = '';
+            let itemDest = '';
+            let itemChallan = '';
             
-            const regex = /\(Dt:\s*(.*?)(?:,\s*Veh:\s*(.*?))?\)$/;
+            const regex = /\(Dt:\s*([^,)]*)(?:,\s*Veh:\s*([^,)]*))?(?:,\s*Dest:\s*([^,)]*))?(?:,\s*Ch\.No:\s*([^)]*))?\)$/;
             const match = matName.match(regex);
             if (match) {
-               // Convert DD MMM YYYY to YYYY-MM-DD for input type="date"
-               // But wait, the date saved in string is formatted via window.LSCUtils.formatDate(date).
-               // It's easier to just parse it or keep raw date. Since it's hard to parse DD MMM YYYY back perfectly here, 
-               // we will just use the sale_date for all entries if we can't reliably parse it, or we try to parse it.
-               // Let's do a simple parse:
                const dParts = new Date(match[1]);
                if (!isNaN(dParts.getTime())) {
                    itemDate = dParts.toISOString().split('T')[0];
                }
-               itemVeh = match[2] || '';
+               itemVeh = (match[2] || '').trim();
+               itemDest = (match[3] || '').trim();
+               itemChallan = (match[4] || '').trim();
                matName = matName.replace(regex, '').trim();
             }
             
-            const key = itemDate + '|' + itemVeh;
-            if(!entriesMap[key]) entriesMap[key] = { date: itemDate, vehicle: itemVeh, items: [] };
+            const key = itemDate + '|' + itemVeh + '|' + itemDest + '|' + itemChallan;
+            if(!entriesMap[key]) entriesMap[key] = { date: itemDate, vehicle: itemVeh, dest: itemDest, challan: itemChallan, items: [] };
             entriesMap[key].items.push({ ...item, cleanName: matName });
           });
 
           // Render groups
           for (const key in entriesMap) {
              const group = entriesMap[key];
-             const eid = addEntry(group.date, group.vehicle, false);
+             const eid = addEntry(group.date, group.vehicle, group.dest, group.challan, false);
              group.items.forEach(it => {
                  addItem(eid, { material_id: it.material_id, qty: it.quantity, rate: it.rate, unit: it.unit });
              });
@@ -246,17 +245,19 @@
       return materials.map(m => `<option value="${m.id}" data-rate="${m.rate_per_unit || 0}" data-unit="${m.unit || 'Brass'}">${m.name}</option>`).join('');
     }
 
-    function addEntry(dateStr = null, vehStr = null, autoAddItem = true) {
+    function addEntry(dateStr = null, vehStr = null, destStr = null, challanStr = null, autoAddItem = true) {
       entryCounter++;
       const eid = entryCounter;
       const today = dateStr || window.LSCUtils.formatISO(new Date());
       const v = vehStr || '';
+      const d = destStr || '';
+      const c = challanStr || '';
 
       const template = `
         <div id="entry-${eid}" class="entry-box bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-inner relative">
           <button type="button" onclick="removeEntry(${eid})" class="absolute top-4 right-4 text-red-500 hover:text-red-700 font-bold text-xs" title="Remove Entry">&times; Remove Entry</button>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pr-24">
             <div>
               <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Entry Date *</label>
               <input type="date" required class="entry-date form-input text-xs px-3 h-9" value="${today}">
@@ -264,6 +265,14 @@
             <div>
               <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Vehicle No</label>
               <input type="text" placeholder="MH12AB1234" class="entry-vehicle form-input text-xs uppercase px-3 h-9" value="${v}">
+            </div>
+            <div>
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Destination</label>
+              <input type="text" placeholder="Site Location" class="entry-dest form-input text-xs px-3 h-9" value="${d}">
+            </div>
+            <div>
+              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Challan No</label>
+              <input type="text" placeholder="CH-101" class="entry-challan form-input text-xs uppercase px-3 h-9" value="${c}">
             </div>
           </div>
           
@@ -429,7 +438,15 @@
         entryBoxes.forEach(box => {
           const date = box.querySelector('.entry-date').value;
           const vehicle = box.querySelector('.entry-vehicle').value.trim();
+          const dest = box.querySelector('.entry-dest').value.trim();
+          const challan = box.querySelector('.entry-challan').value.trim();
           if (vehicle) allVehicles.add(vehicle);
+
+          const extraParts = [];
+          if (vehicle) extraParts.push(`Veh: ${vehicle}`);
+          if (dest) extraParts.push(`Dest: ${dest}`);
+          if (challan) extraParts.push(`Ch.No: ${challan}`);
+          const extraStr = extraParts.length > 0 ? ', ' + extraParts.join(', ') : '';
 
           const itemRows = box.querySelectorAll('.item-row');
           itemRows.forEach(row => {
@@ -445,7 +462,7 @@
             // Flatten data for Supabase while preserving Entry context in the material name
             allItems.push({
               material_id: matId,
-              custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(date)}${vehicle ? ', Veh: ' + vehicle : ''})`,
+              custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(date)}${extraStr})`,
               quantity: qty,
               unit: unit,
               rate: rate
