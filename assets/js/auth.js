@@ -49,8 +49,8 @@ window.LSCAuth = {
 
     // Default Fallback Login Check (for offline / placeholder API keys)
     if (!user) {
-      if ((cleanId === 'admin_master' || cleanId === '9999999999') && password === 'AdminSecure@2026') {
-        user = { id: 1, username: 'admin_master', mobile: '9999999999', role: 'admin' };
+      if ((cleanId === 'admin_master' || cleanId === '9699985749') && password === 'AdminSecure@2026') {
+        user = { id: 1, username: 'admin_master', mobile: '9699985749', role: 'admin' };
       } else if ((cleanId === 'staff_user' || cleanId === '8888888888') && password === 'StaffSecure@2026') {
         user = { id: 2, username: 'staff_user', mobile: '8888888888', role: 'staff' };
       }

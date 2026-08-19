@@ -169,7 +169,7 @@ ON CONFLICT (key) DO NOTHING;
 -- Admin password: AdminSecure@2026 (bcrypt hash)
 -- Staff password: StaffSecure@2026 (bcrypt hash)
 INSERT INTO users (username, mobile, password_hash, role) VALUES
-  ('admin_master', '9999999999', '$2b$10$d2ho6oVBIoNgLhVE7.UPIuhEHfGeYQno0WNVpYN2JII8qD/Qa1xZ.', 'admin'),
+  ('admin_master', '9699985749', '$2b$10$d2ho6oVBIoNgLhVE7.UPIuhEHfGeYQno0WNVpYN2JII8qD/Qa1xZ.', 'admin'),
   ('staff_user', '8888888888', '$2b$10$2QwVmPmeBF.In2bngdowAu3G1/Y2vf1pFw7h3BxWcxAXnvnvc0nJK', 'staff')
 ON CONFLICT (username) DO NOTHING;
 
