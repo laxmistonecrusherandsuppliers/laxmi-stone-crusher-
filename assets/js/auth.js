@@ -30,7 +30,7 @@ window.LSCAuth = {
           } else if (typeof bcrypt !== 'undefined') {
             isMatch = bcrypt.compareSync(password, fetchedUser.password_hash);
           } else {
-            isMatch = (fetchedUser.password_hash === password || password === 'admin123' || password === 'staff123');
+            isMatch = (fetchedUser.password_hash === password || password === 'AdminSecure@2026' || password === 'StaffSecure@2026');
           }
 
           if (isMatch) {
@@ -49,10 +49,10 @@ window.LSCAuth = {
 
     // Default Fallback Login Check (for offline / placeholder API keys)
     if (!user) {
-      if ((cleanId === 'admin' || cleanId === '9999999999') && password === 'admin123') {
-        user = { id: 1, username: 'admin', mobile: '9999999999', role: 'admin' };
-      } else if ((cleanId === 'staff1' || cleanId === '8888888888') && password === 'staff123') {
-        user = { id: 2, username: 'staff1', mobile: '8888888888', role: 'staff' };
+      if ((cleanId === 'admin_master' || cleanId === '9999999999') && password === 'AdminSecure@2026') {
+        user = { id: 1, username: 'admin_master', mobile: '9999999999', role: 'admin' };
+      } else if ((cleanId === 'staff_user' || cleanId === '8888888888') && password === 'StaffSecure@2026') {
+        user = { id: 2, username: 'staff_user', mobile: '8888888888', role: 'staff' };
       }
     }
 

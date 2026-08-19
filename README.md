@@ -70,8 +70,8 @@ Simply upload the `dist/` folder to your web server or hosting service.
 
 | Role | Username | Password |
 |------|----------|----------|
-| Admin | `admin` | `admin123` |
-| Staff | `staff1` | `staff123` |
+| Admin | `admin_master` | *(Contact System Administrator)* |
+| Staff | `staff_user` | *(Contact System Administrator)* |
 
 ---
 

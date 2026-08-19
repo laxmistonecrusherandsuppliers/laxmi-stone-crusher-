@@ -166,11 +166,11 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- SEED DEFAULT ADMIN & STAFF USERS
--- Admin password: admin123 (bcrypt hash)
--- Staff password: staff123 (bcrypt hash)
+-- Admin password: AdminSecure@2026 (bcrypt hash)
+-- Staff password: StaffSecure@2026 (bcrypt hash)
 INSERT INTO users (username, mobile, password_hash, role) VALUES
-  ('admin', '9999999999', '$2a$10$wT8KskY78FmFqfG83gXg2.1wH496P27wO0v8Xj801Vj9pG28c/0tO', 'admin'),
-  ('staff1', '8888888888', '$2a$10$wT8KskY78FmFqfG83gXg2.1wH496P27wO0v8Xj801Vj9pG28c/0tO', 'staff')
+  ('admin_master', '9999999999', '$2b$10$d2ho6oVBIoNgLhVE7.UPIuhEHfGeYQno0WNVpYN2JII8qD/Qa1xZ.', 'admin'),
+  ('staff_user', '8888888888', '$2b$10$2QwVmPmeBF.In2bngdowAu3G1/Y2vf1pFw7h3BxWcxAXnvnvc0nJK', 'staff')
 ON CONFLICT (username) DO NOTHING;
 
 -- ========================================================

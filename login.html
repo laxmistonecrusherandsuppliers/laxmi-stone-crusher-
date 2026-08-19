@@ -52,12 +52,33 @@
         </button>
       </form>
 
-      <!-- Default Credentials Tip -->
-      <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-        <p class="text-xs text-slate-500 mb-2 font-medium">Default Credentials</p>
-        <div class="flex justify-center gap-4 text-xs">
-          <span class="px-2.5 py-1 bg-slate-100 rounded text-slate-600">Admin: <strong>admin</strong> / <strong>admin123</strong></span>
-          <span class="px-2.5 py-1 bg-slate-100 rounded text-slate-600">Staff: <strong>staff1</strong> / <strong>staff123</strong></span>
+      <!-- Forgot Password Link -->
+      <div class="mt-4 text-center">
+        <a href="#" id="forgot-password-link" class="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div id="reset-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transform transition-all">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-slate-800">Reset Password</h3>
+        <button id="close-reset-modal" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <p class="text-sm text-slate-600 mb-4">Please contact the system administrator to reset your password. If you are the administrator, please reset via the database or Supabase console.</p>
+        <div class="space-y-4">
+          <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
+            <strong>Admin Contact:</strong> +91 9999999999
+          </div>
+          <button id="understood-btn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-lg transition-all">
+            Understood
+          </button>
         </div>
       </div>
     </div>
@@ -93,6 +114,30 @@
           loginBtn.disabled = false;
           loginBtn.innerHTML = 'Sign In to Dashboard';
         }
+      });
+
+      // Password Reset Modal Logic
+      const forgotPasswordLink = document.getElementById('forgot-password-link');
+      const resetModal = document.getElementById('reset-modal');
+      const closeResetModal = document.getElementById('close-reset-modal');
+      const understoodBtn = document.getElementById('understood-btn');
+
+      function openModal(e) {
+        if (e) e.preventDefault();
+        resetModal.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        resetModal.classList.add('hidden');
+      }
+
+      if (forgotPasswordLink) forgotPasswordLink.addEventListener('click', openModal);
+      if (closeResetModal) closeResetModal.addEventListener('click', closeModal);
+      if (understoodBtn) understoodBtn.addEventListener('click', closeModal);
+      
+      // Close modal on outside click
+      resetModal.addEventListener('click', (e) => {
+        if (e.target === resetModal) closeModal();
       });
     });
   </script>
