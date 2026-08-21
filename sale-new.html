@@ -187,7 +187,7 @@
              const group = entriesMap[key];
              const eid = addEntry(group.date, group.vehicle, group.dest, group.challan, false);
              group.items.forEach(it => {
-                 addItem(eid, { material_id: it.material_id, qty: it.quantity, rate: it.rate, unit: it.unit });
+                 addItem(eid, { material_id: it.material_id, qty: it.quantity, rate: it.rate, unit: it.unit, amount: it.amount });
              });
           }
           calculateGrandTotal();
@@ -319,7 +319,9 @@
       let qtyVal = initData ? initData.qty : '';
       let rateVal = initData ? initData.rate : '';
       let unitVal = initData ? initData.unit : 'Brass';
-      
+      let totalVal = initData && initData.amount !== undefined ? parseFloat(initData.amount).toFixed(2) : ((parseFloat(qtyVal) || 0) * (parseFloat(rateVal) || 0)).toFixed(2);
+      if (totalVal === "0.00" && !initData) totalVal = ""; // Leave blank for new item
+
       // We must render options and pre-select if initData is present
       const opts = materials.map(m => `<option value="${m.id}" data-rate="${m.rate_per_unit || 0}" data-unit="${m.unit || 'Brass'}" ${m.id == matVal ? 'selected' : ''}>${m.name}</option>`).join('');
 
@@ -338,7 +340,7 @@
           <div class="md:col-span-3">
             <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1">Quantity *</label>
             <div class="flex h-8">
-              <input type="number" required step="0.001" min="0.001" placeholder="0.00" class="item-qty form-input text-xs font-semibold rounded-r-none border-r-0 px-2 w-16 flex-1" value="${qtyVal}" oninput="calculateGrandTotal()">
+              <input type="number" required step="0.001" min="0.001" placeholder="0.00" class="item-qty form-input text-xs font-semibold rounded-r-none border-r-0 px-2 w-16 flex-1" value="${qtyVal}" oninput="handleRateQtyChange(this)">
               <select class="item-unit form-select rounded-l-none bg-gray-100 text-[10px] px-1 w-14 font-bold border-l-gray-300">
                 <option value="Brass" ${unitVal === 'Brass' ? 'selected' : ''}>Brass</option>
                 <option value="Tonne" ${unitVal === 'Tonne' ? 'selected' : ''}>Tonne</option>
@@ -349,14 +351,12 @@
           
           <div class="md:col-span-2">
             <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1">Rate (₹) *</label>
-            <input type="number" required step="0.01" min="0" placeholder="0" class="item-rate form-input text-xs font-semibold px-2 h-8 w-full" value="${rateVal}" oninput="calculateGrandTotal()">
+            <input type="number" required step="0.01" min="0" placeholder="0" class="item-rate form-input text-xs font-semibold px-2 h-8 w-full" value="${rateVal}" oninput="handleRateQtyChange(this)">
           </div>
           
           <div class="md:col-span-3">
-            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1 text-right block">Total</label>
-            <div class="bg-gray-50 rounded px-2 text-gray-900 shadow-sm flex items-center justify-end h-8 border border-gray-200">
-               <div class="text-[13px] font-bold tracking-tight item-total">₹0.00</div>
-            </div>
+            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1 text-right block">Total (₹)</label>
+            <input type="number" step="0.01" min="0" placeholder="0.00" class="item-total form-input text-[13px] font-bold px-2 h-8 w-full text-right" value="${totalVal}" oninput="handleTotalChange(this)">
           </div>
         </div>
       `;
@@ -389,6 +389,25 @@
       calculateGrandTotal();
     }
 
+    function handleRateQtyChange(el) {
+      const row = el.closest('.item-row');
+      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+      const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+      const totalInput = row.querySelector('.item-total');
+      totalInput.value = (qty * rate).toFixed(2);
+      calculateGrandTotal();
+    }
+
+    function handleTotalChange(el) {
+      const row = el.closest('.item-row');
+      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+      const total = parseFloat(el.value) || 0;
+      if (qty > 0) {
+        row.querySelector('.item-rate').value = (total / qty).toFixed(2);
+      }
+      calculateGrandTotal();
+    }
+
     function calculateGrandTotal() {
       let grandTotal = 0;
 
@@ -398,10 +417,7 @@
         const items = entry.querySelectorAll('.item-row');
         
         items.forEach(item => {
-          const qty = parseFloat(item.querySelector('.item-qty').value) || 0;
-          const rate = parseFloat(item.querySelector('.item-rate').value) || 0;
-          const total = qty * rate;
-          item.querySelector('.item-total').textContent = window.LSCUtils.formatCurrency(total);
+          const total = parseFloat(item.querySelector('.item-total').value) || 0;
           entryTotal += total;
         });
 
@@ -455,9 +471,10 @@
             const matName = matSel.options[matSel.selectedIndex].text;
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
             const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+            const total = parseFloat(row.querySelector('.item-total').value) || 0;
             const unit = row.querySelector('.item-unit').value;
             
-            finalGrandTotal += (qty * rate);
+            finalGrandTotal += total;
 
             // Flatten data for Supabase while preserving Entry context in the material name
             allItems.push({
@@ -465,7 +482,8 @@
               custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(date)}${extraStr})`,
               quantity: qty,
               unit: unit,
-              rate: rate
+              rate: rate,
+              amount: total
             });
           });
         });

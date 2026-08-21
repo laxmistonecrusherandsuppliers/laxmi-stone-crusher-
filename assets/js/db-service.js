@@ -352,7 +352,7 @@ window.LSCDB = {
             quantity: parseFloat(item.quantity),
             unit: item.unit || 'Tonne',
             rate: parseFloat(item.rate),
-            amount: (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
+            amount: item.amount !== undefined ? parseFloat(item.amount) : (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
           }));
 
           await supabase.from('sale_items').insert(itemsToInsert);
@@ -494,7 +494,7 @@ window.LSCDB = {
             quantity: parseFloat(item.quantity),
             unit: item.unit || 'Tonne',
             rate: parseFloat(item.rate),
-            amount: (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
+            amount: item.amount !== undefined ? parseFloat(item.amount) : (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
           }));
           await supabase.from('sale_items').insert(itemsToInsert);
 
