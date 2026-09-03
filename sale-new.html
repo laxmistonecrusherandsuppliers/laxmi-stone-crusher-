@@ -15,102 +15,132 @@
   <script src="assets/js/layout.js?v=1787172000"></script>
 </head>
 <body>
-  <div id="app">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  
+  <div id="app" class="p-2 sm:p-4 max-w-7xl mx-auto pb-24">
+    
+    <div class="flex justify-between items-end mb-4">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Quick Bill Entry</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Fast invoice generation</p>
+        <h1 class="text-2xl font-black tracking-tight text-gray-900">Daily Dispatch Log</h1>
+        <p class="text-xs text-gray-500 font-medium mt-1">Record multiple trips and sales in spreadsheet format.</p>
       </div>
-      <a href="sales.html" class="btn btn-secondary text-xs">View Past Sales</a>
-    </div>
-
-    <div class="card max-w-5xl mx-auto">
-      <div class="card-header bg-blue-50 border-b border-blue-100 text-blue-900 text-sm py-3 px-6">Create New Bill</div>
       
-      <form id="quick-bill-form" class="p-6 space-y-6" onsubmit="handleCreateBill(event)">
-        <!-- Top Row: Customer -->
-        <div class="mb-4 relative max-w-xl">
-          <label class="form-label text-[11px] uppercase text-gray-500 font-bold mb-1.5">Customer Name *</label>
-          <div id="selected-customer-display" class="hidden flex items-center justify-between border border-emerald-300 bg-emerald-50 rounded-lg p-2.5">
-            <div>
-              <div class="font-bold text-sm text-emerald-900 leading-tight" id="disp-cust-name"></div>
-              <div class="text-[11px] text-emerald-700 mt-0.5 font-medium" id="disp-cust-mobile"></div>
-            </div>
-            <button type="button" onclick="clearCustomer()" class="text-red-600 text-xs font-bold hover:underline">Change</button>
-          </div>
-          
-          <div id="customer-search-container">
-            <input type="text" id="cust-search" class="form-input text-sm" placeholder="Search name or mobile..." autocomplete="off" oninput="onCustSearch(this.value)">
-            <div id="cust-results" class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-200 shadow-xl rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100 text-sm"></div>
-            <button type="button" onclick="openNewCustModal()" class="text-[11px] text-blue-600 font-bold hover:underline mt-2 inline-block">+ Add New Customer</button>
-          </div>
+      <div class="flex gap-4 items-center bg-white p-2 px-4 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Day</label>
+          <input type="text" id="log-day" class="form-input h-8 text-sm font-semibold w-32" placeholder="e.g. Monday">
         </div>
-
-        <hr class="border-gray-100 border-dashed">
-
-        <!-- Dynamic Entries Container -->
-        <div id="entries-container" class="space-y-6">
-           <!-- Populated dynamically by JS -->
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date</label>
+          <input type="date" id="log-date" class="form-input h-8 text-sm font-semibold">
         </div>
-
-        <div class="flex justify-between items-center border-t border-gray-200 pt-4">
-          <button type="button" onclick="addEntry()" class="btn btn-secondary text-sm font-bold flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Add New Entry
-          </button>
-          
-          <div class="bg-blue-600 rounded-lg p-3 text-white shadow-md flex flex-col justify-center border border-blue-700 min-w-[200px] text-right">
-             <div class="text-[10px] text-blue-200 uppercase font-bold tracking-wider mb-1">Grand Total Amount</div>
-             <div class="text-2xl font-black tracking-tight" id="grand-total-display">₹0.00</div>
-          </div>
-        </div>
-
-        <!-- Billing & Payment Options -->
-        <div class="p-4 mt-2 border border-gray-200 rounded-lg bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-6 shadow-sm no-print">
-           <div>
-             <label class="form-label text-[11px] uppercase font-bold text-gray-600 mb-1.5">GST Settings</label>
-             <select id="adv-gst" class="form-select text-sm font-semibold h-10" onchange="calculateGrandTotal()">
-               <option value="0">NO GST (Plain Bill)</option>
-               <option value="18">18% GST (Tax Invoice)</option>
-             </select>
-           </div>
-           <div>
-             <label class="form-label text-[11px] uppercase font-bold text-gray-600 mb-1.5">Payment Method *</label>
-             <select id="adv-pay" class="form-select text-sm font-semibold h-10 text-emerald-700">
-               <option value="cash">💰 Cash (Full Paid)</option>
-               <option value="upi">📱 UPI / Online (Full Paid)</option>
-               <option value="due">📒 Keep Due (Add to Ledger)</option>
-             </select>
-           </div>
-        </div>
-
-        <div class="pt-2 flex justify-end">
-          <button type="submit" id="btn-submit" class="btn btn-primary py-3 px-8 text-sm font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2 hover:scale-105 transition-transform">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-            Save All Entries & Print
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
 
-    <!-- Modals (Customer) -->
-    <div id="modal-customer" class="modal-overlay hidden">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="font-semibold text-gray-900">Add New Customer</h3>
-          <button type="button" onclick="closeNewCustModal()" class="text-gray-400 hover:text-gray-900">&times;</button>
+    <form id="daily-log-form" onsubmit="handleSaveLog(event)">
+      <!-- Global Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 flex flex-wrap gap-4 items-center">
+        <div class="flex items-center gap-2">
+          <label class="text-[10px] font-bold text-gray-500 uppercase">Apply GST (18%)</label>
+          <select id="adv-gst" class="form-select h-8 text-xs font-semibold py-0">
+            <option value="0">No (Plain)</option>
+            <option value="18">Yes (18%)</option>
+          </select>
         </div>
-        <form id="new-cust-form" onsubmit="handleCreateCustomer(event)">
-          <div class="modal-body space-y-4">
-            <div><label class="form-label">Name *</label><input type="text" id="new-c-name" required class="form-input"></div>
-            <div><label class="form-label">Mobile</label><input type="text" id="new-c-mob" class="form-input"></div>
-            <div><label class="form-label">Address</label><input type="text" id="new-c-addr" class="form-input"></div>
+        <div class="flex items-center gap-2 border-l border-gray-200 pl-4">
+          <label class="text-[10px] font-bold text-gray-500 uppercase">Payment Default</label>
+          <select id="adv-pay" class="form-select h-8 text-xs font-semibold py-0">
+            <option value="cash">Cash (Full)</option>
+            <option value="upi">UPI (Full)</option>
+            <option value="due">Keep Due</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Spreadsheet Table -->
+      <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-300">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse" id="log-table">
+            <thead>
+              <tr class="bg-slate-800 text-white text-[10px] uppercase tracking-wider">
+                <th class="p-2 border border-slate-700 w-10 text-center">#</th>
+                <th class="p-2 border border-slate-700 min-w-[150px]">Owner Name</th>
+                <th class="p-2 border border-slate-700 min-w-[120px]">Vehicle No</th>
+                <th class="p-2 border border-slate-700 min-w-[120px]">Destination</th>
+                <th class="p-2 border border-slate-700 min-w-[140px]">Material</th>
+                <th class="p-2 border border-slate-700 w-20">Trip</th>
+                <th class="p-2 border border-slate-700 w-24">Brass(Qty)</th>
+                <th class="p-2 border border-slate-700 w-24">Rate</th>
+                <th class="p-2 border border-slate-700 w-28 text-right">Total</th>
+                <th class="p-2 border border-slate-700 w-10 text-center">Act</th>
+              </tr>
+            </thead>
+            <tbody id="log-body">
+              <!-- Rows will be injected here -->
+            </tbody>
+            <tfoot>
+              <tr class="bg-gray-50 border-t-2 border-gray-300">
+                <td colspan="8" class="p-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Grand Total (All Rows)</td>
+                <td class="p-3 text-right font-black text-gray-900 text-sm" id="grand-total-display">₹0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="p-3 bg-gray-50 border-t border-gray-200">
+          <button type="button" onclick="addRow()" class="btn btn-secondary text-xs px-4 py-1.5 border-dashed">
+            + Add New Row
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-slate-200 p-4 z-30 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
+        <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+          <div class="text-xs font-medium text-slate-500">
+            Records will be grouped by Owner Name into separate invoices.
           </div>
-          <div class="modal-footer">
-            <button type="button" onclick="closeNewCustModal()" class="btn btn-secondary text-xs font-bold">Cancel</button>
-            <button type="submit" class="btn btn-primary text-xs font-bold">Save Customer</button>
-          </div>
-        </form>
+          <button type="submit" id="btn-submit" class="btn btn-primary shadow-lg shadow-blue-500/30 flex items-center gap-2 px-6">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+            Save Daily Log
+          </button>
+        </div>
+      </div>
+    </form>
+    
+    <!-- Customer Modal -->
+    <div id="modal-customer" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <h3 class="font-bold text-slate-800 flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+            </div>
+            Add New Customer
+          </h3>
+          <button type="button" onclick="closeNewCustModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-5 overflow-y-auto">
+          <form id="new-cust-form" onsubmit="handleCreateCustomer(event)" class="space-y-4">
+            <div>
+              <label class="form-label text-xs font-semibold text-slate-700">Full Name *</label>
+              <input type="text" id="new-c-name" required class="form-input text-sm" placeholder="e.g. Rahul Patil">
+            </div>
+            <div>
+              <label class="form-label text-xs font-semibold text-slate-700">Mobile Number</label>
+              <input type="tel" id="new-c-mob" class="form-input text-sm" placeholder="10-digit number">
+            </div>
+            <div>
+              <label class="form-label text-xs font-semibold text-slate-700">Address / Location</label>
+              <textarea id="new-c-addr" rows="2" class="form-input text-sm resize-none" placeholder="City or area"></textarea>
+            </div>
+            <div class="pt-4 flex gap-3">
+              <button type="button" onclick="closeNewCustModal()" class="btn bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 flex-1">Cancel</button>
+              <button type="submit" class="btn btn-primary flex-1">Save Customer</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -118,16 +148,17 @@
   <script>
     let materials = [];
     let customers = [];
-    let selCustId = null;
-
-    let entryCounter = 0;
-    let itemCounter = 0;
-
-    let editSaleId = null;
-
+    let rowCount = 0;
+    
+    // Set default day and date
     document.addEventListener('DOMContentLoaded', async () => {
-      window.LSCLayout.init('sale-new', 'Quick Bill Entry');
+      window.LSCLayout.init('sale-new', 'Daily Dispatch Log');
       
+      const now = new Date();
+      document.getElementById('log-date').value = window.LSCUtils.formatISO(now);
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      document.getElementById('log-day').value = days[now.getDay()];
+
       try {
         const [mats, custs] = await Promise.all([
           window.LSCDB.getMaterials(),
@@ -135,400 +166,241 @@
         ]);
         materials = mats;
         customers = custs;
-
-        editSaleId = window.LSCUtils.getQueryParam('edit_id');
-        if (editSaleId) {
-          document.querySelector('h1').textContent = 'Edit Bill';
-          document.querySelector('.card-header').textContent = 'Edit Invoice #' + editSaleId; // will be overwritten below if possible
-          document.getElementById('btn-submit').innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Update Bill & Print';
-          
-          const sale = await window.LSCDB.getSaleById(editSaleId);
-          document.querySelector('.card-header').textContent = 'Edit Invoice #' + sale.invoice_number;
-          selectCust(sale.customer_id);
-          
-          document.getElementById('adv-gst').value = sale.gst_enabled ? (sale.gst_percent || "18") : "0";
-          
-          let payVal = 'due';
-          if (sale.payment_mode === 'full' || sale.payment_mode === 'partial') {
-             const firstLog = sale.payment_logs && sale.payment_logs.length > 0 ? sale.payment_logs[0] : null;
-             payVal = (firstLog && firstLog.payment_mode === 'upi') ? 'upi' : 'cash';
-          }
-          document.getElementById('adv-pay').value = payVal;
-
-          // Group items by entry (date + vehicle)
-          const entriesMap = {};
-          (sale.items || []).forEach(item => {
-            let matName = item.custom_material_name || item.material_name || 'N/A';
-            let itemDate = sale.sale_date.split('T')[0];
-            let itemVeh = '';
-            let itemDest = '';
-            let itemChallan = '';
-            
-            const regex = /\(Dt:\s*([^,)]*)(?:,\s*Veh:\s*([^,)]*))?(?:,\s*Dest:\s*([^,)]*))?(?:,\s*Ch\.No:\s*([^)]*))?\)$/;
-            const match = matName.match(regex);
-            if (match) {
-               const dParts = new Date(match[1]);
-               if (!isNaN(dParts.getTime())) {
-                   itemDate = dParts.toISOString().split('T')[0];
-               }
-               itemVeh = (match[2] || '').trim();
-               itemDest = (match[3] || '').trim();
-               itemChallan = (match[4] || '').trim();
-               matName = matName.replace(regex, '').trim();
-            }
-            
-            const key = itemDate + '|' + itemVeh + '|' + itemDest + '|' + itemChallan;
-            if(!entriesMap[key]) entriesMap[key] = { date: itemDate, vehicle: itemVeh, dest: itemDest, challan: itemChallan, items: [] };
-            entriesMap[key].items.push({ ...item, cleanName: matName });
-          });
-
-          // Render groups
-          for (const key in entriesMap) {
-             const group = entriesMap[key];
-             const eid = addEntry(group.date, group.vehicle, group.dest, group.challan, false);
-             group.items.forEach(it => {
-                 addItem(eid, { material_id: it.material_id, qty: it.quantity, rate: it.rate, unit: it.unit, amount: it.amount });
-             });
-          }
-          calculateGrandTotal();
-
-        } else {
-          // Add initial empty entry for new bill
-          addEntry();
-        }
         
+        // Check if editing an existing bill (might need special handling, but for now we just add one empty row)
+        // If edit_id is present, we might want to load it. For simplicity, we just add a blank row first.
+        let editSaleId = window.LSCUtils.getQueryParam('edit_id');
+        if (editSaleId) {
+            alert('Edit mode is currently restricted in the new spreadsheet view. Please delete and re-enter, or contact support.');
+            window.location.href = 'sales.html';
+            return;
+        }
+
+        addRow();
       } catch (err) {
         console.error(err);
         alert('Error loading data: ' + err.message);
       }
     });
 
-    function onCustSearch(val) {
-      const box = document.getElementById('cust-results');
-      if (!val.trim()) { box.classList.add('hidden'); return; }
-      
-      const term = val.toLowerCase();
-      const matches = customers.filter(c => (c.name||'').toLowerCase().includes(term) || (c.mobile||'').includes(term));
-      
-      if (matches.length === 0) {
-        box.innerHTML = '<div class="p-3 text-gray-400 text-xs">No match found</div>';
-      } else {
-        box.innerHTML = matches.map(c => `
-          <div onclick="selectCust(${c.id})" class="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-0">
-            <span class="font-bold text-slate-800">${c.name}</span>
-            <span class="text-slate-500 text-xs">${c.mobile || ''}</span>
-          </div>
-        `).join('');
-      }
-      box.classList.remove('hidden');
-    }
-
-    function selectCust(id) {
-      const c = customers.find(x => x.id === id);
-      if(!c) return;
-      selCustId = c.id;
-      document.getElementById('disp-cust-name').textContent = c.name;
-      document.getElementById('disp-cust-mobile').textContent = c.mobile || c.address || 'No details';
-      document.getElementById('customer-search-container').classList.add('hidden');
-      document.getElementById('selected-customer-display').classList.remove('hidden');
-      document.getElementById('cust-results').classList.add('hidden');
-    }
-
-    function clearCustomer() {
-      selCustId = null;
-      document.getElementById('cust-search').value = '';
-      document.getElementById('selected-customer-display').classList.add('hidden');
-      document.getElementById('customer-search-container').classList.remove('hidden');
+    function getCustomerOptions() {
+      let opts = '<option value="">-- Select Owner --</option>';
+      customers.forEach(c => {
+        opts += `<option value="${c.id}">${c.name}</option>`;
+      });
+      return opts;
     }
 
     function getMaterialOptions() {
-      return materials.map(m => `<option value="${m.id}" data-rate="${m.rate_per_unit || 0}" data-unit="${m.unit || 'Brass'}">${m.name}</option>`).join('');
+      let opts = '<option value="">-- Select Material --</option>';
+      materials.forEach(m => {
+        opts += `<option value="${m.id}" data-rate="${m.rate_per_unit||0}">${m.name}</option>`;
+      });
+      return opts;
     }
 
-    function addEntry(dateStr = null, vehStr = null, destStr = null, challanStr = null, autoAddItem = true) {
-      entryCounter++;
-      const eid = entryCounter;
-      const today = dateStr || window.LSCUtils.formatISO(new Date());
-      const v = vehStr || '';
-      const d = destStr || '';
-      const c = challanStr || '';
-
-      const template = `
-        <div id="entry-${eid}" class="entry-box bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-inner relative">
-          <button type="button" onclick="removeEntry(${eid})" class="absolute top-4 right-4 text-red-500 hover:text-red-700 font-bold text-xs" title="Remove Entry">&times; Remove Entry</button>
-          
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pr-24">
-            <div>
-              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Entry Date *</label>
-              <input type="date" required class="entry-date form-input text-xs px-3 h-9" value="${today}">
-            </div>
-            <div>
-              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Vehicle No</label>
-              <input type="text" placeholder="MH12AB1234" class="entry-vehicle form-input text-xs uppercase px-3 h-9" value="${v}">
-            </div>
-            <div>
-              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Destination</label>
-              <input type="text" placeholder="Site Location" class="entry-dest form-input text-xs px-3 h-9" value="${d}">
-            </div>
-            <div>
-              <label class="form-label text-[10px] uppercase text-gray-500 font-bold mb-1.5">Challan No</label>
-              <input type="text" placeholder="CH-101" class="entry-challan form-input text-xs uppercase px-3 h-9" value="${c}">
-            </div>
-          </div>
-          
-          <div class="items-container space-y-3" id="items-container-${eid}">
-            <!-- Items added here -->
-          </div>
-
-          <div class="mt-4 flex justify-between items-center border-t border-slate-200 pt-4">
-            <button type="button" onclick="addItem(${eid})" class="text-blue-600 text-xs font-bold hover:underline flex items-center gap-1">
-              + Add Item
-            </button>
-            <div class="text-emerald-700 font-black text-sm">
-              Entry Total: <span class="entry-total">₹0.00</span>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const div = document.createElement('div');
-      div.innerHTML = template.trim();
-      document.getElementById('entries-container').appendChild(div.firstChild);
+    function addRow() {
+      rowCount++;
+      const id = rowCount;
+      const tr = document.createElement('tr');
+      tr.id = `row-${id}`;
+      tr.className = "hover:bg-slate-50 transition-colors group";
       
-      if (autoAddItem) {
-        addItem(eid);
+      tr.innerHTML = `
+        <td class="p-1 border border-slate-200 text-center text-xs text-slate-400 font-medium">${id}</td>
+        <td class="p-1 border border-slate-200">
+          <div class="flex items-center gap-1">
+            <select required class="row-cust form-select text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm">
+              ${getCustomerOptions()}
+            </select>
+            <button type="button" onclick="openNewCustModal()" class="text-blue-500 hover:text-blue-700 p-1" title="Add New Owner">+</button>
+          </div>
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="text" class="row-veh form-input text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" placeholder="e.g. MH12">
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="text" class="row-dest form-input text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" placeholder="e.g. Pune">
+        </td>
+        <td class="p-1 border border-slate-200">
+          <select required class="row-mat form-select text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" onchange="onMaterialChange(${id})">
+            ${getMaterialOptions()}
+          </select>
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="number" class="row-trip form-input text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" value="1" min="1">
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="number" required step="0.001" min="0.001" class="row-qty form-input text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" placeholder="0" oninput="handleMathChange(${id})">
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="number" required step="0.01" min="0" class="row-rate form-input text-xs font-semibold py-1 px-2 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" placeholder="0" oninput="handleMathChange(${id})">
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="number" required step="0.01" min="0" class="row-total form-input text-[13px] font-bold py-1 px-2 h-7 w-full text-right border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" value="0.00" oninput="handleTotalChange(${id})">
+        </td>
+        <td class="p-1 border border-slate-200 text-center">
+          <button type="button" onclick="removeRow(${id})" class="text-slate-300 hover:text-red-500 font-bold transition-colors">&times;</button>
+        </td>
+      `;
+      document.getElementById('log-body').appendChild(tr);
+    }
+
+    function removeRow(id) {
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.remove();
         calculateGrandTotal();
       }
-      return eid;
     }
 
-    function removeEntry(eid) {
-      if (document.querySelectorAll('.entry-box').length <= 1) {
-        alert("You must have at least one entry.");
-        return;
-      }
-      document.getElementById(`entry-${eid}`).remove();
-      calculateGrandTotal();
-    }
-
-    function addItem(eid, initData = null) {
-      itemCounter++;
-      const iid = itemCounter;
-      
-      let matVal = initData ? initData.material_id : '';
-      let qtyVal = initData ? initData.qty : '';
-      let rateVal = initData ? initData.rate : '';
-      let unitVal = initData ? initData.unit : 'Brass';
-      let totalVal = initData && initData.amount !== undefined ? parseFloat(initData.amount).toFixed(2) : ((parseFloat(qtyVal) || 0) * (parseFloat(rateVal) || 0)).toFixed(2);
-      if (totalVal === "0.00" && !initData) totalVal = ""; // Leave blank for new item
-
-      // We must render options and pre-select if initData is present
-      const opts = materials.map(m => `<option value="${m.id}" data-rate="${m.rate_per_unit || 0}" data-unit="${m.unit || 'Brass'}" ${m.id == matVal ? 'selected' : ''}>${m.name}</option>`).join('');
-
-      const template = `
-        <div id="item-${iid}" class="item-row grid grid-cols-2 md:grid-cols-12 gap-3 items-end bg-white p-3 rounded border border-gray-100 shadow-sm relative pr-8">
-          <button type="button" onclick="removeItem(${iid})" class="absolute top-1/2 -translate-y-1/2 right-2 text-red-400 hover:text-red-600 font-bold text-lg" title="Remove Item">&times;</button>
-          
-          <div class="md:col-span-4">
-            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1">Material Type *</label>
-            <select required class="item-material form-select text-xs font-semibold text-slate-800 px-2 h-8" onchange="onMaterialChange(${iid})">
-              <option value="">-- Select --</option>
-              ${opts}
-            </select>
-          </div>
-          
-          <div class="md:col-span-3">
-            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1">Quantity *</label>
-            <div class="flex h-8">
-              <input type="number" required step="0.001" min="0.001" placeholder="0.00" class="item-qty form-input text-xs font-semibold rounded-r-none border-r-0 px-2 w-16 flex-1" value="${qtyVal}" oninput="handleRateQtyChange(this)">
-              <select class="item-unit form-select rounded-l-none bg-gray-100 text-[10px] px-1 w-14 font-bold border-l-gray-300">
-                <option value="Brass" ${unitVal === 'Brass' ? 'selected' : ''}>Brass</option>
-                <option value="Tonne" ${unitVal === 'Tonne' ? 'selected' : ''}>Tonne</option>
-                <option value="Trip" ${unitVal === 'Trip' ? 'selected' : ''}>Trip</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="md:col-span-2">
-            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1">Rate (₹) *</label>
-            <input type="number" required step="0.01" min="0" placeholder="0" class="item-rate form-input text-xs font-semibold px-2 h-8 w-full" value="${rateVal}" oninput="handleRateQtyChange(this)">
-          </div>
-          
-          <div class="md:col-span-3">
-            <label class="form-label text-[9px] uppercase text-gray-400 font-bold mb-1 text-right block">Total (₹)</label>
-            <input type="number" step="0.01" min="0" placeholder="0.00" class="item-total form-input text-[13px] font-bold px-2 h-8 w-full text-right" value="${totalVal}" oninput="handleTotalChange(this)">
-          </div>
-        </div>
-      `;
-
-      const div = document.createElement('div');
-      div.innerHTML = template.trim();
-      document.getElementById(`items-container-${eid}`).appendChild(div.firstChild);
-    }
-
-    function removeItem(iid) {
-      const row = document.getElementById(`item-${iid}`);
-      const entryBox = row.closest('.entry-box');
-      if (entryBox.querySelectorAll('.item-row').length <= 1) {
-        alert("An entry must have at least one material item.");
-        return;
-      }
-      row.remove();
-      calculateGrandTotal();
-    }
-
-    function onMaterialChange(iid) {
-      const row = document.getElementById(`item-${iid}`);
-      const sel = row.querySelector('.item-material');
+    function onMaterialChange(id) {
+      const row = document.getElementById(`row-${id}`);
+      const sel = row.querySelector('.row-mat');
       if (!sel.value) return;
       
       const opt = sel.options[sel.selectedIndex];
-      if (opt.dataset.rate) row.querySelector('.item-rate').value = opt.dataset.rate;
-      if (opt.dataset.unit) row.querySelector('.item-unit').value = opt.dataset.unit;
-      
-      calculateGrandTotal();
+      if (opt.dataset.rate) {
+        row.querySelector('.row-rate').value = opt.dataset.rate;
+      }
+      handleMathChange(id);
     }
 
-    function handleRateQtyChange(el) {
-      const row = el.closest('.item-row');
-      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-      const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-      const totalInput = row.querySelector('.item-total');
+    function handleMathChange(id) {
+      const row = document.getElementById(`row-${id}`);
+      const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+      const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
+      const totalInput = row.querySelector('.row-total');
       totalInput.value = (qty * rate).toFixed(2);
       calculateGrandTotal();
     }
 
-    function handleTotalChange(el) {
-      const row = el.closest('.item-row');
-      const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-      const total = parseFloat(el.value) || 0;
+    function handleTotalChange(id) {
+      const row = document.getElementById(`row-${id}`);
+      const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+      const total = parseFloat(row.querySelector('.row-total').value) || 0;
       if (qty > 0) {
-        row.querySelector('.item-rate').value = (total / qty).toFixed(2);
+        row.querySelector('.row-rate').value = (total / qty).toFixed(2);
       }
       calculateGrandTotal();
     }
 
     function calculateGrandTotal() {
       let grandTotal = 0;
-
-      const entries = document.querySelectorAll('.entry-box');
-      entries.forEach(entry => {
-        let entryTotal = 0;
-        const items = entry.querySelectorAll('.item-row');
-        
-        items.forEach(item => {
-          const total = parseFloat(item.querySelector('.item-total').value) || 0;
-          entryTotal += total;
-        });
-
-        entry.querySelector('.entry-total').textContent = window.LSCUtils.formatCurrency(entryTotal);
-        grandTotal += entryTotal;
+      const totals = document.querySelectorAll('.row-total');
+      totals.forEach(inp => {
+        grandTotal += parseFloat(inp.value) || 0;
       });
-
-      const gstVal = parseFloat(document.getElementById('adv-gst').value);
+      
+      const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
       if (gstVal > 0) {
         grandTotal += grandTotal * (gstVal / 100);
       }
-
+      
       document.getElementById('grand-total-display').textContent = window.LSCUtils.formatCurrency(grandTotal);
     }
 
-    async function handleCreateBill(e) {
+    async function handleSaveLog(e) {
       e.preventDefault();
-      if (!selCustId) {
-        alert("Please select or add a customer first!");
+      
+      const rows = document.querySelectorAll('#log-body tr');
+      if (rows.length === 0) {
+        alert("Please add at least one row.");
         return;
       }
-      
+
       const btn = document.getElementById('btn-submit');
       btn.disabled = true;
       btn.innerHTML = 'Saving...';
 
       try {
-        // Collect all nested entries
-        const entryBoxes = document.querySelectorAll('.entry-box');
-        let allItems = [];
-        let allVehicles = new Set();
-        let finalGrandTotal = 0;
-
-        entryBoxes.forEach(box => {
-          const date = box.querySelector('.entry-date').value;
-          const vehicle = box.querySelector('.entry-vehicle').value.trim();
-          const dest = box.querySelector('.entry-dest').value.trim();
-          const challan = box.querySelector('.entry-challan').value.trim();
-          if (vehicle) allVehicles.add(vehicle);
-
-          const extraParts = [];
-          if (vehicle) extraParts.push(`Veh: ${vehicle}`);
-          if (dest) extraParts.push(`Dest: ${dest}`);
-          if (challan) extraParts.push(`Ch.No: ${challan}`);
-          const extraStr = extraParts.length > 0 ? ', ' + extraParts.join(', ') : '';
-
-          const itemRows = box.querySelectorAll('.item-row');
-          itemRows.forEach(row => {
-            const matSel = row.querySelector('.item-material');
-            const matId = parseInt(matSel.value);
-            const matName = matSel.options[matSel.selectedIndex].text;
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
-            const total = parseFloat(row.querySelector('.item-total').value) || 0;
-            const unit = row.querySelector('.item-unit').value;
-            
-            finalGrandTotal += total;
-
-            // Flatten data for Supabase while preserving Entry context in the material name
-            allItems.push({
-              material_id: matId,
-              custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(date)}${extraStr})`,
-              quantity: qty,
-              unit: unit,
-              rate: rate,
-              amount: total
-            });
-          });
-        });
-
-        const gstVal = parseFloat(document.getElementById('adv-gst').value);
+        const logDate = document.getElementById('log-date').value;
+        const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
         const isGst = gstVal > 0;
-        const grandTotalWithGst = finalGrandTotal + (isGst ? finalGrandTotal * (gstVal/100) : 0);
-        
         const paySelection = document.getElementById('adv-pay').value; 
         const payStatus = paySelection === 'due' ? 'due' : 'full';
         const payMethod = paySelection === 'due' ? 'cash' : paySelection;
-        const amtPaid = payStatus === 'full' ? grandTotalWithGst : 0;
         
-        // Join all unique vehicles to store in parent notes
-        const notes = Array.from(allVehicles).join(', ');
+        // Group rows by customer
+        const custGroups = {};
 
-        const payload = {
-          customer_id: selCustId,
-          sale_date: window.LSCUtils.formatISO(new Date()),
-          gst_enabled: isGst,
-          gst_percent: isGst ? gstVal : 18,
-          items: allItems,
-          payment_mode: payStatus,
-          payment_method: payMethod,
-          amount_paid: amtPaid,
-          notes: notes
-        };
+        rows.forEach(row => {
+          const custSel = row.querySelector('.row-cust');
+          const custId = parseInt(custSel.value);
+          if (!custId) return; // Skip invalid rows (should be caught by required attribute though)
+          
+          if (!custGroups[custId]) custGroups[custId] = [];
+          
+          const veh = row.querySelector('.row-veh').value.trim();
+          const dest = row.querySelector('.row-dest').value.trim();
+          const matSel = row.querySelector('.row-mat');
+          const matId = parseInt(matSel.value);
+          const matName = matSel.options[matSel.selectedIndex].text;
+          const trip = row.querySelector('.row-trip').value.trim();
+          const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+          const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
+          const amount = parseFloat(row.querySelector('.row-total').value) || 0;
+          
+          const extraParts = [];
+          if (veh) extraParts.push(`Veh: ${veh}`);
+          if (dest) extraParts.push(`Dest: ${dest}`);
+          if (trip) extraParts.push(`Trip: ${trip}`);
+          const extraStr = extraParts.length > 0 ? ', ' + extraParts.join(', ') : '';
+          
+          custGroups[custId].push({
+            material_id: matId,
+            custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(logDate)}${extraStr})`,
+            quantity: qty,
+            unit: 'Brass', // Fixed as per UI requirement "Brass(Qty)"
+            rate: rate,
+            amount: amount,
+            vehicle_ref: veh // Storing to build notes
+          });
+        });
 
-        let res;
-        if (editSaleId) {
-            res = await window.LSCDB.updateSale(editSaleId, payload);
-            window.LSCUtils.showNotification('Bill updated successfully!', 'success');
-        } else {
-            res = await window.LSCDB.createSale(payload);
-            window.LSCUtils.showNotification('Nested Bill generated successfully!', 'success');
+        // Save each group as a separate sale
+        const salePromises = [];
+        for (const custId in custGroups) {
+           const items = custGroups[custId];
+           let groupTotal = 0;
+           let allVehicles = new Set();
+           
+           items.forEach(it => {
+             groupTotal += it.amount;
+             if (it.vehicle_ref) allVehicles.add(it.vehicle_ref);
+           });
+           
+           const grandTotalWithGst = groupTotal + (isGst ? groupTotal * (gstVal/100) : 0);
+           const amtPaid = payStatus === 'full' ? grandTotalWithGst : 0;
+           const notes = Array.from(allVehicles).join(', ');
+
+           const payload = {
+             customer_id: parseInt(custId),
+             sale_date: logDate,
+             gst_enabled: isGst,
+             gst_percent: isGst ? gstVal : 18,
+             items: items,
+             payment_mode: payStatus,
+             payment_method: payMethod,
+             amount_paid: amtPaid,
+             notes: notes
+           };
+           
+           salePromises.push(window.LSCDB.createSale(payload));
         }
+
+        await Promise.all(salePromises);
+        
+        window.LSCUtils.showNotification(`Successfully saved ${salePromises.length} invoices!`, 'success');
         
         setTimeout(() => {
-          window.location.href = 'sale-details.html?id=' + res.sale_id;
-        }, 500);
+          window.location.href = 'sales.html';
+        }, 800);
 
       } catch(err) {
         alert("Error: " + err.message);
         btn.disabled = false;
-        btn.innerHTML = 'Save All Entries & Print';
+        btn.innerHTML = 'Save Daily Log';
       }
     }
 
@@ -544,11 +416,20 @@
           address: document.getElementById('new-c-addr').value
         });
         customers.push(c);
-        selectCust(c.id);
+        
+        // Refresh all dropdowns
+        const selects = document.querySelectorAll('.row-cust');
+        selects.forEach(sel => {
+           const currentVal = sel.value;
+           sel.innerHTML = getCustomerOptions();
+           if (currentVal) sel.value = currentVal;
+        });
+        
         closeNewCustModal();
         window.LSCUtils.showNotification('Customer Added!', 'success');
       } catch(err) { alert(err.message); }
     }
   </script>
+
 </body>
 </html>
