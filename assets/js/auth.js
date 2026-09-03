@@ -106,7 +106,7 @@ window.LSCAuth = {
     const user = this.getCurrentUser();
     if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
       alert('Access Restricted: Admin privileges required.');
-      window.location.href = 'index.html';
+      window.location.href = 'sales.html';
       return false;
     }
 

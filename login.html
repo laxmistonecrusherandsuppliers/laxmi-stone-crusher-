@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1787171840">
+  <link rel="stylesheet" href="assets/css/style.css?v=1787172000">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-  <script src="assets/js/config.js?v=1787171840"></script>
-  <script src="assets/js/supabase-client.js?v=1787171840"></script>
-  <script src="assets/js/utils.js?v=1787171840"></script>
-  <script src="assets/js/auth.js?v=1787171840"></script>
+  <script src="assets/js/config.js?v=1787172000"></script>
+  <script src="assets/js/supabase-client.js?v=1787172000"></script>
+  <script src="assets/js/utils.js?v=1787172000"></script>
+  <script src="assets/js/auth.js?v=1787172000"></script>
 </head>
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
 
@@ -88,7 +88,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       // If already logged in, redirect to index
       if (window.LSCAuth.isAuthenticated()) {
-        window.location.href = 'index.html';
+        window.location.href = 'sales.html';
       }
 
       const form = document.getElementById('login-form');
@@ -106,7 +106,7 @@
 
         try {
           await window.LSCAuth.login(identifier, password);
-          window.location.href = 'index.html';
+          window.location.href = 'sales.html';
         } catch (err) {
           errAlert.textContent = err.message || 'Login failed. Please check credentials.';
           errAlert.classList.remove('hidden');
