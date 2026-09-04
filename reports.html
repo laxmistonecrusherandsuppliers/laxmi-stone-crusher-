@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Account Statement & Reports - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1787172400">
+  <link rel="stylesheet" href="assets/css/style.css?v=1787172500">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="assets/js/config.js?v=1787172400"></script>
-  <script src="assets/js/supabase-client.js?v=1787172400"></script>
-  <script src="assets/js/utils.js?v=1787172400"></script>
-  <script src="assets/js/auth.js?v=1787172400"></script>
-  <script src="assets/js/db-service.js?v=1787172400"></script>
-  <script src="assets/js/pdf-generator.js?v=1787172400"></script>
-  <script src="assets/js/layout.js?v=1787172400"></script>
+  <script src="assets/js/config.js?v=1787172500"></script>
+  <script src="assets/js/supabase-client.js?v=1787172500"></script>
+  <script src="assets/js/utils.js?v=1787172500"></script>
+  <script src="assets/js/auth.js?v=1787172500"></script>
+  <script src="assets/js/db-service.js?v=1787172500"></script>
+  <script src="assets/js/pdf-generator.js?v=1787172500"></script>
+  <script src="assets/js/layout.js?v=1787172500"></script>
 </head>
 <body>
   <div id="app">
@@ -34,38 +34,34 @@
 
     <!-- Filter Card (Hidden on Print) -->
     <div class="card mb-6 p-4 no-print">
-      <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
-        <div>
-          <label class="form-label">Report Type</label>
-          <select id="report-type" class="form-select text-xs" onchange="onReportTypeChange()">
-            <option value="customer-statement">Customer Bills Statement</option>
-            <option value="dispatch-log">Daily Dispatch Report (Spreadsheet Format)</option>
-            <option value="daily">Daily Sales Summary</option>
-            <option value="customer-wise">Customer-wise Sales</option>
-            <option value="material-wise">Material-wise Sales</option>
-            <option value="due">Outstanding Dues Report</option>
-            <option value="attendance">Staff Attendance Log</option>
-            <option value="staff-summary">Staff Summary (Payroll)</option>
+      <div class="flex flex-col md:flex-row gap-4 items-end justify-between">
+        <div class="flex items-center gap-4 w-full md:w-auto">
+          <!-- Hidden select to keep existing logic working without errors -->
+          <select id="report-type" class="hidden">
+            <option value="dispatch-log" selected>Daily Dispatch Report (Spreadsheet Format)</option>
           </select>
+          
+          <div id="customer-select-box" class="w-full md:w-64">
+            <label class="form-label text-xs">Customer Filter</label>
+            <select id="rep-customer-select" class="form-select text-sm py-1.5" onchange="runReport()">
+              <option value="">-- All Customers --</option>
+            </select>
+          </div>
         </div>
 
-        <div id="customer-select-box">
-          <label class="form-label">Select Customer Name</label>
-          <select id="rep-customer-select" class="form-select text-xs" onchange="runReport()">
-            <option value="">-- All Customers --</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">From Date</label>
-          <input type="date" id="rep-from" class="form-input text-xs" onchange="runReport()">
-        </div>
-        <div>
-          <label class="form-label">To Date</label>
-          <input type="date" id="rep-to" class="form-input text-xs" onchange="runReport()">
-        </div>
-        <div>
-          <button onclick="resetFilters()" class="btn btn-secondary text-xs w-full">Reset Filters</button>
+        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <button type="button" class="btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('yesterday')">Yesterday</button>
+          <button type="button" class="btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('today')">Today</button>
+          
+          <div class="flex items-center border border-slate-300 rounded-md bg-white shadow-sm ml-2">
+            <button type="button" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-r border-slate-200 focus:outline-none" onclick="shiftDate(-1)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <input type="date" id="rep-single-date" class="border-none text-sm w-36 text-center focus:ring-0 py-1.5" onchange="runReport()">
+            <button type="button" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l border-slate-200 focus:outline-none" onclick="shiftDate(1)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -220,14 +216,49 @@
 
       document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-IN');
 
-      const urlType = window.LSCUtils.getQueryParam('type');
       const urlCust = window.LSCUtils.getQueryParam('customer_id');
-
-      if (urlType) document.getElementById('report-type').value = urlType;
       if (urlCust) document.getElementById('rep-customer-select').value = urlCust;
 
+      // Set today by default
+      setDatePreset('today');
+      
       onReportTypeChange();
     });
+
+    
+    // --- Date Navigation Logic ---
+    function setDatePreset(preset) {
+      const dateInput = document.getElementById('rep-single-date');
+      const today = new Date();
+      if (preset === 'yesterday') {
+        today.setDate(today.getDate() - 1);
+      }
+      // format YYYY-MM-DD
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+      runReport();
+    }
+
+    function shiftDate(days) {
+      const dateInput = document.getElementById('rep-single-date');
+      let currentVal = dateInput.value;
+      if (!currentVal) {
+        setDatePreset('today');
+        return;
+      }
+      
+      const d = new Date(currentVal);
+      d.setDate(d.getDate() + days);
+      
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+      runReport();
+    }
+    // -----------------------------
 
     async function onReportTypeChange() {
       const type = document.getElementById('report-type').value;
@@ -262,8 +293,9 @@
 
     async function runReport() {
       const type = document.getElementById('report-type').value;
-      const from = document.getElementById('rep-from').value;
-      const to = document.getElementById('rep-to').value;
+      const singleDate = document.getElementById('rep-single-date').value;
+      const from = singleDate;
+      const to = singleDate;
       const entity_id = document.getElementById('rep-customer-select').value;
 
       document.getElementById('print-period').textContent = (from || to) ? `${from || 'Start'} to ${to || 'Today'}` : 'All Time';
