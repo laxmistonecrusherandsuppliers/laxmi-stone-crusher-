@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quick Bill Entry - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1787172000">
+  <link rel="stylesheet" href="assets/css/style.css?v=1787172100">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=1787172000"></script>
-  <script src="assets/js/supabase-client.js?v=1787172000"></script>
-  <script src="assets/js/utils.js?v=1787172000"></script>
-  <script src="assets/js/auth.js?v=1787172000"></script>
-  <script src="assets/js/db-service.js?v=1787172000"></script>
-  <script src="assets/js/layout.js?v=1787172000"></script>
+  <script src="assets/js/config.js?v=1787172100"></script>
+  <script src="assets/js/supabase-client.js?v=1787172100"></script>
+  <script src="assets/js/utils.js?v=1787172100"></script>
+  <script src="assets/js/auth.js?v=1787172100"></script>
+  <script src="assets/js/db-service.js?v=1787172100"></script>
+  <script src="assets/js/layout.js?v=1787172100"></script>
 </head>
 <body>
   
@@ -95,14 +95,22 @@
 
       <!-- Bottom Bar -->
       <div class="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-slate-200 p-4 z-30 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
-        <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div class="text-xs font-medium text-slate-500">
             Records will be grouped by Owner Name into separate invoices.
           </div>
-          <button type="submit" id="btn-submit" class="btn btn-primary shadow-lg shadow-blue-500/30 flex items-center gap-2 px-6">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-            Save Daily Log
-          </button>
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <button type="button" onclick="clearDraft()" id="btn-clear-draft" class="btn bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 flex-1 md:flex-none hidden">
+              Clear Draft
+            </button>
+            <button type="button" onclick="saveDraft()" id="btn-save-draft" class="btn bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 flex-1 md:flex-none">
+              Save as Draft
+            </button>
+            <button type="submit" id="btn-submit" class="btn btn-primary shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 px-6 flex-1 md:flex-none">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+              Save Daily Log
+            </button>
+          </div>
         </div>
       </div>
     </form>
@@ -176,7 +184,7 @@
             return;
         }
 
-        addRow();
+        loadDraft();
       } catch (err) {
         console.error(err);
         alert('Error loading data: ' + err.message);
@@ -300,7 +308,97 @@
       document.getElementById('grand-total-display').textContent = window.LSCUtils.formatCurrency(grandTotal);
     }
 
-    async function handleSaveLog(e) {
+    
+    // --- Draft Logic ---
+    function saveDraft() {
+      const rows = document.querySelectorAll('#log-body tr');
+      if (rows.length === 0) {
+        window.LSCUtils.showNotification('Nothing to save.', 'error');
+        return;
+      }
+      
+      const draftData = {
+        date: document.getElementById('log-date').value,
+        day: document.getElementById('log-day').value,
+        gst: document.getElementById('adv-gst').value,
+        pay: document.getElementById('adv-pay').value,
+        rows: []
+      };
+
+      rows.forEach(row => {
+        draftData.rows.push({
+          cust: row.querySelector('.row-cust').value,
+          veh: row.querySelector('.row-veh').value,
+          dest: row.querySelector('.row-dest').value,
+          mat: row.querySelector('.row-mat').value,
+          trip: row.querySelector('.row-trip').value,
+          qty: row.querySelector('.row-qty').value,
+          rate: row.querySelector('.row-rate').value,
+          total: row.querySelector('.row-total').value
+        });
+      });
+
+      localStorage.setItem('lsc_daily_log_draft', JSON.stringify(draftData));
+      document.getElementById('btn-clear-draft').classList.remove('hidden');
+      window.LSCUtils.showNotification('Draft saved successfully!', 'success');
+    }
+
+    function loadDraft() {
+      const draftJson = localStorage.getItem('lsc_daily_log_draft');
+      if (!draftJson) {
+         addRow(); // default
+         return;
+      }
+      
+      try {
+        const draft = JSON.parse(draftJson);
+        if (draft.date) document.getElementById('log-date').value = draft.date;
+        if (draft.day) document.getElementById('log-day').value = draft.day;
+        if (draft.gst) document.getElementById('adv-gst').value = draft.gst;
+        if (draft.pay) document.getElementById('adv-pay').value = draft.pay;
+        
+        document.getElementById('log-body').innerHTML = ''; // clear existing rows
+        rowCount = 0;
+        
+        draft.rows.forEach(r => {
+          addRow();
+          const lastRowId = rowCount;
+          const row = document.getElementById(`row-${lastRowId}`);
+          row.querySelector('.row-cust').value = r.cust;
+          row.querySelector('.row-veh').value = r.veh;
+          row.querySelector('.row-dest').value = r.dest;
+          row.querySelector('.row-mat').value = r.mat;
+          row.querySelector('.row-trip').value = r.trip;
+          row.querySelector('.row-qty').value = r.qty;
+          row.querySelector('.row-rate').value = r.rate;
+          row.querySelector('.row-total').value = r.total;
+        });
+        
+        calculateGrandTotal();
+        document.getElementById('btn-clear-draft').classList.remove('hidden');
+        window.LSCUtils.showNotification('Draft restored.', 'success');
+        
+      } catch (err) {
+        console.error("Failed to load draft", err);
+        localStorage.removeItem('lsc_daily_log_draft');
+        addRow();
+      }
+    }
+
+    function clearDraft() {
+       if (confirm('Are you sure you want to clear the draft? This cannot be undone.')) {
+         localStorage.removeItem('lsc_daily_log_draft');
+         document.getElementById('log-body').innerHTML = '';
+         rowCount = 0;
+         addRow();
+         calculateGrandTotal();
+         document.getElementById('btn-clear-draft').classList.add('hidden');
+         window.LSCUtils.showNotification('Draft cleared.', 'success');
+       }
+    }
+    // --- End Draft Logic ---
+
+async function handleSaveLog(e) {
       e.preventDefault();
       
       const rows = document.querySelectorAll('#log-body tr');
@@ -391,6 +489,7 @@
 
         await Promise.all(salePromises);
         
+        localStorage.removeItem('lsc_daily_log_draft');
         window.LSCUtils.showNotification(`Successfully saved ${salePromises.length} invoices!`, 'success');
         
         setTimeout(() => {
