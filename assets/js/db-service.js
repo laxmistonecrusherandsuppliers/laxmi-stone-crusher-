@@ -976,6 +976,103 @@ window.LSCDB = {
     const customers = this.getLocalData('customers', []);
     const materials = this.getLocalData('materials', []);
 
+    
+    if (type === 'dispatch-log') {
+      let dispatchData = [];
+      const supabase = this.getClient();
+      if (supabase) {
+         try {
+             let query = supabase.from('sale_items').select('*, sales!inner(*, customers(name))').order('id', { ascending: false });
+             if (from) query = query.gte('sales.sale_date', from);
+             if (to) query = query.lte('sales.sale_date', to);
+             if (customer_id) query = query.eq('sales.customer_id', customer_id);
+             
+             const { data, error } = await query.limit(500);
+             if (!error && data) {
+                 dispatchData = data.map(item => {
+                    const matObj = materials.find(m => m.id == item.material_id);
+                    const baseName = item.custom_material_name || (matObj ? matObj.name : null) || item.material_name || 'Stone Material';
+                    
+                    // Extract Veh, Dest, Challan/Trip from custom_material_name
+                    let veh = '', dest = '', challan = '';
+                    const regex = /\((.*?)\)/;
+                    const match = baseName.match(regex);
+                    let cleanMatName = baseName;
+                    
+                    if (match) {
+                        const inner = match[1];
+                        cleanMatName = baseName.replace(regex, '').trim();
+                        
+                        const parts = inner.split(',');
+                        parts.forEach(p => {
+                            if (p.includes('Veh:')) veh = p.split('Veh:')[1].trim();
+                            if (p.includes('Dest:')) dest = p.split('Dest:')[1].trim();
+                            if (p.includes('Trip:')) challan = p.split('Trip:')[1].trim();
+                            if (p.includes('Ch.No:')) challan = p.split('Ch.No:')[1].trim();
+                        });
+                    }
+
+                    return {
+                       owner_name: item.sales?.customers?.name || 'N/A',
+                       date: item.sales?.sale_date || '',
+                       vehicle_no: veh,
+                       destination: dest,
+                       challan_no: challan,
+                       material_type: cleanMatName,
+                       qty: parseFloat(item.quantity) || 0,
+                       rate: parseFloat(item.rate) || 0,
+                       total: parseFloat(item.amount) || 0
+                    };
+                 });
+                 
+                 // Sort by date descending
+                 dispatchData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                 return dispatchData;
+             }
+         } catch(e) { console.error('Error fetching dispatch log from Supabase', e); }
+      }
+      
+      // Fallback for local data (not strictly requested, but good practice)
+      sales.forEach(s => {
+         const c = customers.find(x => x.id == s.customer_id);
+         (s.items || []).forEach(item => {
+              const matObj = materials.find(m => m.id == item.material_id);
+              const baseName = item.custom_material_name || (matObj ? matObj.name : null) || item.material_name || 'Stone Material';
+              
+              let veh = '', dest = '', challan = '';
+              const regex = /\((.*?)\)/;
+              const match = baseName.match(regex);
+              let cleanMatName = baseName;
+              
+              if (match) {
+                  const inner = match[1];
+                  cleanMatName = baseName.replace(regex, '').trim();
+                  const parts = inner.split(',');
+                  parts.forEach(p => {
+                      if (p.includes('Veh:')) veh = p.split('Veh:')[1].trim();
+                      if (p.includes('Dest:')) dest = p.split('Dest:')[1].trim();
+                      if (p.includes('Trip:')) challan = p.split('Trip:')[1].trim();
+                      if (p.includes('Ch.No:')) challan = p.split('Ch.No:')[1].trim();
+                  });
+              }
+
+              dispatchData.push({
+                   owner_name: c ? c.name : 'N/A',
+                   date: s.sale_date,
+                   vehicle_no: veh,
+                   destination: dest,
+                   challan_no: challan,
+                   material_type: cleanMatName,
+                   qty: parseFloat(item.quantity) || 0,
+                   rate: parseFloat(item.rate) || 0,
+                   total: parseFloat(item.amount) || 0
+              });
+         });
+      });
+      dispatchData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      return dispatchData;
+    }
+
     if (type === 'customer-statement') {
       return sales.map(s => {
         const c = customers.find(item => item.id == s.customer_id);

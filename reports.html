@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Account Statement & Reports - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1787172100">
+  <link rel="stylesheet" href="assets/css/style.css?v=1787172200">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="assets/js/config.js?v=1787172100"></script>
-  <script src="assets/js/supabase-client.js?v=1787172100"></script>
-  <script src="assets/js/utils.js?v=1787172100"></script>
-  <script src="assets/js/auth.js?v=1787172100"></script>
-  <script src="assets/js/db-service.js?v=1787172100"></script>
-  <script src="assets/js/pdf-generator.js?v=1787172100"></script>
-  <script src="assets/js/layout.js?v=1787172100"></script>
+  <script src="assets/js/config.js?v=1787172200"></script>
+  <script src="assets/js/supabase-client.js?v=1787172200"></script>
+  <script src="assets/js/utils.js?v=1787172200"></script>
+  <script src="assets/js/auth.js?v=1787172200"></script>
+  <script src="assets/js/db-service.js?v=1787172200"></script>
+  <script src="assets/js/pdf-generator.js?v=1787172200"></script>
+  <script src="assets/js/layout.js?v=1787172200"></script>
 </head>
 <body>
   <div id="app">
@@ -39,6 +39,7 @@
           <label class="form-label">Report Type</label>
           <select id="report-type" class="form-select text-xs" onchange="onReportTypeChange()">
             <option value="customer-statement">Customer Bills Statement</option>
+            <option value="dispatch-log">Daily Dispatch Report (Spreadsheet Format)</option>
             <option value="daily">Daily Sales Summary</option>
             <option value="customer-wise">Customer-wise Sales</option>
             <option value="material-wise">Material-wise Sales</option>
@@ -351,7 +352,72 @@
       const custSelect = document.getElementById('rep-customer-select');
       const selectedCustText = custSelect.options[custSelect.selectedIndex]?.text || '';
 
-      if (type === 'customer-statement') {
+      
+      if (type === 'dispatch-log') {
+        currentReportTitle = `Daily Dispatch Report ${selectedCustText && selectedCustText !== '-- All Customers --' ? '(' + selectedCustText + ')' : ''}`;
+        label.textContent = currentReportTitle;
+        printHeading.textContent = currentReportTitle;
+
+        currentReportHeaders = ['Owner Name', 'Date', 'Vehicle No', 'Destination', 'Challan No / Trip', 'Material Type', 'Qty', 'Rate', 'Total'];
+
+        thead.innerHTML = `
+          <tr>
+            <th class="border border-slate-300 p-2 text-left">Owner Name</th>
+            <th class="border border-slate-300 p-2 text-left">Date</th>
+            <th class="border border-slate-300 p-2 text-left">Vehicle No</th>
+            <th class="border border-slate-300 p-2 text-left">Destination</th>
+            <th class="border border-slate-300 p-2 text-left">Challan No</th>
+            <th class="border border-slate-300 p-2 text-left">Material Type</th>
+            <th class="border border-slate-300 p-2 text-right">Qty</th>
+            <th class="border border-slate-300 p-2 text-right">Rate</th>
+            <th class="border border-slate-300 p-2 text-right">Total</th>
+          </tr>
+        `;
+
+        let totQty = 0, totAmt = 0;
+        currentReportRows = data.map(s => {
+          totQty += s.qty;
+          totAmt += s.total;
+          return [
+            s.owner_name,
+            window.LSCUtils.formatDate(s.date),
+            s.vehicle_no,
+            s.destination,
+            s.challan_no,
+            s.material_type,
+            s.qty.toFixed(2),
+            window.LSCUtils.formatCurrency(s.rate),
+            window.LSCUtils.formatCurrency(s.total)
+          ];
+        });
+
+        tbody.innerHTML = data.map(s => `
+          <tr>
+            <td class="border border-slate-300 p-2 text-sm font-semibold">${s.owner_name}</td>
+            <td class="border border-slate-300 p-2 text-sm">${window.LSCUtils.formatDate(s.date)}</td>
+            <td class="border border-slate-300 p-2 text-sm">${s.vehicle_no}</td>
+            <td class="border border-slate-300 p-2 text-sm">${s.destination}</td>
+            <td class="border border-slate-300 p-2 text-sm">${s.challan_no}</td>
+            <td class="border border-slate-300 p-2 text-sm">${s.material_type}</td>
+            <td class="border border-slate-300 p-2 text-sm text-right font-medium">${s.qty.toFixed(2)}</td>
+            <td class="border border-slate-300 p-2 text-sm text-right">${window.LSCUtils.formatCurrency(s.rate)}</td>
+            <td class="border border-slate-300 p-2 text-sm text-right font-bold">${window.LSCUtils.formatCurrency(s.total)}</td>
+          </tr>
+        `).join('');
+
+        tfoot.innerHTML = `
+          <tr class="bg-slate-100 font-bold border-t-2 border-slate-400">
+            <td colspan="6" class="border border-slate-300 p-2 text-right">GRAND TOTAL:</td>
+            <td class="border border-slate-300 p-2 text-right">${totQty.toFixed(2)}</td>
+            <td class="border border-slate-300 p-2 text-right">-</td>
+            <td class="border border-slate-300 p-2 text-right text-base text-gray-900">${window.LSCUtils.formatCurrency(totAmt)}</td>
+          </tr>
+        `;
+        
+        return;
+      }
+
+      else if (type === 'customer-statement') {
         currentReportTitle = `Customer Account Statement ${selectedCustText && selectedCustText !== '-- All Customers --' ? '(' + selectedCustText + ')' : ''}`;
         label.textContent = currentReportTitle;
         printHeading.textContent = currentReportTitle;
