@@ -41,18 +41,13 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 flex flex-wrap gap-4 items-center">
         <div class="flex items-center gap-2">
           <label class="text-[10px] font-bold text-gray-500 uppercase">Apply GST (18%)</label>
-          <select id="adv-gst" class="form-select h-8 text-xs font-semibold py-0">
+          <select id="adv-gst" class="form-select h-8 text-xs font-semibold py-0" onchange="recalcAllRows()">
             <option value="0">No (Plain)</option>
             <option value="18">Yes (18%)</option>
           </select>
         </div>
-        <div class="flex items-center gap-2 border-l border-gray-200 pl-4">
-          <label class="text-[10px] font-bold text-gray-500 uppercase">Payment Default</label>
-          <select id="adv-pay" class="form-select h-8 text-xs font-semibold py-0">
-            <option value="cash">Cash (Full)</option>
-            <option value="upi">UPI (Full)</option>
-            <option value="due">Keep Due</option>
-          </select>
+        <div class="text-[10px] text-gray-400 font-medium border-l border-gray-200 pl-4">
+          💡 Set payment mode per row (Cash / UPI / Due / Partial)
         </div>
       </div>
 
@@ -71,7 +66,10 @@
                 <th class="p-2 border border-slate-700 w-24">Brass(Qty)</th>
                 <th class="p-2 border border-slate-700 w-24">Rate</th>
                 <th class="p-2 border border-slate-700 w-28 text-right">Total</th>
-                <th class="p-2 border border-slate-700 w-10 text-center">Act</th>
+                <th class="p-2 border border-slate-700 min-w-[110px]">Payment</th>
+                <th class="p-2 border border-slate-700 w-28">Paid (₹)</th>
+                <th class="p-2 border border-slate-700 w-24 text-right">Due (₹)</th>
+                <th class="p-2 border border-slate-700 w-10 text-center">Del</th>
               </tr>
             </thead>
             <tbody id="log-body">
@@ -79,8 +77,7 @@
             </tbody>
             <tfoot>
               <tr class="bg-gray-50 border-t-2 border-gray-300">
-                <td colspan="8" class="p-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Grand Total (All Rows)</td>
-                <td class="p-3 text-right font-black text-gray-900 text-sm" id="grand-total-display">₹0.00</td>
+                <td colspan="12" class="p-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Grand Total (All Rows): <span class="text-gray-900 text-sm font-black" id="grand-total-display">₹0.00</span></td>
                 <td></td>
               </tr>
             </tfoot>
@@ -97,7 +94,7 @@
       <div class="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-slate-200 p-4 z-30 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div class="text-xs font-medium text-slate-500">
-            Records will be grouped by Owner Name into separate invoices.
+            Each row is saved as its own invoice. Set payment per row.
           </div>
           <div class="flex items-center gap-3 w-full md:w-auto">
             <button type="button" onclick="clearDraft()" id="btn-clear-draft" class="btn bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 flex-1 md:flex-none hidden">
@@ -158,7 +155,6 @@
     let customers = [];
     let rowCount = 0;
     
-    // Set default day and date
     document.addEventListener('DOMContentLoaded', async () => {
       window.LSCLayout.init('sale-new', 'Daily Dispatch Log');
       
@@ -175,13 +171,11 @@
         materials = mats;
         customers = custs;
         
-        // Check if editing an existing bill (might need special handling, but for now we just add one empty row)
-        // If edit_id is present, we might want to load it. For simplicity, we just add a blank row first.
         let editSaleId = window.LSCUtils.getQueryParam('edit_id');
         if (editSaleId) {
-            alert('Edit mode is currently restricted in the new spreadsheet view. Please delete and re-enter, or contact support.');
-            window.location.href = 'sales.html';
-            return;
+          alert('Edit mode is currently restricted in the new spreadsheet view. Please delete and re-enter, or contact support.');
+          window.location.href = 'sales.html';
+          return;
         }
 
         loadDraft();
@@ -247,6 +241,20 @@
         <td class="p-1 border border-slate-200">
           <input type="number" required step="0.01" min="0" class="row-total form-input text-[13px] font-bold py-1 px-2 h-7 w-full text-right border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" value="0.00" oninput="handleTotalChange(${id})">
         </td>
+        <td class="p-1 border border-slate-200">
+          <select class="row-pay form-select text-xs font-semibold py-1 px-1 h-7 w-full border-0 bg-transparent focus:ring-1 focus:ring-blue-500 rounded-sm" onchange="onPayChange(${id})">
+            <option value="cash">💵 Cash</option>
+            <option value="upi">📱 UPI</option>
+            <option value="due">📋 Due</option>
+            <option value="partial">⚡ Partial</option>
+          </select>
+        </td>
+        <td class="p-1 border border-slate-200">
+          <input type="number" step="0.01" min="0" class="row-paid form-input text-xs font-semibold py-1 px-2 h-7 w-full text-right border-0 bg-green-50 focus:ring-1 focus:ring-blue-500 rounded-sm" value="0.00" oninput="onPaidChange(${id})" readonly>
+        </td>
+        <td class="p-1 border border-slate-200 text-center align-middle">
+          <span class="row-due text-xs font-bold text-slate-400">₹0.00</span>
+        </td>
         <td class="p-1 border border-slate-200 text-center">
           <button type="button" onclick="removeRow(${id})" class="text-slate-300 hover:text-red-500 font-bold transition-colors">&times;</button>
         </td>
@@ -266,7 +274,6 @@
       const row = document.getElementById(`row-${id}`);
       const sel = row.querySelector('.row-mat');
       if (!sel.value) return;
-      
       const opt = sel.options[sel.selectedIndex];
       if (opt.dataset.rate) {
         row.querySelector('.row-rate').value = opt.dataset.rate;
@@ -278,9 +285,9 @@
       const row = document.getElementById(`row-${id}`);
       const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
       const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
-      const totalInput = row.querySelector('.row-total');
-      totalInput.value = (qty * rate).toFixed(2);
+      row.querySelector('.row-total').value = (qty * rate).toFixed(2);
       calculateGrandTotal();
+      onPayChange(id); // keep paid/due in sync with new total
     }
 
     function handleTotalChange(id) {
@@ -291,24 +298,75 @@
         row.querySelector('.row-rate').value = (total / qty).toFixed(2);
       }
       calculateGrandTotal();
+      onPayChange(id); // keep paid/due in sync
+    }
+
+    // Called when GST toggle changes — recalc all rows' payment display
+    function recalcAllRows() {
+      document.querySelectorAll('#log-body tr').forEach(row => {
+        const idMatch = row.id.match(/row-(\d+)/);
+        if (idMatch) onPayChange(parseInt(idMatch[1]));
+      });
+      calculateGrandTotal();
+    }
+
+    // --- Payment per row ---
+    function onPayChange(id) {
+      const row = document.getElementById(`row-${id}`);
+      if (!row) return;
+      const payMode = row.querySelector('.row-pay').value;
+      const total = parseFloat(row.querySelector('.row-total').value) || 0;
+      const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
+      const grandTotal = total + (gstVal > 0 ? total * (gstVal / 100) : 0);
+
+      const paidInput = row.querySelector('.row-paid');
+      const dueSpan = row.querySelector('.row-due');
+
+      if (payMode === 'cash' || payMode === 'upi') {
+        paidInput.value = grandTotal.toFixed(2);
+        paidInput.readOnly = true;
+        paidInput.className = paidInput.className.replace(/bg-\S+/g, '').trim() + ' bg-green-50';
+        dueSpan.textContent = '₹0.00';
+        dueSpan.className = 'row-due text-xs font-bold text-green-600';
+      } else if (payMode === 'due') {
+        paidInput.value = '0.00';
+        paidInput.readOnly = true;
+        paidInput.className = paidInput.className.replace(/bg-\S+/g, '').trim() + ' bg-red-50';
+        dueSpan.textContent = window.LSCUtils.formatCurrency(grandTotal);
+        dueSpan.className = 'row-due text-xs font-bold text-red-500';
+      } else if (payMode === 'partial') {
+        paidInput.readOnly = false;
+        paidInput.className = paidInput.className.replace(/bg-\S+/g, '').trim() + ' bg-amber-50';
+        const paid = parseFloat(paidInput.value) || 0;
+        const due = Math.max(0, grandTotal - paid);
+        dueSpan.textContent = window.LSCUtils.formatCurrency(due);
+        dueSpan.className = 'row-due text-xs font-bold text-amber-600';
+        paidInput.focus();
+      }
+    }
+
+    function onPaidChange(id) {
+      const row = document.getElementById(`row-${id}`);
+      const total = parseFloat(row.querySelector('.row-total').value) || 0;
+      const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
+      const grandTotal = total + (gstVal > 0 ? total * (gstVal / 100) : 0);
+      const paid = parseFloat(row.querySelector('.row-paid').value) || 0;
+      const due = Math.max(0, grandTotal - paid);
+      const dueSpan = row.querySelector('.row-due');
+      dueSpan.textContent = window.LSCUtils.formatCurrency(due);
     }
 
     function calculateGrandTotal() {
       let grandTotal = 0;
       const totals = document.querySelectorAll('.row-total');
-      totals.forEach(inp => {
-        grandTotal += parseFloat(inp.value) || 0;
-      });
-      
       const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
-      if (gstVal > 0) {
-        grandTotal += grandTotal * (gstVal / 100);
-      }
-      
+      totals.forEach(inp => {
+        const v = parseFloat(inp.value) || 0;
+        grandTotal += v + (gstVal > 0 ? v * (gstVal / 100) : 0);
+      });
       document.getElementById('grand-total-display').textContent = window.LSCUtils.formatCurrency(grandTotal);
     }
 
-    
     // --- Draft Logic ---
     function saveDraft() {
       const rows = document.querySelectorAll('#log-body tr');
@@ -321,20 +379,21 @@
         date: document.getElementById('log-date').value,
         day: document.getElementById('log-day').value,
         gst: document.getElementById('adv-gst').value,
-        pay: document.getElementById('adv-pay').value,
         rows: []
       };
 
       rows.forEach(row => {
         draftData.rows.push({
           cust: row.querySelector('.row-cust').value,
-          veh: row.querySelector('.row-veh').value,
+          veh:  row.querySelector('.row-veh').value,
           dest: row.querySelector('.row-dest').value,
-          mat: row.querySelector('.row-mat').value,
+          mat:  row.querySelector('.row-mat').value,
           trip: row.querySelector('.row-trip').value,
-          qty: row.querySelector('.row-qty').value,
+          qty:  row.querySelector('.row-qty').value,
           rate: row.querySelector('.row-rate').value,
-          total: row.querySelector('.row-total').value
+          total: row.querySelector('.row-total').value,
+          pay:  row.querySelector('.row-pay').value,
+          paid: row.querySelector('.row-paid').value
         });
       });
 
@@ -346,32 +405,34 @@
     function loadDraft() {
       const draftJson = localStorage.getItem('lsc_daily_log_draft');
       if (!draftJson) {
-         addRow(); // default
-         return;
+        addRow();
+        return;
       }
       
       try {
         const draft = JSON.parse(draftJson);
         if (draft.date) document.getElementById('log-date').value = draft.date;
-        if (draft.day) document.getElementById('log-day').value = draft.day;
-        if (draft.gst) document.getElementById('adv-gst').value = draft.gst;
-        if (draft.pay) document.getElementById('adv-pay').value = draft.pay;
+        if (draft.day)  document.getElementById('log-day').value  = draft.day;
+        if (draft.gst)  document.getElementById('adv-gst').value  = draft.gst;
         
-        document.getElementById('log-body').innerHTML = ''; // clear existing rows
+        document.getElementById('log-body').innerHTML = '';
         rowCount = 0;
         
         draft.rows.forEach(r => {
           addRow();
           const lastRowId = rowCount;
           const row = document.getElementById(`row-${lastRowId}`);
-          row.querySelector('.row-cust').value = r.cust;
-          row.querySelector('.row-veh').value = r.veh;
-          row.querySelector('.row-dest').value = r.dest;
-          row.querySelector('.row-mat').value = r.mat;
-          row.querySelector('.row-trip').value = r.trip;
-          row.querySelector('.row-qty').value = r.qty;
-          row.querySelector('.row-rate').value = r.rate;
-          row.querySelector('.row-total').value = r.total;
+          row.querySelector('.row-cust').value  = r.cust  || '';
+          row.querySelector('.row-veh').value   = r.veh   || '';
+          row.querySelector('.row-dest').value  = r.dest  || '';
+          row.querySelector('.row-mat').value   = r.mat   || '';
+          row.querySelector('.row-trip').value  = r.trip  || '1';
+          row.querySelector('.row-qty').value   = r.qty   || '';
+          row.querySelector('.row-rate').value  = r.rate  || '';
+          row.querySelector('.row-total').value = r.total || '0.00';
+          row.querySelector('.row-pay').value   = r.pay   || 'cash';
+          row.querySelector('.row-paid').value  = r.paid  || '0.00';
+          onPayChange(lastRowId); // sync colours and due display
         });
         
         calculateGrandTotal();
@@ -386,19 +447,19 @@
     }
 
     function clearDraft() {
-       if (confirm('Are you sure you want to clear the draft? This cannot be undone.')) {
-         localStorage.removeItem('lsc_daily_log_draft');
-         document.getElementById('log-body').innerHTML = '';
-         rowCount = 0;
-         addRow();
-         calculateGrandTotal();
-         document.getElementById('btn-clear-draft').classList.add('hidden');
-         window.LSCUtils.showNotification('Draft cleared.', 'success');
-       }
+      if (confirm('Are you sure you want to clear the draft? This cannot be undone.')) {
+        localStorage.removeItem('lsc_daily_log_draft');
+        document.getElementById('log-body').innerHTML = '';
+        rowCount = 0;
+        addRow();
+        calculateGrandTotal();
+        document.getElementById('btn-clear-draft').classList.add('hidden');
+        window.LSCUtils.showNotification('Draft cleared.', 'success');
+      }
     }
     // --- End Draft Logic ---
 
-async function handleSaveLog(e) {
+    async function handleSaveLog(e) {
       e.preventDefault();
       
       const rows = document.querySelectorAll('#log-body tr');
@@ -413,80 +474,77 @@ async function handleSaveLog(e) {
 
       try {
         const logDate = document.getElementById('log-date').value;
-        const gstVal = parseFloat(document.getElementById('adv-gst').value) || 0;
-        const isGst = gstVal > 0;
-        const paySelection = document.getElementById('adv-pay').value; 
-        const payStatus = paySelection === 'due' ? 'due' : 'full';
-        const payMethod = paySelection === 'due' ? 'cash' : paySelection;
-        
-        // Group rows by customer
-        const custGroups = {};
+        const gstVal  = parseFloat(document.getElementById('adv-gst').value) || 0;
+        const isGst   = gstVal > 0;
+
+        // Each row = its own separate invoice
+        const payloads = [];
 
         rows.forEach(row => {
-          const custSel = row.querySelector('.row-cust');
-          const custId = parseInt(custSel.value);
-          if (!custId) return; // Skip invalid rows (should be caught by required attribute though)
-          
-          if (!custGroups[custId]) custGroups[custId] = [];
-          
-          const veh = row.querySelector('.row-veh').value.trim();
-          const dest = row.querySelector('.row-dest').value.trim();
-          const matSel = row.querySelector('.row-mat');
-          const matId = parseInt(matSel.value);
-          const matName = matSel.options[matSel.selectedIndex].text;
-          const trip = row.querySelector('.row-trip').value.trim();
+          const custId = parseInt(row.querySelector('.row-cust').value);
+          if (!custId) return; // skip rows with no owner selected
+
           const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
-          const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
-          const amount = parseFloat(row.querySelector('.row-total').value) || 0;
-          
+          if (!qty) return; // skip empty rows
+
+          const veh     = row.querySelector('.row-veh').value.trim();
+          const dest    = row.querySelector('.row-dest').value.trim();
+          const matSel  = row.querySelector('.row-mat');
+          const matId   = parseInt(matSel.value) || null;
+          const matName = matSel.options[matSel.selectedIndex]?.text || 'Material';
+          const trip    = row.querySelector('.row-trip').value.trim();
+          const rate    = parseFloat(row.querySelector('.row-rate').value)  || 0;
+          const amount  = parseFloat(row.querySelector('.row-total').value) || 0;
+          const payMode = row.querySelector('.row-pay').value;   // cash | upi | due | partial
+          const amtPaid = parseFloat(row.querySelector('.row-paid').value) || 0;
+
           const extraParts = [];
-          if (veh) extraParts.push(`Veh: ${veh}`);
+          if (veh)  extraParts.push(`Veh: ${veh}`);
           if (dest) extraParts.push(`Dest: ${dest}`);
           if (trip) extraParts.push(`Trip: ${trip}`);
           const extraStr = extraParts.length > 0 ? ', ' + extraParts.join(', ') : '';
-          
-          custGroups[custId].push({
-            material_id: matId,
-            custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(logDate)}${extraStr})`,
-            quantity: qty,
-            unit: 'Brass', // Fixed as per UI requirement "Brass(Qty)"
-            rate: rate,
-            amount: amount,
-            vehicle_ref: veh // Storing to build notes
+
+          // Map UI payMode → createSale payment_mode / payment_method / amount_paid
+          // 'full' in createSale means paid = grand_total (handles GST correctly)
+          let payment_mode, payment_method, amount_paid_arg;
+          if (payMode === 'cash') {
+            payment_mode = 'full'; payment_method = 'cash'; amount_paid_arg = 0; // createSale sets paid=grand_total
+          } else if (payMode === 'upi') {
+            payment_mode = 'full'; payment_method = 'upi'; amount_paid_arg = 0;
+          } else if (payMode === 'due') {
+            payment_mode = 'due'; payment_method = 'cash'; amount_paid_arg = 0;
+          } else { // partial
+            payment_mode = 'partial'; payment_method = 'cash'; amount_paid_arg = amtPaid;
+          }
+
+          payloads.push({
+            customer_id:    custId,
+            sale_date:      logDate,
+            gst_enabled:    isGst,
+            gst_percent:    isGst ? gstVal : 18,
+            items: [{
+              material_id:          matId,
+              custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(logDate)}${extraStr})`,
+              quantity:             qty,
+              unit:                 'Brass',
+              rate:                 rate,
+              amount:               amount
+            }],
+            payment_mode,
+            payment_method,
+            amount_paid: amount_paid_arg,
+            notes: [veh, dest].filter(Boolean).join(', ')
           });
         });
 
-        // Save each group as a separate sale SEQUENTIALLY
-        // (parallel saves cause invoice number collisions — all read the same number before any updates it)
-        const payloads = [];
-        for (const custId in custGroups) {
-           const items = custGroups[custId];
-           let groupTotal = 0;
-           let allVehicles = new Set();
-           
-           items.forEach(it => {
-             groupTotal += it.amount;
-             if (it.vehicle_ref) allVehicles.add(it.vehicle_ref);
-           });
-           
-           const grandTotalWithGst = groupTotal + (isGst ? groupTotal * (gstVal/100) : 0);
-           const amtPaid = payStatus === 'full' ? grandTotalWithGst : 0;
-           const notes = Array.from(allVehicles).join(', ');
-
-           payloads.push({
-             customer_id: parseInt(custId),
-             sale_date: logDate,
-             gst_enabled: isGst,
-             gst_percent: isGst ? gstVal : 18,
-             items: items,
-             payment_mode: payStatus,
-             payment_method: payMethod,
-             amount_paid: amtPaid,
-             notes: notes
-           });
+        if (payloads.length === 0) {
+          alert("No valid rows to save. Please fill Owner and Qty.");
+          btn.disabled = false;
+          btn.innerHTML = 'Save Daily Log';
+          return;
         }
 
-        // Save one at a time so each gets a unique invoice number
+        // Save one at a time — sequential so each gets its own unique invoice number
         let savedCount = 0;
         for (const payload of payloads) {
           await window.LSCDB.createSale(payload);
@@ -494,7 +552,7 @@ async function handleSaveLog(e) {
         }
         
         localStorage.removeItem('lsc_daily_log_draft');
-        window.LSCUtils.showNotification(`Successfully saved ${savedCount} invoices!`, 'success');
+        window.LSCUtils.showNotification(`Successfully saved ${savedCount} invoice${savedCount > 1 ? 's' : ''}!`, 'success');
         
         setTimeout(() => {
           window.location.href = 'sales.html';
@@ -507,25 +565,25 @@ async function handleSaveLog(e) {
       }
     }
 
-    function openNewCustModal() { document.getElementById('modal-customer').classList.remove('hidden'); }
+    function openNewCustModal()  { document.getElementById('modal-customer').classList.remove('hidden'); }
     function closeNewCustModal() { document.getElementById('modal-customer').classList.add('hidden'); document.getElementById('new-cust-form').reset(); }
     
     async function handleCreateCustomer(e) {
       e.preventDefault();
       try {
         const c = await window.LSCDB.addCustomer({
-          name: document.getElementById('new-c-name').value,
-          mobile: document.getElementById('new-c-mob').value,
+          name:    document.getElementById('new-c-name').value,
+          mobile:  document.getElementById('new-c-mob').value,
           address: document.getElementById('new-c-addr').value
         });
         customers.push(c);
         
-        // Refresh all dropdowns
+        // Refresh all owner dropdowns, preserving current selections
         const selects = document.querySelectorAll('.row-cust');
         selects.forEach(sel => {
-           const currentVal = sel.value;
-           sel.innerHTML = getCustomerOptions();
-           if (currentVal) sel.value = currentVal;
+          const currentVal = sel.value;
+          sel.innerHTML = getCustomerOptions();
+          if (currentVal) sel.value = currentVal;
         });
         
         closeNewCustModal();
