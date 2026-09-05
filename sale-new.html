@@ -456,8 +456,9 @@ async function handleSaveLog(e) {
           });
         });
 
-        // Save each group as a separate sale
-        const salePromises = [];
+        // Save each group as a separate sale SEQUENTIALLY
+        // (parallel saves cause invoice number collisions — all read the same number before any updates it)
+        const payloads = [];
         for (const custId in custGroups) {
            const items = custGroups[custId];
            let groupTotal = 0;
@@ -472,7 +473,7 @@ async function handleSaveLog(e) {
            const amtPaid = payStatus === 'full' ? grandTotalWithGst : 0;
            const notes = Array.from(allVehicles).join(', ');
 
-           const payload = {
+           payloads.push({
              customer_id: parseInt(custId),
              sale_date: logDate,
              gst_enabled: isGst,
@@ -482,15 +483,18 @@ async function handleSaveLog(e) {
              payment_method: payMethod,
              amount_paid: amtPaid,
              notes: notes
-           };
-           
-           salePromises.push(window.LSCDB.createSale(payload));
+           });
         }
 
-        await Promise.all(salePromises);
+        // Save one at a time so each gets a unique invoice number
+        let savedCount = 0;
+        for (const payload of payloads) {
+          await window.LSCDB.createSale(payload);
+          savedCount++;
+        }
         
         localStorage.removeItem('lsc_daily_log_draft');
-        window.LSCUtils.showNotification(`Successfully saved ${salePromises.length} invoices!`, 'success');
+        window.LSCUtils.showNotification(`Successfully saved ${savedCount} invoices!`, 'success');
         
         setTimeout(() => {
           window.location.href = 'sales.html';

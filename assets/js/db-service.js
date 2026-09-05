@@ -172,7 +172,7 @@ window.LSCDB = {
       if (supabase) {
         let query = supabase
           .from('sales')
-          .select('*, customers(name, mobile), sale_items(*)')
+          .select('*, customers(name, mobile)')
           .order('sale_date', { ascending: false })
           .order('id', { ascending: false });
 
@@ -180,11 +180,25 @@ window.LSCDB = {
         if (to) query = query.lte('sale_date', to);
         if (customer_id) query = query.eq('customer_id', customer_id);
 
-        const { data, error } = await query.limit(100);
-        if (!error && data) {
+        const { data, error } = await query.limit(200);
+        if (!error && data && data.length > 0) {
+          // Fetch all sale_items for these sales in a single separate query
+          // so we get ALL items (not limited by PostgREST embedded join row limit)
+          const saleIds = data.map(s => s.id);
+          const { data: allItems } = await supabase
+            .from('sale_items')
+            .select('*')
+            .in('sale_id', saleIds);
+
+          const itemsBySaleId = {};
+          (allItems || []).forEach(item => {
+            if (!itemsBySaleId[item.sale_id]) itemsBySaleId[item.sale_id] = [];
+            itemsBySaleId[item.sale_id].push(item);
+          });
+
           return data.map(s => ({
             ...s,
-            items: s.sale_items || [],
+            items: itemsBySaleId[s.id] || [],
             customer_name: s.customers?.name || 'N/A',
             customer_mobile: s.customers?.mobile || ''
           }));
