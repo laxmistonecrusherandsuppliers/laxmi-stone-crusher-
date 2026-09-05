@@ -106,42 +106,83 @@
 
     <!-- Record Payment / Settle Due Modal -->
     <div id="modal-payment" class="modal-overlay hidden">
-      <div class="modal">
+      <div class="modal max-w-lg">
         <div class="modal-header">
-          <h3 class="font-semibold text-gray-900">Settle Customer Bill Due</h3>
-          <button type="button" onclick="closePaymentModal()" class="text-gray-400">&times;</button>
+          <div>
+            <h3 class="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+              <span>💰 Settle Customer Dues</span>
+            </h3>
+            <p class="text-xs text-gray-500" id="modal-cust-subtitle">Customer: Loading...</p>
+          </div>
+          <button type="button" onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
         </div>
         <form id="payment-form" onsubmit="handleRecordPayment(event)">
           <div class="modal-body space-y-4">
-            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs">
-              <span class="text-amber-800 font-medium">Invoice Number: </span>
-              <strong id="modal-inv-no" class="text-gray-900 text-xs"></strong>
-              <div class="mt-1">
-                <span class="text-amber-800 font-medium">Outstanding Balance: </span>
-                <strong id="modal-due-amt" class="text-red-600 text-sm font-bold">₹0.00</strong>
+            <!-- Total Due of Person (Highlighted Banner) -->
+            <div class="p-3 bg-red-50 rounded-xl border border-red-200 flex justify-between items-center">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-red-700 block">Total Due of Person (All Bills)</span>
+                <span class="text-xs text-red-900 font-bold" id="modal-person-name">Customer</span>
+                <span class="text-[11px] text-red-600 block mt-0.5" id="modal-person-unpaid-count">Calculating...</span>
+              </div>
+              <div class="text-right">
+                <div class="text-xl font-black text-red-600" id="modal-person-total-due">₹0.00</div>
+                <div class="text-[10px] text-gray-500 font-medium">Total Ledger Balance</div>
               </div>
             </div>
-            <div>
-              <label class="form-label">Payment Amount (₹) <span class="text-red-500">*</span></label>
-              <input type="number" step="0.01" id="pay-amt" required min="0.01" class="form-input" placeholder="0.00">
+
+            <!-- List of All Due Bills for this Person -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <div class="bg-gray-50 px-3 py-1.5 border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-600 flex justify-between items-center">
+                <span>All Pending Bills of Person</span>
+                <span class="text-[10px] text-gray-500 font-normal">Click any row to select</span>
+              </div>
+              <div class="max-h-40 overflow-y-auto divide-y divide-gray-100 text-xs" id="cust-due-bills-list">
+                <!-- Dynamically populated -->
+              </div>
             </div>
+
+            <!-- Settle Target Selector -->
             <div>
-              <label class="form-label">Payment Method</label>
-              <select id="pay-method" class="form-select">
-                <option value="cash">Cash</option>
-                <option value="upi">UPI / GPay / PhonePe</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="cheque">Cheque</option>
+              <label class="form-label text-xs font-semibold text-gray-700">Apply Payment Towards:</label>
+              <select id="pay-target-select" class="form-select text-xs font-semibold" onchange="onPayTargetChange()">
+                <!-- Options: 'selected', 'all', or specific bill IDs -->
               </select>
             </div>
+
+            <!-- Payment Amount with Quick Fill Chips -->
             <div>
-              <label class="form-label">Payment Notes</label>
-              <input type="text" id="pay-notes" class="form-input" placeholder="e.g. Customer Ledger Settlement / Cash Receipt">
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label text-xs font-semibold text-gray-700 mb-0">Payment Amount (₹) <span class="text-red-500">*</span></label>
+                <div class="flex gap-2 text-[11px]">
+                  <button type="button" onclick="fillBillDue()" id="btn-fill-bill" class="text-blue-600 hover:underline font-semibold">Pay This Bill (₹0)</button>
+                  <span class="text-gray-300">|</span>
+                  <button type="button" onclick="fillTotalPersonDue()" id="btn-fill-all" class="text-red-600 hover:underline font-bold">Pay All Dues (₹0)</button>
+                </div>
+              </div>
+              <input type="number" step="0.01" id="pay-amt" required min="0.01" class="form-input text-sm font-bold text-gray-900" placeholder="0.00">
+            </div>
+
+            <!-- Payment Method & Notes -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Payment Method</label>
+                <select id="pay-method" class="form-select text-xs">
+                  <option value="cash">💵 Cash</option>
+                  <option value="upi">📱 UPI / GPay / PhonePe</option>
+                  <option value="bank">🏦 Bank Transfer</option>
+                  <option value="cheque">📝 Cheque</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Payment Notes / Ref</label>
+                <input type="text" id="pay-notes" class="form-input text-xs" placeholder="e.g. Received via GPay / Cash">
+              </div>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" onclick="closePaymentModal()" class="btn btn-secondary text-xs">Cancel</button>
-            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs">Confirm Payment Settlement</button>
+            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs font-bold px-5">Confirm Payment Settlement</button>
           </div>
         </form>
       </div>
@@ -260,51 +301,207 @@
       }
     }
 
-    function openCustomerSettleModal() {
-      // Find oldest unpaid sale for this customer
-      const unpaidSale = currentSalesList.find(s => parseFloat(s.amount_due) > 0);
-      if (unpaidSale) {
-        openSettleModal(unpaidSale.id);
+    let selectedSaleForSettle = null;
+    let personDueBills = [];
+    let personTotalDue = 0;
+
+    async function openCustomerSettleModal() {
+      let custSales = [];
+      try {
+        custSales = await window.LSCDB.getSales({ customer_id: currentCustomerId });
+      } catch (e) {
+        custSales = currentSalesList;
+      }
+      const unpaidSales = custSales.filter(s => (parseFloat(s.amount_due) || 0) > 0.01);
+      if (unpaidSales.length > 0) {
+        openSettleModal(unpaidSales[0].id);
       } else {
         alert('No unpaid bills found for this customer.');
       }
     }
 
-    function openSettleModal(saleId) {
-      selectedSaleForSettle = currentSalesList.find(s => s.id == saleId);
-      if (!selectedSaleForSettle) return;
+    async function openSettleModal(saleId) {
+      const custName = document.getElementById('cust-profile-title').textContent || 'Customer';
 
-      document.getElementById('modal-inv-no').textContent = selectedSaleForSettle.invoice_number;
-      document.getElementById('modal-due-amt').textContent = window.LSCUtils.formatCurrency(selectedSaleForSettle.amount_due);
-      document.getElementById('pay-amt').value = selectedSaleForSettle.amount_due;
+      document.getElementById('modal-cust-subtitle').textContent = `Customer: ${custName}`;
+      document.getElementById('modal-person-name').textContent = custName;
+      document.getElementById('modal-person-total-due').textContent = 'Loading...';
+      document.getElementById('modal-person-unpaid-count').textContent = 'Fetching pending bills...';
+      document.getElementById('cust-due-bills-list').innerHTML = '<div class="p-3 text-center text-gray-400 text-xs">Loading all dues of person...</div>';
       document.getElementById('modal-payment').classList.remove('hidden');
+
+      let custSales = [];
+      try {
+        custSales = await window.LSCDB.getSales({ customer_id: currentCustomerId });
+      } catch (e) {
+        custSales = currentSalesList;
+      }
+
+      personDueBills = custSales.filter(s => (parseFloat(s.amount_due) || 0) > 0.01);
+      selectedSaleForSettle = custSales.find(s => s.id == saleId) || personDueBills[0];
+
+      if (selectedSaleForSettle && !personDueBills.some(s => s.id == selectedSaleForSettle.id) && (parseFloat(selectedSaleForSettle.amount_due) || 0) > 0.01) {
+        personDueBills.unshift(selectedSaleForSettle);
+      }
+      personDueBills.sort((a, b) => new Date(a.sale_date) - new Date(b.sale_date));
+
+      personTotalDue = personDueBills.reduce((sum, s) => sum + (parseFloat(s.amount_due) || 0), 0);
+
+      document.getElementById('modal-person-total-due').textContent = window.LSCUtils.formatCurrency(personTotalDue);
+      document.getElementById('modal-person-unpaid-count').textContent = `${personDueBills.length} pending bill(s) in total`;
+
+      renderModalBillsList();
+      populatePayTargets();
+
+      const thisDue = selectedSaleForSettle ? (parseFloat(selectedSaleForSettle.amount_due) || 0) : personTotalDue;
+      document.getElementById('pay-amt').value = thisDue.toFixed(2);
+      document.getElementById('btn-fill-bill').textContent = `Pay This Bill (${window.LSCUtils.formatCurrency(thisDue)})`;
+      document.getElementById('btn-fill-all').textContent = `Pay All Dues (${window.LSCUtils.formatCurrency(personTotalDue)})`;
+    }
+
+    function renderModalBillsList() {
+      const billsListEl = document.getElementById('cust-due-bills-list');
+      if (personDueBills.length === 0) {
+        billsListEl.innerHTML = '<div class="p-3 text-center text-gray-400 text-xs">No pending dues found for this customer.</div>';
+        return;
+      }
+
+      billsListEl.innerHTML = personDueBills.map(b => {
+        const isSelected = selectedSaleForSettle && b.id == selectedSaleForSettle.id;
+        return `
+          <div class="p-2.5 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50/70 border-l-4 border-blue-500' : ''}" onclick="selectBillInModal(${b.id})">
+            <div>
+              <div class="font-bold text-gray-900 flex items-center gap-1.5">
+                <span>Challan #${b.invoice_number}</span>
+                ${isSelected ? '<span class="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">Selected</span>' : ''}
+              </div>
+              <div class="text-[11px] text-gray-500">${window.LSCUtils.formatDate(b.sale_date)} • Total: ${window.LSCUtils.formatCurrency(b.grand_total)}</div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-red-600">${window.LSCUtils.formatCurrency(b.amount_due)}</div>
+              <div class="text-[10px] text-gray-400">Due</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populatePayTargets() {
+      const targetSelect = document.getElementById('pay-target-select');
+      let targetOpts = '';
+      if (selectedSaleForSettle) {
+        targetOpts += `<option value="selected">Selected Bill: #${selectedSaleForSettle.invoice_number} (Due: ${window.LSCUtils.formatCurrency(selectedSaleForSettle.amount_due)})</option>`;
+      }
+      if (personDueBills.length > 1) {
+        targetOpts += `<option value="all">⚡ Auto-settle across ALL ${personDueBills.length} pending bills (Total Due: ${window.LSCUtils.formatCurrency(personTotalDue)})</option>`;
+      }
+      personDueBills.forEach(b => {
+        if (!selectedSaleForSettle || b.id != selectedSaleForSettle.id) {
+          targetOpts += `<option value="${b.id}">Bill: #${b.invoice_number} (Due: ${window.LSCUtils.formatCurrency(b.amount_due)})</option>`;
+        }
+      });
+      targetSelect.innerHTML = targetOpts;
+      targetSelect.value = "selected";
+    }
+
+    function selectBillInModal(saleId) {
+      const bill = personDueBills.find(b => b.id == saleId);
+      if (!bill) return;
+      selectedSaleForSettle = bill;
+      renderModalBillsList();
+      populatePayTargets();
+
+      const thisDue = parseFloat(selectedSaleForSettle.amount_due) || 0;
+      document.getElementById('pay-amt').value = thisDue.toFixed(2);
+      document.getElementById('btn-fill-bill').textContent = `Pay This Bill (${window.LSCUtils.formatCurrency(thisDue)})`;
+    }
+
+    function onPayTargetChange() {
+      const target = document.getElementById('pay-target-select').value;
+      if (target === 'all') {
+        document.getElementById('pay-amt').value = personTotalDue.toFixed(2);
+      } else if (target === 'selected' && selectedSaleForSettle) {
+        const thisDue = parseFloat(selectedSaleForSettle.amount_due) || 0;
+        document.getElementById('pay-amt').value = thisDue.toFixed(2);
+      } else {
+        const bill = personDueBills.find(b => b.id == target);
+        if (bill) {
+          selectedSaleForSettle = bill;
+          renderModalBillsList();
+          document.getElementById('pay-amt').value = (parseFloat(bill.amount_due) || 0).toFixed(2);
+        }
+      }
+    }
+
+    function fillBillDue() {
+      document.getElementById('pay-target-select').value = "selected";
+      const thisDue = selectedSaleForSettle ? (parseFloat(selectedSaleForSettle.amount_due) || 0) : 0;
+      document.getElementById('pay-amt').value = thisDue.toFixed(2);
+    }
+
+    function fillTotalPersonDue() {
+      if (personDueBills.length > 1) {
+        document.getElementById('pay-target-select').value = "all";
+      }
+      document.getElementById('pay-amt').value = personTotalDue.toFixed(2);
     }
 
     function closePaymentModal() {
       document.getElementById('modal-payment').classList.add('hidden');
       document.getElementById('payment-form').reset();
       selectedSaleForSettle = null;
+      personDueBills = [];
+      personTotalDue = 0;
     }
 
     async function handleRecordPayment(e) {
       e.preventDefault();
-      if (!selectedSaleForSettle) return;
+      if (!selectedSaleForSettle && personDueBills.length === 0) return;
 
       const saveBtn = document.getElementById('save-pay-btn');
       saveBtn.disabled = true;
       saveBtn.textContent = 'Processing Settlement...';
 
       try {
-        const amt = document.getElementById('pay-amt').value;
-        const method = document.getElementById('pay-method').value;
-        const notes = document.getElementById('pay-notes').value;
+        const amt = parseFloat(document.getElementById('pay-amt').value);
+        if (!amt || amt <= 0) throw new Error('Please enter a valid amount.');
 
-        await window.LSCDB.addPayment(selectedSaleForSettle.id, { amount_paid: amt, payment_method: method, notes });
-        window.LSCUtils.showNotification('Payment settled successfully!', 'success');
+        const method = document.getElementById('pay-method').value;
+        const notes = document.getElementById('pay-notes').value.trim();
+        const target = document.getElementById('pay-target-select').value;
+
+        if (target === 'all') {
+          let remaining = amt;
+          let settledCount = 0;
+          for (const bill of personDueBills) {
+            if (remaining <= 0.001) break;
+            const due = parseFloat(bill.amount_due) || 0;
+            const payPortion = Math.min(remaining, due);
+            if (payPortion > 0) {
+              await window.LSCDB.addPayment(bill.id, {
+                amount_paid: payPortion,
+                payment_method: method,
+                notes: notes ? `${notes} (Multi-bill settlement)` : 'Multi-bill customer settlement'
+              });
+              remaining -= payPortion;
+              settledCount++;
+            }
+          }
+          window.LSCUtils.showNotification(`Successfully settled ${window.LSCUtils.formatCurrency(amt)} across ${settledCount} bill(s)!`, 'success');
+        } else {
+          const targetSaleId = (target === 'selected' && selectedSaleForSettle) ? selectedSaleForSettle.id : parseInt(target);
+          await window.LSCDB.addPayment(targetSaleId, {
+            amount_paid: amt,
+            payment_method: method,
+            notes: notes
+          });
+          window.LSCUtils.showNotification('Payment recorded successfully!', 'success');
+        }
+
         closePaymentModal();
         await loadCustomerData();
       } catch (err) {
-        alert(err.message);
+        alert('Payment settlement error: ' + err.message);
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Confirm Payment Settlement';
