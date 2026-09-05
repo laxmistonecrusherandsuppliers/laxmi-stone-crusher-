@@ -334,64 +334,66 @@ window.LSCDB = {
       due = Math.max(0, grand_total - actual_paid);
     }
 
+    // Map 'full' payment_mode to the actual payment method used (cash/upi/bank)
+    // 'full' is a logical state, not a valid DB enum — use payment_method as the mode when fully paid
+    const dbPaymentMode = (payment_mode === 'full') ? (payment_method || 'cash') : payment_mode;
+
     const user = window.LSCAuth.getCurrentUser();
     let newSaleId = Date.now();
 
-    try {
-      if (supabase) {
-        const { data: saleRes, error: saleErr } = await supabase
-          .from('sales')
-          .insert([{
-            invoice_number,
-            customer_id,
-            sale_date: sale_date || new Date().toISOString().split('T')[0],
-            gst_enabled: !!gst_enabled,
-            gst_percent,
-            subtotal,
-            gst_amount,
-            grand_total,
-            payment_mode,
-            amount_paid: actual_paid,
-            amount_due: due,
-            notes,
-            created_by: user?.id || null
-          }])
-          .select();
+    if (supabase) {
+      const { data: saleRes, error: saleErr } = await supabase
+        .from('sales')
+        .insert([{
+          invoice_number,
+          customer_id,
+          sale_date: sale_date || new Date().toISOString().split('T')[0],
+          gst_enabled: !!gst_enabled,
+          gst_percent,
+          subtotal,
+          gst_amount,
+          grand_total,
+          payment_mode: dbPaymentMode,
+          amount_paid: actual_paid,
+          amount_due: due,
+          notes,
+          created_by: user?.id || null
+        }])
+        .select();
 
-        if (!saleErr && saleRes && saleRes.length > 0) {
-          newSaleId = saleRes[0].id;
-          const itemsToInsert = items.map(item => ({
-            sale_id: newSaleId,
-            material_id: item.material_id || null,
-            custom_material_name: item.custom_material_name || null,
-            quantity: parseFloat(item.quantity),
-            unit: item.unit || 'Tonne',
-            rate: parseFloat(item.rate),
-            amount: item.amount !== undefined ? parseFloat(item.amount) : (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
-          }));
+      if (saleErr) throw new Error('Failed to save sale: ' + (saleErr.message || JSON.stringify(saleErr)));
+      if (!saleRes || saleRes.length === 0) throw new Error('Sale insert returned no data.');
 
-          await supabase.from('sale_items').insert(itemsToInsert);
+      newSaleId = saleRes[0].id;
+      const itemsToInsert = items.map(item => ({
+        sale_id: newSaleId,
+        material_id: item.material_id || null,
+        custom_material_name: item.custom_material_name || null,
+        quantity: parseFloat(item.quantity),
+        unit: item.unit || 'Tonne',
+        rate: parseFloat(item.rate),
+        amount: item.amount !== undefined ? parseFloat(item.amount) : (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)
+      }));
 
-          const payMethod = payment_method || 'cash';
-          const logNote = notes ? `Initial Payment (${payMethod.toUpperCase()}) - ${notes}` : `Initial Payment (${payMethod.toUpperCase()})`;
+      const { error: itemsErr } = await supabase.from('sale_items').insert(itemsToInsert);
+      if (itemsErr) throw new Error('Failed to save sale items: ' + (itemsErr.message || JSON.stringify(itemsErr)));
 
-          await supabase.from('payment_logs').insert([{
-            sale_id: newSaleId,
-            customer_id,
-            payment_date: new Date().toISOString(),
-            amount_paid: actual_paid,
-            balance_before: grand_total,
-            balance_after: due,
-            notes: logNote,
-            recorded_by: user?.id || null
-          }]);
+      const payMethod = payment_method || 'cash';
+      const logNote = notes ? `Initial Payment (${payMethod.toUpperCase()}) - ${notes}` : `Initial Payment (${payMethod.toUpperCase()})`;
 
-          await this.updateSettings({ next_invoice_number: nextNum + 1 });
-          return { sale_id: newSaleId, invoice_number };
-        }
-      }
-    } catch (e) {
-      console.warn('Using local createSale fallback:', e);
+      await supabase.from('payment_logs').insert([{
+        sale_id: newSaleId,
+        customer_id,
+        payment_date: new Date().toISOString(),
+        amount_paid: actual_paid,
+        balance_before: grand_total,
+        balance_after: due,
+        notes: logNote,
+        recorded_by: user?.id || null
+      }]);
+
+      await this.updateSettings({ next_invoice_number: nextNum + 1 });
+      return { sale_id: newSaleId, invoice_number };
     }
 
     // Local Storage Fallback Creation
