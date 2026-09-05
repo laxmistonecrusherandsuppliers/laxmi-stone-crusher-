@@ -3,9 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice Details - Lakshmi Stone Crusher & Suppliers</title>
+  <title>Bill Details - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/style.css?v=1787172100">
+  <style>
+    /* Print optimizations for exact single-page A4 Challan output */
+    @media print {
+      body { background: white !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; }
+      .no-print, .sidebar, .header, #sidebar-overlay { display: none !important; }
+      .main-content { margin-left: 0 !important; width: 100% !important; }
+      .page-content { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+      .bill-print-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 190mm !important;
+      }
+      #challan-table, #challan-table th, #challan-table td {
+        border-color: #000000 !important;
+      }
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -19,24 +39,30 @@
 </head>
 <body>
   <div id="app">
-    <!-- Action Header -->
+    <!-- Top Action Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="header-invoice-no">Invoice Details</h1>
-        <p class="text-xs text-gray-500 mt-0.5" id="header-customer-name">Loading invoice details...</p>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="header-invoice-no">Bill Details</h1>
+        <p class="text-xs text-gray-500 mt-0.5" id="header-customer-name">Loading bill details...</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <button id="record-payment-btn" onclick="openPaymentModal()" class="btn btn-success text-xs hidden">
           + Record Payment
         </button>
-        <button onclick="window.print()" class="btn btn-secondary text-xs">
-          🖨️ Print A4 Invoice
+        <button onclick="downloadPDF()" class="btn btn-primary text-xs flex items-center gap-1.5 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>Save as PDF</span>
+        </button>
+        <button onclick="window.print()" class="btn btn-secondary text-xs flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          <span>Print</span>
+        </button>
+        <button onclick="openEditModal()" class="btn btn-secondary text-xs border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 flex items-center gap-1 font-semibold">
+          <span>✏️</span>
+          <span>Edit Bill</span>
         </button>
         <button onclick="openThermalModal()" class="btn btn-secondary text-xs">
           🧾 Thermal Receipt
-        </button>
-        <button onclick="editBill()" class="btn btn-secondary text-xs border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100">
-          ✏️ Edit
         </button>
         <button onclick="handleDeleteBill()" class="btn btn-ghost text-xs text-red-600 hover:bg-red-50">
           🗑️ Delete
@@ -52,7 +78,7 @@
             <span>⚠️ Outstanding Balance Due:</span>
             <span id="due-banner-amount" class="text-base text-red-700">₹0.00</span>
           </div>
-          <p class="text-xs text-red-600 mt-0.5">Record payment to settle customer outstanding ledger balance.</p>
+          <p class="text-xs text-red-600 mt-0.5">Record payment to settle customer outstanding balance.</p>
         </div>
         <button onclick="openPaymentModal()" class="btn btn-danger text-xs self-start sm:self-auto py-2 px-4 shadow-sm">
           Record Payment Now
@@ -60,105 +86,104 @@
       </div>
     </div>
 
-    <!-- Printable Invoice Card -->
-    <div class="bill-print-container bg-white p-8 rounded-xl border border-gray-200 shadow-sm mb-6" id="bill-card">
-      <div id="bill-loading" class="p-8 text-center text-gray-400 text-xs">Loading invoice...</div>
+    <!-- Printable Challan / Invoice Card (Exact format requested) -->
+    <div class="bill-print-container bg-white p-6 sm:p-10 rounded-xl border border-gray-300 shadow-sm mb-6 max-w-4xl mx-auto" id="bill-card">
+      <div id="bill-loading" class="p-8 text-center text-gray-400 text-xs">Loading bill...</div>
 
-      <div id="bill-content" class="hidden">
-        <!-- Business Header -->
-        <div class="text-center pb-6 border-b border-gray-200 mb-6">
-          <img src="assets/images/logo.png" alt="Logo" class="w-16 h-16 mx-auto mb-3 object-contain">
-          <h2 class="text-2xl font-bold text-gray-900 tracking-tight" id="biz-name">Lakshmi Stone Crusher & Suppliers</h2>
-          <p class="text-xs text-gray-600 mt-1" id="biz-address"></p>
-          <p class="text-xs text-gray-600" id="biz-mobile"></p>
-          <div id="tax-invoice-badge" class="mt-3 hidden">
-            <span class="inline-block bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold px-3 py-1 rounded">TAX INVOICE</span>
-            <p class="text-xs text-gray-600 mt-1" id="biz-gstin"></p>
+      <div id="bill-content" class="hidden text-black font-sans">
+        <!-- Top Section: Subhash Warule (Left) | Laxmi Stone Crusher (Center) | Prasad Warule (Right) -->
+        <div class="border-t border-black pt-2 pb-2">
+          <div class="flex justify-between items-start">
+            <div class="text-left font-bold text-xs sm:text-sm text-gray-900 leading-tight">
+              Subhash Warule<br>
+              <span class="font-normal text-xs text-gray-800">7020778707</span>
+            </div>
+            <div class="text-center font-bold text-xl sm:text-3xl tracking-tight text-gray-900 px-2">
+              Laxmi Stone Crusher
+            </div>
+            <div class="text-right font-bold text-xs sm:text-sm text-gray-900 leading-tight">
+              prasad warule<br>
+              <span class="font-normal text-xs text-gray-800">8010406871</span>
+            </div>
           </div>
         </div>
 
-        <!-- Meta Details -->
-        <div class="grid grid-cols-2 gap-6 mb-6 text-xs">
-          <div>
-            <div class="font-bold text-gray-900 uppercase text-[11px] text-gray-400 mb-1">Invoice Details</div>
-            <div><span class="font-semibold text-gray-700">Invoice No:</span> <span id="inv-no" class="font-bold text-gray-900"></span></div>
-            <div><span class="font-semibold text-gray-700">Date:</span> <span id="inv-date"></span></div>
-            <div><span class="font-semibold text-gray-700">Status:</span> <span id="inv-status"></span></div>
-          </div>
-          <div>
-            <div class="font-bold text-gray-900 uppercase text-[11px] text-gray-400 mb-1">Bill To (Customer)</div>
-            <div class="font-bold text-gray-900 text-sm" id="cust-name"></div>
-            <div class="text-gray-600" id="cust-mobile"></div>
-            <div class="text-gray-600" id="cust-address"></div>
+        <!-- Subheader: Challan No, Name (left) | Date (right) -->
+        <div class="border-t border-b border-black py-2 my-1 text-xs sm:text-sm">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1">
+              <div><span class="font-bold">Challan No:</span> <span id="inv-no" class="font-semibold text-gray-900"></span></div>
+              <div><span class="font-bold">Name :</span> <span id="cust-name" class="font-semibold text-gray-900"></span></div>
+            </div>
+            <div class="text-right">
+              <div><span class="font-bold">Date :</span> <span id="inv-date" class="font-semibold text-gray-900"></span></div>
+            </div>
           </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="table-container mb-6">
-          <table class="table">
+        <!-- Table: date | vech no | material | trip | brass | rate | total -->
+        <div class="overflow-x-auto my-2">
+          <table class="w-full text-xs sm:text-sm border-collapse border border-black text-left" id="challan-table" style="border: 1.5px solid #000;">
             <thead>
-              <tr>
-                <th class="w-10">#</th>
-                <th class="w-24">Date</th>
-                <th class="w-28">Vehicle No</th>
-                <th class="w-20">Qty</th>
-                <th class="w-16">Unit</th>
-                <th>Material / Item</th>
-                <th class="text-right w-24">Rate (₹)</th>
-                <th class="text-right w-28">Amount (₹)</th>
+              <tr class="border-b border-black font-bold uppercase text-[11px] sm:text-xs bg-white">
+                <th class="border border-black p-2 w-24">date</th>
+                <th class="border border-black p-2 w-28">vech no</th>
+                <th class="border border-black p-2">material</th>
+                <th class="border border-black p-2 w-16 text-center">trip</th>
+                <th class="border border-black p-2 w-24 text-right">brass</th>
+                <th class="border border-black p-2 w-24 text-right">rate</th>
+                <th class="border border-black p-2 w-28 text-right">total</th>
               </tr>
             </thead>
-            <tbody id="items-tbody"></tbody>
+            <tbody id="items-tbody">
+              <!-- Dynamically populated rows and empty padding rows -->
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-black font-bold">
+                <td colspan="4" class="border border-black p-2 text-right">Total Brass:</td>
+                <td class="border border-black p-2 text-right font-black" id="inv-total-brass">0.000</td>
+                <td class="border border-black p-2 text-right">Total:</td>
+                <td class="border border-black p-2 text-right font-black text-sm sm:text-base" id="inv-grandtotal">₹0.00</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 
-        <!-- Totals & Balance -->
-        <div class="flex flex-col sm:flex-row justify-between gap-6 border-t border-gray-200 pt-4 text-xs">
-          <div class="space-y-2 max-w-xs">
-            <div id="notes-container" class="hidden">
-              <span class="font-bold text-gray-700">Notes / Reference:</span>
-              <p id="inv-notes" class="text-gray-600 italic mt-0.5"></p>
+        <!-- Bottom Summary & Signatory -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end text-xs text-gray-800 pt-2 border-t border-black mt-2 gap-4">
+          <div class="space-y-1">
+            <div class="flex flex-wrap gap-4 text-xs font-semibold">
+              <div>Payment: <span id="inv-status" class="uppercase"></span></div>
+              <div>Paid: <span id="inv-paid" class="text-emerald-700">₹0.00</span></div>
+              <div id="due-container">Due: <span id="inv-due" class="text-red-600">₹0.00</span></div>
+            </div>
+            <div id="notes-container" class="hidden text-gray-500 italic text-[11px] pt-1">
+              Notes: <span id="inv-notes"></span>
             </div>
           </div>
-
-          <div class="w-full sm:w-64 space-y-2 text-right">
-            <div id="subtotal-row" class="flex justify-between text-gray-600 hidden">
-              <span>Subtotal (Taxable):</span>
-              <span id="inv-subtotal" class="font-semibold text-gray-900"></span>
-            </div>
-            <div id="cgst-row" class="flex justify-between text-gray-600 hidden">
-              <span id="cgst-label">CGST:</span>
-              <span id="inv-cgst" class="font-semibold text-gray-900"></span>
-            </div>
-            <div id="sgst-row" class="flex justify-between text-gray-600 hidden">
-              <span id="sgst-label">SGST:</span>
-              <span id="inv-sgst" class="font-semibold text-gray-900"></span>
-            </div>
-            <div class="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-200 pt-2">
-              <span>Grand Total:</span>
-              <span id="inv-grandtotal" class="text-base"></span>
-            </div>
-            <div class="flex justify-between text-emerald-700 font-semibold pt-1">
-              <span>Amount Paid:</span>
-              <span id="inv-paid"></span>
-            </div>
-            <div class="flex justify-between text-red-600 font-bold border-t border-gray-100 pt-1">
-              <span>Balance Due:</span>
-              <span id="inv-due" class="text-sm"></span>
-            </div>
+          <div class="text-right pt-6 sm:pt-4">
+            <div class="border-t border-black pt-1 px-6 font-bold text-xs inline-block">Authorized Signatory</div>
           </div>
         </div>
 
-        <div class="text-center text-[11px] text-gray-400 italic mt-8 pt-4 border-t border-gray-100">
-          Thank you for your business! Lakshmi Stone Crusher & Suppliers.
+        <!-- Bottom Card Buttons (save as pdf & print) matching user PDF mockup -->
+        <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-200 no-print">
+          <button type="button" onclick="downloadPDF()" class="btn btn-primary text-xs flex items-center gap-1.5 py-2 px-4 shadow-sm font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>save as pdf</span>
+          </button>
+          <button type="button" onclick="window.print()" class="btn btn-secondary text-xs flex items-center gap-1.5 py-2 px-4 shadow-sm font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span>print</span>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Payment Settlement History Log -->
-    <div class="card no-print">
+    <div class="card no-print max-w-4xl mx-auto mb-8">
       <div class="card-header">
-        <span>Payment Settlement History Logs</span>
+        <span class="font-bold text-sm text-gray-800">Payment Settlement History Logs</span>
       </div>
       <div class="table-container">
         <table class="table text-xs">
@@ -177,12 +202,100 @@
       </div>
     </div>
 
+    <!-- Edit Bill Modal -->
+    <div id="modal-edit-bill" class="modal-overlay hidden">
+      <div class="modal max-w-lg">
+        <div class="modal-header">
+          <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+            <span>✏️ Edit Bill Details</span>
+            <span id="edit-modal-inv-no" class="text-xs text-blue-600 font-mono"></span>
+          </h3>
+          <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+        </div>
+        <form id="edit-bill-form" onsubmit="handleSaveEditBill(event)">
+          <div class="modal-body space-y-4">
+            <!-- Customer Edit -->
+            <div>
+              <label class="form-label text-xs font-semibold text-gray-700">Customer / Owner Name <span class="text-red-500">*</span></label>
+              <div class="flex gap-2">
+                <select id="edit-cust-select" class="form-select text-xs font-semibold flex-1" onchange="onEditCustSelectChange()">
+                  <!-- customers populated -->
+                </select>
+                <input type="text" id="edit-cust-name-input" class="form-input text-xs font-semibold flex-1 hidden" placeholder="Enter / Edit customer name">
+                <button type="button" id="btn-toggle-cust-mode" onclick="toggleEditCustMode()" class="btn btn-secondary text-xs px-2.5 font-bold" title="Toggle edit text / select dropdown">
+                  ✏️ Edit Name
+                </button>
+              </div>
+            </div>
+
+            <!-- Date & Vehicle -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Bill Date <span class="text-red-500">*</span></label>
+                <input type="date" id="edit-sale-date" class="form-input text-xs font-semibold" required>
+              </div>
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Vehicle No</label>
+                <input type="text" id="edit-veh-no" class="form-input text-xs font-semibold" placeholder="e.g. MH12 AB1234">
+              </div>
+            </div>
+
+            <!-- Destination & Trip -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Destination</label>
+                <input type="text" id="edit-destination" class="form-input text-xs font-semibold" placeholder="e.g. Pune">
+              </div>
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Trip Count</label>
+                <input type="number" id="edit-trip" class="form-input text-xs font-semibold" value="1" min="1">
+              </div>
+            </div>
+
+            <!-- Material -->
+            <div>
+              <label class="form-label text-xs font-semibold text-gray-700">Material</label>
+              <select id="edit-material" class="form-select text-xs font-semibold" onchange="onEditMaterialChange()">
+                <!-- materials populated -->
+              </select>
+            </div>
+
+            <!-- Brass (Qty), Rate, Total -->
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Brass (Qty) <span class="text-red-500">*</span></label>
+                <input type="number" id="edit-qty" step="0.001" min="0.001" class="form-input text-xs font-semibold" required oninput="recalcEditTotal()">
+              </div>
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Rate (₹) <span class="text-red-500">*</span></label>
+                <input type="number" id="edit-rate" step="0.01" min="0" class="form-input text-xs font-semibold" required oninput="recalcEditTotal()">
+              </div>
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Total (₹)</label>
+                <input type="number" id="edit-total" step="0.01" min="0" class="form-input text-xs font-bold text-right bg-gray-50 text-gray-900" readonly>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="form-label text-xs font-semibold text-gray-700">Notes / Reference</label>
+              <input type="text" id="edit-notes" class="form-input text-xs" placeholder="Optional notes">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="closeEditModal()" class="btn btn-secondary text-xs">Cancel</button>
+            <button type="submit" id="btn-save-edit" class="btn btn-primary text-xs font-bold px-5">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Record Payment Modal -->
     <div id="modal-payment" class="modal-overlay hidden">
       <div class="modal">
         <div class="modal-header">
           <h3 class="font-semibold text-gray-900">Record Payment</h3>
-          <button type="button" onclick="closePaymentModal()" class="text-gray-400">&times;</button>
+          <button type="button" onclick="closePaymentModal()" class="text-gray-400 text-lg">&times;</button>
         </div>
         <form id="payment-form">
           <div class="modal-body space-y-4">
@@ -191,12 +304,12 @@
               <strong id="modal-due-amt" class="text-red-600 text-sm font-bold">₹0.00</strong>
             </div>
             <div>
-              <label class="form-label">Payment Amount (₹) <span class="text-red-500">*</span></label>
+              <label class="form-label text-xs font-semibold">Payment Amount (₹) <span class="text-red-500">*</span></label>
               <input type="number" step="0.01" id="pay-amt" required min="0.01" class="form-input" placeholder="0.00">
             </div>
             <div>
-              <label class="form-label">Payment Method</label>
-              <select id="pay-method" class="form-select">
+              <label class="form-label text-xs font-semibold">Payment Method</label>
+              <select id="pay-method" class="form-select text-xs">
                 <option value="cash">Cash</option>
                 <option value="upi">UPI / GPay / PhonePe</option>
                 <option value="bank">Bank Transfer</option>
@@ -204,13 +317,13 @@
               </select>
             </div>
             <div>
-              <label class="form-label">Payment Notes</label>
-              <input type="text" id="pay-notes" class="form-input" placeholder="e.g. Received via GPay / Receipt #123">
+              <label class="form-label text-xs font-semibold">Payment Notes</label>
+              <input type="text" id="pay-notes" class="form-input text-xs" placeholder="e.g. Received via GPay / Receipt #">
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" onclick="closePaymentModal()" class="btn btn-secondary text-xs">Cancel</button>
-            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs">Record Payment</button>
+            <button type="submit" id="save-pay-btn" class="btn btn-success text-xs font-bold px-4">Record Payment</button>
           </div>
         </form>
       </div>
@@ -224,9 +337,7 @@
           <button type="button" onclick="closeThermalModal()" class="text-gray-400">&times;</button>
         </div>
         <div class="modal-body">
-          <div id="thermal-receipt" class="p-4 bg-white border border-gray-300 font-mono text-[10pt] leading-tight space-y-2">
-            <!-- Thermal contents -->
-          </div>
+          <div id="thermal-receipt" class="p-4 bg-white border border-gray-300 font-mono text-[10pt] leading-tight space-y-2"></div>
         </div>
         <div class="modal-footer">
           <button type="button" onclick="closeThermalModal()" class="btn btn-secondary text-xs">Close</button>
@@ -239,9 +350,12 @@
   <script>
     let currentSale = null;
     let appSettings = null;
+    let allMaterials = [];
+    let allCustomers = [];
+    let isCustNameInputMode = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      window.LSCLayout.init('sales', 'Invoice Details');
+      window.LSCLayout.init('sales', 'Bill Details');
       const saleId = window.LSCUtils.getQueryParam('id');
       if (!saleId) {
         window.location.href = 'sales.html';
@@ -250,46 +364,74 @@
 
       await loadInvoice(saleId);
       document.getElementById('payment-form').addEventListener('submit', handleRecordPayment);
+
+      // Auto-open edit modal if ?edit=1 is in URL
+      if (window.LSCUtils.getQueryParam('edit') === '1') {
+        openEditModal();
+      }
     });
+
+    // Robust Item Parser for (Dt: ..., Veh: ..., Dest: ..., Trip: ...)
+    function parseItemDetails(item, sale) {
+      let matName = item.custom_material_name || item.material_name || 'Stone Material';
+      let date = sale.sale_date ? window.LSCUtils.formatDate(sale.sale_date) : '';
+      let veh = item.vehicle_ref || sale.notes || '';
+      let trip = '1';
+      let dest = '';
+
+      const parenMatch = matName.match(/\((.*?)\)$/);
+      if (parenMatch) {
+        const inside = parenMatch[1];
+        matName = matName.replace(/\((.*?)\)$/, '').trim();
+
+        const dtM = inside.match(/Dt:\s*([^,]+)/);
+        if (dtM) date = dtM[1].trim();
+
+        const vehM = inside.match(/Veh:\s*([^,]+)/);
+        if (vehM) veh = vehM[1].trim();
+
+        const destM = inside.match(/Dest:\s*([^,]+)/);
+        if (destM) dest = destM[1].trim();
+
+        const tripM = inside.match(/Trip:\s*([^,]+)/);
+        if (tripM) trip = tripM[1].trim();
+      }
+
+      return {
+        date: date || '-',
+        veh: veh || '-',
+        dest: dest || '',
+        material: matName || '-',
+        trip: trip || '1',
+        brass: parseFloat(item.quantity) || 0,
+        rate: parseFloat(item.rate) || 0,
+        total: parseFloat(item.amount) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0))
+      };
+    }
 
     async function loadInvoice(id) {
       try {
-        appSettings = await window.LSCDB.getSettings();
-        currentSale = await window.LSCDB.getSaleById(id);
+        const [settings, sale, mats, custs] = await Promise.all([
+          window.LSCDB.getSettings(),
+          window.LSCDB.getSaleById(id),
+          window.LSCDB.getMaterials(),
+          window.LSCDB.getCustomers()
+        ]);
 
-        document.getElementById('biz-name').textContent = appSettings.business_name || 'Lakshmi Stone Crusher & Suppliers';
-        document.getElementById('biz-address').textContent = appSettings.business_address || '';
-        document.getElementById('biz-mobile').textContent = appSettings.business_mobile ? `Ph: ${appSettings.business_mobile}` : '';
+        appSettings = settings;
+        currentSale = sale;
+        allMaterials = mats;
+        allCustomers = custs;
 
-        document.getElementById('header-invoice-no').textContent = `Invoice #${currentSale.invoice_number}`;
+        document.getElementById('header-invoice-no').textContent = `Bill #${currentSale.invoice_number}`;
         document.getElementById('header-customer-name').textContent = `${currentSale.customer_name} • ${window.LSCUtils.formatDate(currentSale.sale_date)}`;
 
         document.getElementById('inv-no').textContent = currentSale.invoice_number;
         document.getElementById('inv-date').textContent = window.LSCUtils.formatDate(currentSale.sale_date);
+        document.getElementById('cust-name').textContent = currentSale.customer_name || 'N/A';
 
-        const statusClass = currentSale.payment_mode === 'full' ? 'badge-full' : (currentSale.payment_mode === 'partial' ? 'badge-partial' : 'badge-due');
-        document.getElementById('inv-status').innerHTML = `<span class="badge ${statusClass}">${(currentSale.payment_mode || 'DUE').toUpperCase()}</span>`;
-
-        document.getElementById('cust-name').textContent = currentSale.customer_name;
-        document.getElementById('cust-mobile').textContent = currentSale.customer_mobile ? `Mob: ${currentSale.customer_mobile}` : '';
-        document.getElementById('cust-address').textContent = currentSale.customer_address || '';
-
-        if (currentSale.gst_enabled) {
-          document.getElementById('tax-invoice-badge').classList.remove('hidden');
-          document.getElementById('biz-gstin').textContent = appSettings.gstin ? `GSTIN: ${appSettings.gstin}` : '';
-          document.getElementById('subtotal-row').classList.remove('hidden');
-          document.getElementById('cgst-row').classList.remove('hidden');
-          document.getElementById('sgst-row').classList.remove('hidden');
-
-          const halfGst = (parseFloat(currentSale.gst_percent) || 18) / 2;
-          const halfAmt = (parseFloat(currentSale.gst_amount) || 0) / 2;
-
-          document.getElementById('inv-subtotal').textContent = window.LSCUtils.formatCurrency(currentSale.subtotal);
-          document.getElementById('cgst-label').textContent = `CGST @ ${halfGst.toFixed(1)}%:`;
-          document.getElementById('inv-cgst').textContent = window.LSCUtils.formatCurrency(halfAmt);
-          document.getElementById('sgst-label').textContent = `SGST @ ${halfGst.toFixed(1)}%:`;
-          document.getElementById('inv-sgst').textContent = window.LSCUtils.formatCurrency(halfAmt);
-        }
+        const statusClass = currentSale.payment_mode === 'full' || currentSale.payment_mode === 'cash' || currentSale.payment_mode === 'upi' ? 'text-green-700 font-bold' : (currentSale.payment_mode === 'partial' ? 'text-amber-700 font-bold' : 'text-red-600 font-bold');
+        document.getElementById('inv-status').innerHTML = `<span class="${statusClass}">${(currentSale.payment_mode || 'DUE').toUpperCase()}</span>`;
 
         document.getElementById('inv-grandtotal').textContent = window.LSCUtils.formatCurrency(currentSale.grand_total);
         document.getElementById('inv-paid').textContent = window.LSCUtils.formatCurrency(currentSale.amount_paid);
@@ -298,38 +440,52 @@
         if (currentSale.notes) {
           document.getElementById('notes-container').classList.remove('hidden');
           document.getElementById('inv-notes').textContent = currentSale.notes;
+        } else {
+          document.getElementById('notes-container').classList.add('hidden');
         }
 
-        // Render Items Table
+        // Render Table Items (date | vech no | material | trip | brass | rate | total)
         const itemsTbody = document.getElementById('items-tbody');
-        itemsTbody.innerHTML = (currentSale.items || []).map((item, i) => {
-          let matName = item.custom_material_name || item.material_name || 'N/A';
-          let itemDate = '-';
-          let itemVeh = '-';
-          
-          // Extract (Dt: ..., Veh: ...)
-          const regex = /\(Dt:\s*(.*?)(?:,\s*Veh:\s*(.*?))?\)$/;
-          const match = matName.match(regex);
-          if (match) {
-             itemDate = match[1] || '-';
-             itemVeh = match[2] || '-';
-             matName = matName.replace(regex, '').trim();
-          }
+        let totalBrass = 0;
+
+        const renderedRows = (currentSale.items || []).map(item => {
+          const parsed = parseItemDetails(item, currentSale);
+          totalBrass += parsed.brass;
 
           return `
-          <tr>
-            <td>${i + 1}</td>
-            <td class="text-gray-600 whitespace-nowrap text-[10px]">${itemDate}</td>
-            <td class="text-gray-600 text-[10px] uppercase">${itemVeh}</td>
-            <td>${parseFloat(item.quantity).toFixed(3)}</td>
-            <td>${item.unit || 'Tonne'}</td>
-            <td class="font-medium text-gray-900">${matName}</td>
-            <td class="text-right">${window.LSCUtils.formatCurrency(item.rate)}</td>
-            <td class="text-right font-semibold">${window.LSCUtils.formatCurrency(item.amount)}</td>
-          </tr>
-        `}).join('');
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="border border-black p-2 whitespace-nowrap">${parsed.date}</td>
+              <td class="border border-black p-2 uppercase font-semibold">${parsed.veh}</td>
+              <td class="border border-black p-2 font-medium">${parsed.material}</td>
+              <td class="border border-black p-2 text-center">${parsed.trip}</td>
+              <td class="border border-black p-2 text-right font-semibold">${parsed.brass > 0 ? parsed.brass.toFixed(3) : ''}</td>
+              <td class="border border-black p-2 text-right">${parsed.rate > 0 ? parsed.rate.toFixed(2) : ''}</td>
+              <td class="border border-black p-2 text-right font-bold">${parsed.total > 0 ? parsed.total.toFixed(2) : ''}</td>
+            </tr>
+          `;
+        });
 
-        // Render Logs Table
+        // Pad with empty rows to match authentic paper challan look (~12-14 rows total)
+        const minRows = 12;
+        const emptyRowsNeeded = Math.max(0, minRows - renderedRows.length);
+        for (let i = 0; i < emptyRowsNeeded; i++) {
+          renderedRows.push(`
+            <tr>
+              <td class="border border-black p-2 h-7">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+              <td class="border border-black p-2">&nbsp;</td>
+            </tr>
+          `);
+        }
+
+        itemsTbody.innerHTML = renderedRows.join('');
+        document.getElementById('inv-total-brass').textContent = totalBrass.toFixed(3);
+
+        // Render Payment Logs Table
         const logsTbody = document.getElementById('logs-tbody');
         logsTbody.innerHTML = (currentSale.payment_logs || []).map(log => `
           <tr>
@@ -342,7 +498,7 @@
           </tr>
         `).join('');
 
-        // Banner & Button checks
+        // Due Warning Banner check
         const dueAmt = parseFloat(currentSale.amount_due) || 0;
         if (dueAmt > 0.01) {
           document.getElementById('due-warning-banner').classList.remove('hidden');
@@ -357,58 +513,202 @@
         document.getElementById('bill-content').classList.remove('hidden');
       } catch (err) {
         console.error(err);
-        window.LSCUtils.showNotification('Error loading invoice: ' + err.message, 'error');
+        window.LSCUtils.showNotification('Error loading bill: ' + err.message, 'error');
       }
     }
 
+    // --- Edit Bill Logic ---
+    function openEditModal() {
+      if (!currentSale) return;
+
+      document.getElementById('edit-modal-inv-no').textContent = `#${currentSale.invoice_number}`;
+      
+      // Populate Customer Select
+      const custSelect = document.getElementById('edit-cust-select');
+      custSelect.innerHTML = allCustomers.map(c => `
+        <option value="${c.id}" ${c.id == currentSale.customer_id ? 'selected' : ''}>${c.name}</option>
+      `).join('');
+
+      document.getElementById('edit-cust-name-input').value = currentSale.customer_name || '';
+      isCustNameInputMode = false;
+      custSelect.classList.remove('hidden');
+      document.getElementById('edit-cust-name-input').classList.add('hidden');
+
+      // Populate Materials Select
+      const matSelect = document.getElementById('edit-material');
+      matSelect.innerHTML = allMaterials.map(m => `
+        <option value="${m.id}" data-rate="${m.rate_per_unit || 0}">${m.name}</option>
+      `).join('');
+
+      // Populate form with current first item values
+      const firstItem = (currentSale.items && currentSale.items[0]) || {};
+      const parsed = parseItemDetails(firstItem, currentSale);
+
+      document.getElementById('edit-sale-date').value = currentSale.sale_date || '';
+      document.getElementById('edit-veh-no').value = (parsed.veh !== '-' ? parsed.veh : '') || '';
+      document.getElementById('edit-destination').value = parsed.dest || '';
+      document.getElementById('edit-trip').value = parsed.trip || '1';
+      document.getElementById('edit-qty').value = parsed.brass || '';
+      document.getElementById('edit-rate').value = parsed.rate || '';
+      document.getElementById('edit-notes').value = currentSale.notes || '';
+
+      if (firstItem.material_id) {
+        matSelect.value = firstItem.material_id;
+      }
+
+      recalcEditTotal();
+      document.getElementById('modal-edit-bill').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('modal-edit-bill').classList.add('hidden');
+    }
+
+    function toggleEditCustMode() {
+      isCustNameInputMode = !isCustNameInputMode;
+      const select = document.getElementById('edit-cust-select');
+      const input = document.getElementById('edit-cust-name-input');
+      const btn = document.getElementById('btn-toggle-cust-mode');
+
+      if (isCustNameInputMode) {
+        select.classList.add('hidden');
+        input.classList.remove('hidden');
+        input.focus();
+        btn.textContent = '📋 Select';
+      } else {
+        input.classList.add('hidden');
+        select.classList.remove('hidden');
+        btn.textContent = '✏️ Edit Name';
+      }
+    }
+
+    function onEditCustSelectChange() {
+      const select = document.getElementById('edit-cust-select');
+      const opt = select.options[select.selectedIndex];
+      if (opt) {
+        document.getElementById('edit-cust-name-input').value = opt.text;
+      }
+    }
+
+    function onEditMaterialChange() {
+      const select = document.getElementById('edit-material');
+      const opt = select.options[select.selectedIndex];
+      if (opt && opt.dataset.rate && parseFloat(opt.dataset.rate) > 0) {
+        document.getElementById('edit-rate').value = opt.dataset.rate;
+        recalcEditTotal();
+      }
+    }
+
+    function recalcEditTotal() {
+      const qty = parseFloat(document.getElementById('edit-qty').value) || 0;
+      const rate = parseFloat(document.getElementById('edit-rate').value) || 0;
+      document.getElementById('edit-total').value = (qty * rate).toFixed(2);
+    }
+
+    async function handleSaveEditBill(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-edit');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        let custId = parseInt(document.getElementById('edit-cust-select').value);
+        const custNameText = document.getElementById('edit-cust-name-input').value.trim();
+
+        // If user changed or edited customer name directly, update customer in DB
+        if (isCustNameInputMode && custNameText) {
+          if (custId) {
+            await window.LSCDB.updateCustomer(custId, { name: custNameText });
+          } else {
+            const newC = await window.LSCDB.addCustomer({ name: custNameText });
+            custId = newC.id;
+          }
+        }
+
+        const saleDate = document.getElementById('edit-sale-date').value;
+        const veh = document.getElementById('edit-veh-no').value.trim();
+        const dest = document.getElementById('edit-destination').value.trim();
+        const trip = document.getElementById('edit-trip').value.trim();
+        const matSelect = document.getElementById('edit-material');
+        const matId = parseInt(matSelect.value) || null;
+        const matName = matSelect.options[matSelect.selectedIndex]?.text || 'Stone Material';
+        const qty = parseFloat(document.getElementById('edit-qty').value) || 0;
+        const rate = parseFloat(document.getElementById('edit-rate').value) || 0;
+        const amount = parseFloat(document.getElementById('edit-total').value) || (qty * rate);
+        const notes = document.getElementById('edit-notes').value.trim();
+
+        const extraParts = [];
+        if (veh) extraParts.push(`Veh: ${veh}`);
+        if (dest) extraParts.push(`Dest: ${dest}`);
+        if (trip) extraParts.push(`Trip: ${trip}`);
+        const extraStr = extraParts.length > 0 ? ', ' + extraParts.join(', ') : '';
+
+        const updatedItems = [{
+          material_id: matId,
+          custom_material_name: `${matName} (Dt: ${window.LSCUtils.formatDate(saleDate)}${extraStr})`,
+          quantity: qty,
+          unit: 'Brass',
+          rate: rate,
+          amount: amount
+        }];
+
+        await window.LSCDB.updateSale(currentSale.id, {
+          customer_id: custId,
+          sale_date: saleDate,
+          gst_enabled: currentSale.gst_enabled,
+          gst_percent: currentSale.gst_percent,
+          items: updatedItems,
+          notes: notes || [veh, dest].filter(Boolean).join(', ')
+        });
+
+        window.LSCUtils.showNotification('Bill updated successfully!', 'success');
+        closeEditModal();
+        await loadInvoice(currentSale.id);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to update bill: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    }
+
+    // --- Thermal Receipt Logic ---
     function renderThermalReceipt() {
       if (!currentSale) return;
       const html = `
-        <div class="flex justify-center mb-1">
-          <img src="assets/images/logo.png" style="width: 48px; height: 48px; object-fit: contain; filter: grayscale(100%);">
-        </div>
-        <div class="text-center font-bold text-sm">${appSettings.business_name || 'Lakshmi Stone Crusher'}</div>
-        <div class="text-center text-[9pt]">${appSettings.business_address || ''}</div>
-        <div class="text-center text-[9pt] mb-2">Ph: ${appSettings.business_mobile || ''}</div>
-        <div class="border-t border-b border-dashed py-1 text-[9pt] flex justify-between">
-          <span>Inv: #${currentSale.invoice_number}</span>
+        <div class="text-center font-bold text-base mb-1">Laxmi Stone Crusher</div>
+        <div class="text-center text-[9pt]">Subhash: 7020778707 | Prasad: 8010406871</div>
+        <div class="border-t border-b border-dashed py-1 text-[9pt] flex justify-between my-2">
+          <span>Challan: #${currentSale.invoice_number}</span>
           <span>${window.LSCUtils.formatDate(currentSale.sale_date)}</span>
         </div>
         <div class="text-[9pt] py-1">
-          <div>To: <strong>${currentSale.customer_name}</strong></div>
-          <div>Mob: ${currentSale.customer_mobile || '-'}</div>
+          <div>Customer: <strong>${currentSale.customer_name}</strong></div>
+          <div>Mobile: ${currentSale.customer_mobile || '-'}</div>
         </div>
         <div class="border-t border-dashed py-1 text-[9pt]">
           ${(currentSale.items || []).map(i => {
-            let matName = i.custom_material_name || i.material_name || 'N/A';
-            let itemDate = '';
-            let itemVeh = '';
-            const regex = /\(Dt:\s*(.*?)(?:,\s*Veh:\s*(.*?))?\)$/;
-            const match = matName.match(regex);
-            if (match) {
-               itemDate = match[1] || '';
-               itemVeh = match[2] || '';
-               matName = matName.replace(regex, '').trim();
-            }
+            const p = parseItemDetails(i, currentSale);
             return `
             <div class="mb-1 pb-1 border-b border-dashed border-gray-200 last:border-0">
               <div class="flex justify-between font-bold">
-                <span>${matName} x ${i.quantity} ${i.unit}</span>
-                <span>₹${parseFloat(i.amount).toFixed(2)}</span>
+                <span>${p.material} x ${p.brass.toFixed(3)} Brass</span>
+                <span>₹${p.total.toFixed(2)}</span>
               </div>
-              ${(itemDate || itemVeh) ? `<div class="text-[8pt] text-gray-600 flex justify-between">
-                <span>${itemDate ? 'Dt: '+itemDate : ''}</span>
-                <span>${itemVeh ? 'Veh: '+itemVeh : ''}</span>
-              </div>` : ''}
-            </div>
-          `}).join('')}
+              <div class="text-[8pt] text-gray-600 flex justify-between">
+                <span>${p.veh !== '-' ? 'Veh: '+p.veh : ''}</span>
+                <span>Trip: ${p.trip}</span>
+              </div>
+            </div>`;
+          }).join('')}
         </div>
         <div class="border-t border-dashed pt-1 text-[9pt] space-y-0.5">
           <div class="flex justify-between font-bold"><span>Total:</span> <span>₹${parseFloat(currentSale.grand_total).toFixed(2)}</span></div>
           <div class="flex justify-between"><span>Paid:</span> <span>₹${parseFloat(currentSale.amount_paid).toFixed(2)}</span></div>
           <div class="flex justify-between font-bold text-red-600"><span>Due:</span> <span>₹${parseFloat(currentSale.amount_due).toFixed(2)}</span></div>
         </div>
-        <div class="text-center text-[8pt] pt-2 border-t border-dashed mt-2">Thank you! Come again.</div>
+        <div class="text-center text-[8pt] pt-3 border-t border-dashed mt-2">Thank you! Laxmi Stone Crusher</div>
       `;
       document.getElementById('thermal-receipt').innerHTML = html;
     }
@@ -419,12 +719,14 @@
     }
     function closeThermalModal() { document.getElementById('modal-thermal').classList.add('hidden'); }
 
+    // --- Save as PDF Logic ---
     function downloadPDF() {
       if (currentSale && appSettings) {
         window.LSCPDF.downloadInvoicePDF(currentSale, appSettings);
       }
     }
 
+    // --- Payment Recording Modal ---
     function openPaymentModal() {
       document.getElementById('modal-due-amt').textContent = window.LSCUtils.formatCurrency(currentSale.amount_due);
       document.getElementById('pay-amt').value = currentSale.amount_due;
@@ -459,20 +761,19 @@
     }
 
     async function handleDeleteBill() {
-      if (!confirm(`Are you sure you want to permanently delete Invoice #${currentSale.invoice_number}?\nThis action cannot be undone.`)) return;
+      if (!confirm(`Are you sure you want to permanently delete Bill #${currentSale.invoice_number}?\nThis action cannot be undone.`)) return;
 
       try {
         await window.LSCDB.deleteSale(currentSale.id);
-        window.LSCUtils.showNotification(`Invoice #${currentSale.invoice_number} deleted.`, 'success');
+        window.LSCUtils.showNotification(`Bill #${currentSale.invoice_number} deleted.`, 'success');
         setTimeout(() => { window.location.href = 'sales.html'; }, 400);
       } catch (err) {
-        alert('Failed to delete sale: ' + err.message);
+        alert('Failed to delete bill: ' + err.message);
       }
     }
 
     function editBill() {
-      if (!currentSale) return;
-      window.location.href = `sale-new.html?edit_id=${currentSale.id}`;
+      openEditModal();
     }
   </script>
 </body>

@@ -13,142 +13,172 @@ window.LSCPDF = {
     const formatDate = window.LSCUtils.formatDate;
 
     const W = 210;
-    const margin = 15;
-    let y = 15;
+    const margin = 12;
+    let y = 14;
 
-    // Header Accent Bar
-    doc.setFillColor(30, 41, 59); // Dark Slate #1e293b
-    doc.rect(margin, y, W - (margin * 2), 24, 'F');
+    // Top horizontal border
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, W - margin, y);
+    y += 5;
 
+    // Top Contacts & Header
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.text(settings.business_name || 'LAKSHMI STONE CRUSHER & SUPPLIERS', W / 2, y + 8, { align: 'center' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(226, 232, 240);
-    doc.text(`${settings.business_address || ''} • Ph: ${settings.business_mobile || ''}`, W / 2, y + 14, { align: 'center' });
-    if (settings.gstin) {
-      doc.text(`GSTIN: ${settings.gstin}`, W / 2, y + 19, { align: 'center' });
-    }
-
-    y += 30;
-
-    // Invoice Title & Status
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42);
-    doc.text(sale.gst_enabled ? 'TAX INVOICE' : 'CRUSHER SALE BILL', margin, y);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Invoice No: ${sale.invoice_number}`, margin, y + 5);
-    doc.text(`Date: ${formatDate(sale.sale_date)}`, margin, y + 10);
-
-    // Customer Info Box Right
-    const custX = 125;
-    doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(custX, y - 4, 70, 20, 2, 2, 'FD');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text('BILL TO (CUSTOMER)', custX + 4, y);
     doc.setFontSize(10);
-    doc.setTextColor(15, 23, 42);
-    doc.text(sale.customer_name || 'N/A', custX + 4, y + 5);
-    doc.setFontSize(8.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Subhash Warule', margin, y);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
-    if (sale.customer_mobile) doc.text(`Ph: ${sale.customer_mobile}`, custX + 4, y + 10);
+    doc.setFontSize(9);
+    doc.text('7020778707', margin, y + 4.5);
 
-    y += 24;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.text('Laxmi Stone Crusher', W / 2, y + 2, { align: 'center' });
 
-    // Items Table
-    const tableCols = ['#', 'Material Description', 'Qty', 'Unit', 'Rate (₹)', 'Amount (₹)'];
-    const tableRows = (sale.items || []).map((item, i) => [
-      String(i + 1),
-      item.custom_material_name || item.material_name || 'Stone Crusher Material',
-      parseFloat(item.quantity).toFixed(3),
-      item.unit || 'Tonne',
-      formatINR(item.rate),
-      formatINR(item.amount)
-    ]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('prasad warule', W - margin, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('8010406871', W - margin, y + 4.5, { align: 'right' });
+
+    y += 11;
+    doc.line(margin, y, W - margin, y);
+    y += 5;
+
+    // Subheader: Challan No, Name (left), Date (right)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Challan No: ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(sale.invoice_number || ''), margin + 24, y);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Date : ', W - margin - 35, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(formatDate(sale.sale_date), W - margin - 22, y);
+
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Name : ', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(sale.customer_name || 'N/A'), margin + 16, y);
+
+    y += 5;
+    doc.line(margin, y, W - margin, y);
+    y += 2;
+
+    // Items table parser
+    const parseItem = (item) => {
+      let matName = item.custom_material_name || item.material_name || 'Stone Material';
+      let date = sale.sale_date ? formatDate(sale.sale_date) : '';
+      let veh = item.vehicle_ref || sale.notes || '';
+      let trip = '1';
+
+      const parenMatch = matName.match(/\((.*?)\)$/);
+      if (parenMatch) {
+        const inside = parenMatch[1];
+        matName = matName.replace(/\((.*?)\)$/, '').trim();
+        const dtM = inside.match(/Dt:\s*([^,]+)/);
+        if (dtM) date = dtM[1].trim();
+        const vehM = inside.match(/Veh:\s*([^,]+)/);
+        if (vehM) veh = vehM[1].trim();
+        const tripM = inside.match(/Trip:\s*([^,]+)/);
+        if (tripM) trip = tripM[1].trim();
+      }
+
+      return {
+        date: date || '-',
+        veh: veh || '-',
+        material: matName || '-',
+        trip: trip || '1',
+        brass: parseFloat(item.quantity) || 0,
+        rate: parseFloat(item.rate) || 0,
+        total: parseFloat(item.amount) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0))
+      };
+    };
+
+    const tableCols = ['date', 'vech no', 'material', 'trip', 'brass', 'rate', 'total'];
+    let totalBrass = 0;
+    const tableRows = (sale.items || []).map(item => {
+      const parsed = parseItem(item);
+      totalBrass += parsed.brass;
+      return [
+        parsed.date,
+        parsed.veh,
+        parsed.material,
+        parsed.trip,
+        parsed.brass > 0 ? parsed.brass.toFixed(3) : '',
+        parsed.rate > 0 ? parsed.rate.toFixed(2) : '',
+        parsed.total > 0 ? parsed.total.toFixed(2) : ''
+      ];
+    });
+
+    // Pad table with empty grid rows to match authentic paper challan look
+    const minRows = 14;
+    while (tableRows.length < minRows) {
+      tableRows.push([' ', ' ', ' ', ' ', ' ', ' ', ' ']);
+    }
 
     doc.autoTable({
       startY: y,
       head: [tableCols],
       body: tableRows,
       theme: 'grid',
-      styles: { fontSize: 8.5, cellPadding: 3 },
-      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: 2.2,
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.25,
+        font: 'helvetica'
+      },
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'left',
+        lineColor: [0, 0, 0],
+        lineWidth: 0.35
+      },
       columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 70 },
-        2: { cellWidth: 20, halign: 'right' },
-        3: { cellWidth: 20, halign: 'center' },
-        4: { cellWidth: 30, halign: 'right' },
-        5: { cellWidth: 30, halign: 'right' }
-      }
+        0: { cellWidth: 26 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 54 },
+        3: { cellWidth: 16, halign: 'center' },
+        4: { cellWidth: 20, halign: 'right' },
+        5: { cellWidth: 20, halign: 'right' },
+        6: { cellWidth: 22, halign: 'right' }
+      },
+      margin: { left: margin, right: margin }
     });
 
-    y = doc.lastAutoTable.finalY + 8;
+    y = doc.lastAutoTable.finalY;
 
-    // Summary Totals
-    const totLabelX = 125;
-    const totValX = 195;
-
-    const printTotRow = (label, val, bold = false, color = [15, 23, 42]) => {
-      doc.setFont('helvetica', bold ? 'bold' : 'normal');
-      doc.setTextColor(...color);
-      doc.text(label, totLabelX, y);
-      doc.text(formatINR(val), totValX, y, { align: 'right' });
-      y += 5;
-    };
-
-    if (sale.gst_enabled) {
-      printTotRow('Subtotal (Taxable):', sale.subtotal);
-      const halfGst = parseFloat(sale.gst_percent) / 2;
-      const halfAmt = parseFloat(sale.gst_amount) / 2;
-      printTotRow(`CGST @ ${halfGst.toFixed(2)}%:`, halfAmt);
-      printTotRow(`SGST @ ${halfGst.toFixed(2)}%:`, halfAmt);
-    }
-
-    doc.setFontSize(10);
-    printTotRow('Grand Total Amount:', sale.grand_total, true, [37, 99, 235]);
+    // Total Row Border box
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.35);
+    doc.rect(margin, y, W - (margin * 2), 7);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    printTotRow('Amount Paid:', sale.amount_paid, false, [16, 185, 129]);
-    printTotRow('Balance Due:', sale.amount_due, parseFloat(sale.amount_due) > 0, parseFloat(sale.amount_due) > 0 ? [239, 68, 68] : [15, 23, 42]);
+    doc.text(`Total Brass: ${totalBrass.toFixed(3)}`, margin + 3, y + 4.8);
+    doc.text('Total:', W - margin - 42, y + 4.8);
+    doc.text(formatINR(sale.grand_total), W - margin - 2, y + 4.8, { align: 'right' });
 
-    y += 10;
+    y += 12;
 
-    // Bank Account Details & Signatory
-    doc.setDrawColor(226, 232, 240);
-    doc.line(margin, y, W - margin, y);
-    y += 6;
-
-    doc.setFont('helvetica', 'bold');
+    // Payment Info & Signatory
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(30, 41, 59);
-    doc.text('PAYMENT SETTLEMENT DETAILS', margin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Bank: State Bank of India | A/C No: 38920192810 | IFSC: SBIN0001234', margin, y + 4);
-    doc.text('UPI ID: lakshmistonecrusher@sbi', margin, y + 8);
+    doc.text(`Payment: ${(sale.payment_mode || 'due').toUpperCase()}   |   Paid: ${formatINR(sale.amount_paid)}   |   Due: ${formatINR(sale.amount_due)}`, margin, y);
 
+    doc.line(W - margin - 45, y + 10, W - margin, y + 10);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text('For Lakshmi Stone Crusher & Suppliers', W - margin - 50, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(148, 163, 184);
-    doc.text('(Authorized Signatory)', W - margin - 35, y + 14);
+    doc.setFontSize(8);
+    doc.text('Authorized Signatory', W - margin - 42, y + 14);
 
-    doc.save(`Invoice_${sale.invoice_number}.pdf`);
+    doc.save(`Challan_${sale.invoice_number}.pdf`);
   },
 
   downloadReportPDF: function (title, headers, rows, summary = null) {

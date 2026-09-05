@@ -478,7 +478,7 @@ window.LSCDB = {
     let due = Math.max(0, grand_total - actual_paid);
     
     let payment_mode = 'due';
-    if (due <= 0.01) payment_mode = 'full';
+    if (due <= 0.01) payment_mode = (existingSale.payment_mode === 'upi' ? 'upi' : 'cash');
     else if (actual_paid > 0) payment_mode = 'partial';
 
     try {

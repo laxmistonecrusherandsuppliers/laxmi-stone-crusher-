@@ -177,8 +177,7 @@
         
         let editSaleId = window.LSCUtils.getQueryParam('edit_id');
         if (editSaleId) {
-          alert('Edit mode is currently restricted in the new spreadsheet view. Please delete and re-enter, or contact support.');
-          window.location.href = 'sales.html';
+          window.location.href = `sale-details.html?id=${editSaleId}&edit=1`;
           return;
         }
 

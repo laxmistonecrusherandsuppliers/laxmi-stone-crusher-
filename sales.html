@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales & Invoices - Lakshmi Stone Crusher & Suppliers</title>
+  <title>Bill Edit - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/style.css?v=1787172100">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,12 +18,12 @@
   <div id="app">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Sales & Invoices</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Browse, manage bills, and settle outstanding customer dues</p>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Bill Edit</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Search, edit previous bills, print challans, and manage customer dues</p>
       </div>
       <a href="sale-new.html" class="btn btn-primary text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-4 shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        <span>New Sale Invoice</span>
+        <span>+ New Bill Entry</span>
       </a>
     </div>
 
@@ -122,7 +122,7 @@
     let selectedSaleForSettle = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      window.LSCLayout.init('sales', 'Sales & Invoices');
+      window.LSCLayout.init('sales', 'Bill Edit');
       await fetchSales();
 
       document.getElementById('search-input').addEventListener('input', renderSales);
@@ -184,7 +184,7 @@
             <td>
               <div class="flex items-center gap-1.5">
                 ${dueAmt > 0.01 ? `<button onclick="openSettleModal(${s.id})" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</button>` : ''}
-                <a href="sale-details.html?id=${s.id}" class="btn btn-ghost btn-sm text-xs">View</a>
+                <a href="sale-details.html?id=${s.id}" class="btn btn-primary btn-sm text-xs py-1 px-2.5 font-bold">View / Edit</a>
                 <button onclick="handleDeleteSale(${s.id}, '${s.invoice_number}')" class="btn btn-ghost btn-sm text-xs text-red-600 hover:bg-red-50">Delete</button>
               </div>
             </td>
