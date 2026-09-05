@@ -112,7 +112,7 @@
         <div class="border-t border-b border-black py-2 my-1 text-xs sm:text-sm">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <div><span class="font-bold">Challan No:</span> <span id="inv-no" class="font-semibold text-gray-900"></span></div>
+              <div><span class="font-bold">Challan No:</span> <span id="inv-no" class="font-semibold text-gray-900"></span> <button type="button" onclick="openEditModal()" class="no-print text-blue-600 hover:text-blue-800 text-xs ml-1 font-bold" title="Edit Challan No / Bill">✏️ Edit</button></div>
               <div><span class="font-bold">Name :</span> <span id="cust-name" class="font-semibold text-gray-900"></span></div>
             </div>
             <div class="text-right">
@@ -228,28 +228,34 @@
               </div>
             </div>
 
-            <!-- Date & Vehicle -->
+            <!-- Challan No & Bill Date -->
             <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label text-xs font-semibold text-gray-700">Challan No <span class="text-red-500">*</span></label>
+                <input type="text" id="edit-challan-no" class="form-input text-xs font-semibold" placeholder="e.g. 1001 or LSC-2526-1001" required>
+              </div>
               <div>
                 <label class="form-label text-xs font-semibold text-gray-700">Bill Date <span class="text-red-500">*</span></label>
                 <input type="date" id="edit-sale-date" class="form-input text-xs font-semibold" required>
               </div>
+            </div>
+
+            <!-- Vehicle & Destination -->
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="form-label text-xs font-semibold text-gray-700">Vehicle No</label>
                 <input type="text" id="edit-veh-no" class="form-input text-xs font-semibold" placeholder="e.g. MH12 AB1234">
               </div>
-            </div>
-
-            <!-- Destination & Trip -->
-            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="form-label text-xs font-semibold text-gray-700">Destination</label>
                 <input type="text" id="edit-destination" class="form-input text-xs font-semibold" placeholder="e.g. Pune">
               </div>
-              <div>
-                <label class="form-label text-xs font-semibold text-gray-700">Trip Count</label>
-                <input type="number" id="edit-trip" class="form-input text-xs font-semibold" value="1" min="1">
-              </div>
+            </div>
+
+            <!-- Trip Count -->
+            <div>
+              <label class="form-label text-xs font-semibold text-gray-700">Trip Count</label>
+              <input type="number" id="edit-trip" class="form-input text-xs font-semibold" value="1" min="1">
             </div>
 
             <!-- Material -->
@@ -544,6 +550,7 @@
       const firstItem = (currentSale.items && currentSale.items[0]) || {};
       const parsed = parseItemDetails(firstItem, currentSale);
 
+      document.getElementById('edit-challan-no').value = currentSale.invoice_number || '';
       document.getElementById('edit-sale-date').value = currentSale.sale_date || '';
       document.getElementById('edit-veh-no').value = (parsed.veh !== '-' ? parsed.veh : '') || '';
       document.getElementById('edit-destination').value = parsed.dest || '';
@@ -612,6 +619,14 @@
       btn.textContent = 'Saving...';
 
       try {
+        const challanNo = document.getElementById('edit-challan-no').value.trim();
+        if (!challanNo) {
+          alert('Challan No is required.');
+          btn.disabled = false;
+          btn.textContent = 'Save Changes';
+          return;
+        }
+
         let custId = parseInt(document.getElementById('edit-cust-select').value);
         const custNameText = document.getElementById('edit-cust-name-input').value.trim();
 
@@ -653,6 +668,7 @@
         }];
 
         await window.LSCDB.updateSale(currentSale.id, {
+          invoice_number: challanNo,
           customer_id: custId,
           sale_date: saleDate,
           gst_enabled: currentSale.gst_enabled,

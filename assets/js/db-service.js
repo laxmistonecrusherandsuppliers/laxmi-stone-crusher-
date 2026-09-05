@@ -465,6 +465,7 @@ window.LSCDB = {
 
     // Get existing sale to retain payments and invoice number
     const existingSale = await this.getSaleById(saleId);
+    const invoice_number = saleData.invoice_number ? String(saleData.invoice_number).trim() : existingSale.invoice_number;
     
     let subtotal = 0;
     items.forEach(item => {
@@ -487,6 +488,7 @@ window.LSCDB = {
         const { error: saleErr } = await supabase
           .from('sales')
           .update({
+            invoice_number,
             customer_id: parseInt(customer_id),
             sale_date: sale_date || new Date().toISOString().split('T')[0],
             gst_enabled: !!gst_enabled,
@@ -515,7 +517,7 @@ window.LSCDB = {
           }));
           await supabase.from('sale_items').insert(itemsToInsert);
 
-          return { sale_id: saleId, invoice_number: existingSale.invoice_number };
+          return { sale_id: saleId, invoice_number };
         } else {
             throw saleErr;
         }
@@ -530,6 +532,7 @@ window.LSCDB = {
     if (idx !== -1) {
       localSales[idx] = {
         ...localSales[idx],
+        invoice_number,
         customer_id: parseInt(customer_id),
         sale_date: sale_date || new Date().toISOString().split('T')[0],
         gst_enabled: !!gst_enabled,
