@@ -39,7 +39,6 @@
           <div>
             <label class="form-label text-xs font-semibold">Report Type</label>
             <select id="report-type" class="form-select text-xs font-semibold py-1.5" onchange="onReportTypeChange()">
-              <option value="due">💰 Outstanding Dues (By Person)</option>
               <option value="dispatch-log" selected>📋 Daily Dispatch Report</option>
               <option value="customer-statement">📄 Customer Account Statement</option>
               <option value="customer-wise">👥 Customer-wise Summary</option>
@@ -268,19 +267,23 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       const urlType = window.LSCUtils.getQueryParam('type');
-      if (urlType) {
-        const typeSelect = document.getElementById('report-type');
-        if (typeSelect) typeSelect.value = urlType;
-      }
+      const typeSelect = document.getElementById('report-type');
 
-      const activeType = document.getElementById('report-type').value;
-      if (activeType === 'due') {
+      if (urlType === 'due') {
+        if (typeSelect) {
+          typeSelect.innerHTML = `<option value="due" selected>💰 Outstanding Dues (By Person)</option>`;
+        }
         window.LSCLayout.init('dues', 'Outstanding Dues');
         document.getElementById('page-main-title').textContent = 'Outstanding Dues by Person';
         document.getElementById('page-main-sub').textContent = 'Track, filter, and settle all outstanding dues partitioned by each person';
       } else {
+        if (urlType && typeSelect) {
+          typeSelect.value = urlType;
+        }
         window.LSCLayout.init('reports', 'Customer Account Statement & Reports');
       }
+
+      const activeType = typeSelect ? typeSelect.value : '';
 
       appSettings = await window.LSCDB.getSettings();
       if (appSettings) {
@@ -1208,10 +1211,16 @@
     }
 
     function resetFilters() {
-      document.getElementById('report-type').value = 'customer-statement';
+      const urlType = window.LSCUtils.getQueryParam('type');
+      if (urlType === 'due') {
+        document.getElementById('report-type').value = 'due';
+        document.getElementById('rep-single-date').value = '';
+        updatePresetButtonStyles('all');
+      } else {
+        document.getElementById('report-type').value = 'dispatch-log';
+        setDatePreset('today', false);
+      }
       document.getElementById('rep-customer-select').value = '';
-      document.getElementById('rep-from').value = '';
-      document.getElementById('rep-to').value = '';
       runReport();
     }
   </script>
