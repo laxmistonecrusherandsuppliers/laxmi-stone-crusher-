@@ -161,6 +161,8 @@
   <script>
     let allSales = [];
     let selectedSaleForSettle = null;
+    let personDueBills = [];
+    let personTotalDue = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
       window.LSCLayout.init('sales', 'Bill Edit');
@@ -235,10 +237,6 @@
 
       document.getElementById('sales-table-container').classList.remove('hidden');
     }
-
-    let selectedSaleForSettle = null;
-    let personDueBills = [];
-    let personTotalDue = 0;
 
     async function openSettleModal(saleId) {
       selectedSaleForSettle = allSales.find(s => s.id == saleId);

@@ -244,6 +244,8 @@
     let currentReportTitle = 'Customer Bills Statement';
     let currentSummaryObj = null;
     let selectedSaleForSettle = null;
+    let personDueBills = [];
+    let personTotalDue = 0;
     let appSettings = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -729,10 +731,6 @@
     }
 
     // --- Payment Recording Modal with All Dues of Person ---
-    let selectedSaleForSettle = null;
-    let personDueBills = [];
-    let personTotalDue = 0;
-
     async function openSettleModal(saleId) {
       selectedSaleForSettle = currentRawData.find(s => s.id == saleId);
       if (!selectedSaleForSettle) return;

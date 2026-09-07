@@ -193,6 +193,8 @@
     let currentCustomerId = null;
     let currentSalesList = [];
     let selectedSaleForSettle = null;
+    let personDueBills = [];
+    let personTotalDue = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
       window.LSCLayout.init('customers', 'Customer Ledger');
@@ -300,10 +302,6 @@
         window.LSCUtils.showNotification('Error loading customer details: ' + err.message, 'error');
       }
     }
-
-    let selectedSaleForSettle = null;
-    let personDueBills = [];
-    let personTotalDue = 0;
 
     async function openCustomerSettleModal() {
       let custSales = [];
