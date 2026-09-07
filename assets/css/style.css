@@ -499,4 +499,12 @@ body {
     max-width: 210mm !important;
     margin: 0 auto !important;
   }
+
+  .due-person-card {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 }

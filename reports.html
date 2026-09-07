@@ -22,8 +22,8 @@
     <!-- Screen Header (Hidden on Print) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Customer Account Statement & Reports</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Filter past bills by customer name & date range, view totals & print statement</p>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="page-main-title">Customer Account Statement & Reports</h1>
+        <p class="text-xs text-gray-500 mt-0.5" id="page-main-sub">Filter past bills by customer name & date range, view totals & print statement</p>
       </div>
       <div class="flex gap-2">
         <button onclick="window.print()" class="btn btn-secondary text-xs flex items-center gap-1.5">
@@ -35,29 +35,38 @@
     <!-- Filter Card (Hidden on Print) -->
     <div class="card mb-6 p-4 no-print">
       <div class="flex flex-col md:flex-row gap-4 items-end justify-between">
-        <div class="flex items-center gap-4 w-full md:w-auto">
-          <!-- Hidden select to keep existing logic working without errors -->
-          <select id="report-type" class="hidden">
-            <option value="dispatch-log" selected>Daily Dispatch Report (Spreadsheet Format)</option>
-          </select>
+        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div>
+            <label class="form-label text-xs font-semibold">Report Type</label>
+            <select id="report-type" class="form-select text-xs font-semibold py-1.5" onchange="onReportTypeChange()">
+              <option value="due">💰 Outstanding Dues (By Person)</option>
+              <option value="dispatch-log" selected>📋 Daily Dispatch Report</option>
+              <option value="customer-statement">📄 Customer Account Statement</option>
+              <option value="customer-wise">👥 Customer-wise Summary</option>
+              <option value="material-wise">🧱 Material-wise Summary</option>
+              <option value="attendance">🕒 Staff Attendance</option>
+              <option value="staff-summary">💼 Staff Salary & Advances</option>
+            </select>
+          </div>
           
           <div id="customer-select-box" class="w-full md:w-64">
-            <label class="form-label text-xs">Customer Filter</label>
-            <select id="rep-customer-select" class="form-select text-sm py-1.5" onchange="runReport()">
+            <label class="form-label text-xs font-semibold">Customer Filter</label>
+            <select id="rep-customer-select" class="form-select text-xs font-medium py-1.5" onchange="runReport()">
               <option value="">-- All Customers --</option>
             </select>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <button type="button" class="btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('yesterday')">Yesterday</button>
-          <button type="button" class="btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('today')">Today</button>
+        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0" id="date-filter-box">
+          <button type="button" id="btn-preset-all" class="btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('all')">All Time</button>
+          <button type="button" id="btn-preset-yesterday" class="btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('yesterday')">Yesterday</button>
+          <button type="button" id="btn-preset-today" class="btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap" onclick="setDatePreset('today')">Today</button>
           
-          <div class="flex items-center border border-slate-300 rounded-md bg-white shadow-sm ml-2">
+          <div class="flex items-center border border-slate-300 rounded-md bg-white shadow-sm ml-1">
             <button type="button" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-r border-slate-200 focus:outline-none" onclick="shiftDate(-1)">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </button>
-            <input type="date" id="rep-single-date" class="border-none text-sm w-36 text-center focus:ring-0 py-1.5" onchange="runReport()">
+            <input type="date" id="rep-single-date" class="border-none text-xs w-32 text-center focus:ring-0 py-1.5" onchange="runReport()">
             <button type="button" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l border-slate-200 focus:outline-none" onclick="shiftDate(1)">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </button>
@@ -66,18 +75,18 @@
       </div>
     </div>
 
-    <!-- Statement Summary Cards (Screen View) -->
+    <!-- Statement / Dues Summary Cards (Screen View) -->
     <div id="customer-statement-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 hidden no-print">
       <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-blue-600 shadow-sm">
-        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Total Billed</div>
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider" id="stat-card1-label">Filtered Total Billed</div>
         <div id="stat-billed" class="text-xl font-extrabold text-gray-900 mt-1">₹0.00</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-emerald-600 shadow-sm">
-        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Total Paid</div>
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider" id="stat-card2-label">Filtered Total Paid</div>
         <div id="stat-paid" class="text-xl font-extrabold text-emerald-600 mt-1">₹0.00</div>
       </div>
       <div class="bg-white p-4 rounded-xl border border-gray-200 border-t-4 border-t-red-600 shadow-sm">
-        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Filtered Outstanding Due</div>
+        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider" id="stat-card3-label">Filtered Outstanding Due</div>
         <div id="stat-due" class="text-xl font-extrabold text-red-600 mt-1">₹0.00</div>
       </div>
     </div>
@@ -101,14 +110,19 @@
       </div>
     </div>
 
-    <!-- Main Table Container Card -->
+    <!-- Main Content Card -->
     <div class="card">
-      <div class="card-header no-print">
+      <div class="card-header no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <span id="report-title-label" class="font-bold text-gray-900">Customer Account Bills Statement</span>
+        <!-- Search bar for Outstanding Dues Partitions -->
+        <div id="dues-search-box" class="hidden">
+          <input type="text" id="dues-search-input" placeholder="🔍 Search person name or invoice in dues..." class="form-input text-xs py-1.5 px-3 w-64" oninput="filterDuesPartitions()">
+        </div>
       </div>
 
       <div id="rep-loading" class="p-8 text-center text-gray-400 text-xs no-print">Generating statement...</div>
 
+      <!-- Standard Table for other reports -->
       <div id="rep-table-container" class="table-container hidden">
         <table class="table text-xs">
           <thead id="rep-thead"></thead>
@@ -117,7 +131,11 @@
         </table>
       </div>
 
-      <div id="rep-empty" class="hidden p-10 text-center text-gray-400 text-xs">No bill records found for the selected customer & date filters.</div>
+      <!-- Partitioned Customer View for Outstanding Dues -->
+      <div id="dues-partitions-container" class="space-y-6 hidden mt-2"></div>
+      <div id="dues-filter-empty" class="hidden p-8 text-center text-gray-400 text-xs">No customer partitions match your search query.</div>
+
+      <div id="rep-empty" class="hidden p-10 text-center text-gray-400 text-xs">No records found for the selected filters.</div>
 
       <!-- Printable Financial Summary & Signatory Section -->
       <div id="print-footer-section" class="print-only hidden mt-8 pt-4 border-t border-gray-200 text-xs space-y-4">
@@ -249,9 +267,22 @@
     let appSettings = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      window.LSCLayout.init('reports', 'Customer Account Statement & Reports');
-      appSettings = await window.LSCDB.getSettings();
+      const urlType = window.LSCUtils.getQueryParam('type');
+      if (urlType) {
+        const typeSelect = document.getElementById('report-type');
+        if (typeSelect) typeSelect.value = urlType;
+      }
 
+      const activeType = document.getElementById('report-type').value;
+      if (activeType === 'due') {
+        window.LSCLayout.init('dues', 'Outstanding Dues');
+        document.getElementById('page-main-title').textContent = 'Outstanding Dues by Person';
+        document.getElementById('page-main-sub').textContent = 'Track, filter, and settle all outstanding dues partitioned by each person';
+      } else {
+        window.LSCLayout.init('reports', 'Customer Account Statement & Reports');
+      }
+
+      appSettings = await window.LSCDB.getSettings();
       if (appSettings) {
         document.getElementById('print-biz-name').textContent = (appSettings.business_name || 'LAKSHMI STONE CRUSHER & SUPPLIERS').toUpperCase();
         document.getElementById('print-biz-sub').textContent = `${appSettings.business_address || ''} • Ph: ${appSettings.business_mobile || ''} • GSTIN: ${appSettings.gstin || ''}`;
@@ -260,28 +291,57 @@
       document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-IN');
 
       const urlCust = window.LSCUtils.getQueryParam('customer_id');
-      if (urlCust) document.getElementById('rep-customer-select').value = urlCust;
 
-      // Set today by default
-      setDatePreset('today');
+      if (activeType === 'due') {
+        const dateInput = document.getElementById('rep-single-date');
+        dateInput.value = '';
+        updatePresetButtonStyles('all');
+      } else {
+        setDatePreset('today', false);
+      }
       
-      onReportTypeChange();
+      await onReportTypeChange(urlCust);
     });
 
-    
     // --- Date Navigation Logic ---
-    function setDatePreset(preset) {
+    function setDatePreset(preset, shouldRun = true) {
       const dateInput = document.getElementById('rep-single-date');
       const today = new Date();
+      if (preset === 'all') {
+        dateInput.value = '';
+        updatePresetButtonStyles('all');
+        if (shouldRun) runReport();
+        return;
+      }
       if (preset === 'yesterday') {
         today.setDate(today.getDate() - 1);
+        updatePresetButtonStyles('yesterday');
+      } else {
+        updatePresetButtonStyles('today');
       }
-      // format YYYY-MM-DD
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const dd = String(today.getDate()).padStart(2, '0');
       dateInput.value = `${yyyy}-${mm}-${dd}`;
-      runReport();
+      if (shouldRun) runReport();
+    }
+
+    function updatePresetButtonStyles(active) {
+      const btnAll = document.getElementById('btn-preset-all');
+      const btnYest = document.getElementById('btn-preset-yesterday');
+      const btnToday = document.getElementById('btn-preset-today');
+      if (!btnAll || !btnYest || !btnToday) return;
+
+      [btnAll, btnYest, btnToday].forEach(b => {
+        b.className = "btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5 whitespace-nowrap";
+      });
+      if (active === 'all') {
+        btnAll.className = "btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap font-bold";
+      } else if (active === 'yesterday') {
+        btnYest.className = "btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap font-bold";
+      } else if (active === 'today') {
+        btnToday.className = "btn bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-xs px-3 py-1.5 whitespace-nowrap font-bold";
+      }
     }
 
     function shiftDate(days) {
@@ -299,16 +359,26 @@
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
       dateInput.value = `${yyyy}-${mm}-${dd}`;
+      updatePresetButtonStyles('');
       runReport();
     }
     // -----------------------------
 
-    async function onReportTypeChange() {
+    async function onReportTypeChange(preselectCustomer = null) {
       const type = document.getElementById('report-type').value;
       const selectBoxLabel = document.querySelector('#customer-select-box .form-label');
       const select = document.getElementById('rep-customer-select');
       
-      const currentVal = select.value;
+      const currentVal = preselectCustomer || select.value;
+
+      if (type === 'due') {
+        document.getElementById('page-main-title').textContent = 'Outstanding Dues by Person';
+        document.getElementById('page-main-sub').textContent = 'Track, filter, and settle all outstanding dues partitioned by each person';
+        document.getElementById('report-title-label').textContent = 'Outstanding Dues (Grouped by Person)';
+      } else {
+        document.getElementById('page-main-title').textContent = 'Customer Account Statement & Reports';
+        document.getElementById('page-main-sub').textContent = 'Filter past bills by customer name & date range, view totals & print statement';
+      }
 
       try {
         if (type === 'attendance' || type === 'staff-summary') {
@@ -317,7 +387,7 @@
           select.innerHTML = '<option value="">-- All Staff --</option>' + 
             staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         } else {
-          selectBoxLabel.textContent = 'Select Customer Name';
+          selectBoxLabel.textContent = 'Customer Filter';
           const customers = await window.LSCDB.getCustomers();
           select.innerHTML = '<option value="">-- All Customers --</option>' +
             customers.map(c => `<option value="${c.id}">${c.name} ${c.mobile ? '(' + c.mobile + ')' : ''}</option>`).join('');
@@ -327,11 +397,11 @@
       }
       
       // Preserve selection if possible, otherwise it resets
-      if(Array.from(select.options).some(o => o.value === currentVal)) {
-          select.value = currentVal;
+      if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+        select.value = currentVal;
       }
 
-      runReport();
+      await runReport();
     }
 
     async function runReport() {
@@ -345,6 +415,8 @@
 
       document.getElementById('rep-loading').classList.remove('hidden');
       document.getElementById('rep-table-container').classList.add('hidden');
+      document.getElementById('dues-partitions-container').classList.add('hidden');
+      document.getElementById('dues-filter-empty').classList.add('hidden');
       document.getElementById('rep-empty').classList.add('hidden');
       document.getElementById('customer-statement-summary').classList.add('hidden');
 
@@ -562,6 +634,9 @@
           due: window.LSCUtils.formatCurrency(totDue)
         };
 
+        document.getElementById('stat-card1-label').textContent = 'Filtered Total Billed';
+        document.getElementById('stat-card2-label').textContent = 'Filtered Total Paid';
+        document.getElementById('stat-card3-label').textContent = 'Filtered Outstanding Due';
         document.getElementById('stat-billed').textContent = window.LSCUtils.formatCurrency(totBilled);
         document.getElementById('stat-paid').textContent = window.LSCUtils.formatCurrency(totPaid);
         document.getElementById('stat-due').textContent = window.LSCUtils.formatCurrency(totDue);
@@ -572,64 +647,219 @@
         document.getElementById('print-sum-due').textContent = window.LSCUtils.formatCurrency(totDue);
 
       } else if (type === 'due') {
-        document.getElementById('customer-statement-summary').classList.add('hidden');
-        currentReportTitle = 'Outstanding Dues Report';
+        currentReportTitle = 'Outstanding Dues Report (Grouped by Person)';
         label.textContent = currentReportTitle;
         printHeading.textContent = currentReportTitle;
-        currentReportHeaders = ['Invoice No', 'Customer Name', 'Mobile', 'Sale Date', 'Grand Total (₹)', 'Amount Paid (₹)', 'Due Balance (₹)'];
 
-        thead.innerHTML = `
-          <tr>
-            <th>Invoice No</th>
-            <th>Customer Name</th>
-            <th>Mobile</th>
-            <th>Sale Date</th>
-            <th>Grand Total (₹)</th>
-            <th>Amount Paid (₹)</th>
-            <th>Due Balance (₹)</th>
-            <th class="no-print">Actions</th>
-          </tr>
-        `;
+        // Group all due bills by person / customer
+        const customerMap = new Map();
+        let overallTotalDue = 0;
+        let overallTotalBilled = 0;
+        let overallTotalPaid = 0;
 
-        let totDue = 0;
-        currentReportRows = data.map(r => {
-          totDue += parseFloat(r.amount_due) || 0;
-          return [
-            r.invoice_number,
-            r.customer_name,
-            r.customer_mobile || '-',
-            window.LSCUtils.formatDate(r.sale_date),
-            window.LSCUtils.formatCurrency(r.grand_total),
-            window.LSCUtils.formatCurrency(r.amount_paid),
-            window.LSCUtils.formatCurrency(r.amount_due)
-          ];
+        data.forEach(sale => {
+          const custKey = (sale.customer_id && sale.customer_id !== 'unknown') ? `id_${sale.customer_id}` : `name_${sale.customer_name || 'Walk-in'}`;
+          const custName = sale.customer_name || 'Walk-in Customer';
+          const custMobile = sale.customer_mobile || '';
+          const due = parseFloat(sale.amount_due) || 0;
+          const billed = parseFloat(sale.grand_total) || 0;
+          const paid = parseFloat(sale.amount_paid) || 0;
+
+          overallTotalDue += due;
+          overallTotalBilled += billed;
+          overallTotalPaid += paid;
+
+          if (!customerMap.has(custKey)) {
+            customerMap.set(custKey, {
+              id: sale.customer_id || null,
+              name: custName,
+              mobile: custMobile,
+              bills: [],
+              totalBilled: 0,
+              totalPaid: 0,
+              totalDue: 0
+            });
+          }
+          const grp = customerMap.get(custKey);
+          grp.bills.push(sale);
+          grp.totalBilled += billed;
+          grp.totalPaid += paid;
+          grp.totalDue += due;
+          if (!grp.mobile && custMobile) grp.mobile = custMobile;
         });
 
-        tbody.innerHTML = data.map(r => `
-          <tr>
-            <td class="font-semibold text-gray-900">${r.invoice_number}</td>
-            <td class="font-medium">${r.customer_name}</td>
-            <td>${r.customer_mobile || '-'}</td>
-            <td>${window.LSCUtils.formatDate(r.sale_date)}</td>
-            <td>${window.LSCUtils.formatCurrency(r.grand_total)}</td>
-            <td class="text-emerald-600">${window.LSCUtils.formatCurrency(r.amount_paid)}</td>
-            <td class="text-red-600 font-bold">${window.LSCUtils.formatCurrency(r.amount_due)}</td>
-            <td class="no-print">
-              <div class="flex items-center gap-1.5">
-                <button onclick="openSettleModal(${r.id})" class="btn btn-success btn-sm text-xs py-1 px-2.5 font-bold shadow-sm">Settle Due</button>
-                <a href="sale-details.html?id=${r.id}" class="btn btn-ghost btn-sm text-xs">View</a>
-              </div>
-            </td>
-          </tr>
-        `).join('');
+        // Sort customer partitions by highest outstanding debt first
+        const customerPartitions = Array.from(customerMap.values()).sort((a, b) => b.totalDue - a.totalDue);
 
-        tfoot.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-right font-bold">TOTAL OUTSTANDING DUE BALANCE:</td>
-            <td class="text-red-600 text-base font-bold">${window.LSCUtils.formatCurrency(totDue)}</td>
-            <td class="no-print"></td>
-          </tr>
+        // Sort bills inside each partition chronologically (oldest first for aging / FIFO settlement)
+        customerPartitions.forEach(c => {
+          c.bills.sort((a, b) => new Date(a.sale_date) - new Date(b.sale_date));
+        });
+
+        // Update Top Summary Cards
+        document.getElementById('stat-card1-label').textContent = 'Customers with Dues';
+        document.getElementById('stat-billed').textContent = customerPartitions.length;
+        document.getElementById('stat-card2-label').textContent = 'Total Unpaid Bills';
+        document.getElementById('stat-paid').textContent = data.length;
+        document.getElementById('stat-card3-label').textContent = 'Total Outstanding Balance';
+        document.getElementById('stat-due').textContent = window.LSCUtils.formatCurrency(overallTotalDue);
+        document.getElementById('customer-statement-summary').classList.remove('hidden');
+
+        // Printable Letterhead Summary
+        document.getElementById('print-sum-billed').textContent = window.LSCUtils.formatCurrency(overallTotalBilled);
+        document.getElementById('print-sum-paid').textContent = window.LSCUtils.formatCurrency(overallTotalPaid);
+        document.getElementById('print-sum-due').textContent = window.LSCUtils.formatCurrency(overallTotalDue);
+
+        currentSummaryObj = {
+          billed: `${customerPartitions.length} Customers`,
+          paid: `${data.length} Unpaid Bills`,
+          due: window.LSCUtils.formatCurrency(overallTotalDue)
+        };
+
+        // Export PDF Headers & Rows (Partitioned by Person)
+        currentReportHeaders = ['Customer Name', 'Mobile', 'Challan / Inv No', 'Sale Date', 'Materials Particulars', 'Bill Total (₹)', 'Paid (₹)', 'Due Balance (₹)'];
+        currentReportRows = [];
+        customerPartitions.forEach(c => {
+          c.bills.forEach(b => {
+            currentReportRows.push([
+              c.name,
+              c.mobile || '-',
+              b.invoice_number,
+              window.LSCUtils.formatDate(b.sale_date),
+              b.material_summary || 'Stone Crusher Materials',
+              window.LSCUtils.formatCurrency(b.grand_total),
+              window.LSCUtils.formatCurrency(b.amount_paid),
+              window.LSCUtils.formatCurrency(b.amount_due)
+            ]);
+          });
+        });
+
+        // Render Partition Cards HTML
+        const partitionsHtml = customerPartitions.map((c, idx) => {
+          const initials = c.name ? c.name.trim().charAt(0).toUpperCase() : 'C';
+          const invoicesList = c.bills.map(b => b.invoice_number).join(' ');
+          const searchData = `${c.name} ${c.mobile || ''} ${invoicesList}`.toLowerCase();
+
+          return `
+            <div class="due-person-card border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:shadow-md mb-6"
+                 data-customer-name="${(c.name || '').toLowerCase()}"
+                 data-customer-mobile="${(c.mobile || '').toLowerCase()}"
+                 data-search-terms="${searchData}">
+              
+              <!-- Partition Header -->
+              <div class="p-4 bg-gradient-to-r from-slate-50 via-slate-50 to-blue-50/40 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                    ${initials}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-xs font-semibold text-slate-400">#${idx + 1}</span>
+                      <h3 class="font-bold text-gray-900 text-base tracking-tight">${c.name}</h3>
+                      ${c.id ? `
+                        <a href="customer-details.html?id=${c.id}" class="text-[11px] text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center gap-0.5 no-print" title="View Customer Ledger">
+                          <span>View Ledger</span>
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                      ` : ''}
+                    </div>
+                    <div class="text-xs text-gray-500 flex items-center gap-2.5 mt-0.5 flex-wrap">
+                      <span>📞 ${c.mobile || 'No Mobile'}</span>
+                      <span class="text-slate-300">•</span>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
+                        ${c.bills.length} Pending Bill${c.bills.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 sm:text-right">
+                  <div class="bg-white/80 px-3 py-1.5 rounded-lg border border-red-100 sm:text-right">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Person Due</span>
+                    <span class="text-lg font-black text-red-600">${window.LSCUtils.formatCurrency(c.totalDue)}</span>
+                  </div>
+                  <button type="button" onclick="openCustomerSettleModal('${c.id || ''}', '${escapeQuotes(c.name)}')" class="btn btn-success btn-sm text-xs font-bold py-2 px-3 shadow-sm flex items-center gap-1.5 no-print">
+                    <span>💰</span> Settle Person Due
+                  </button>
+                </div>
+              </div>
+
+              <!-- Partition Bills Table -->
+              <div class="overflow-x-auto">
+                <table class="table text-xs w-full">
+                  <thead class="bg-slate-100/80 text-gray-600 text-[11px]">
+                    <tr>
+                      <th class="py-2.5 px-3 text-left font-bold">Challan / Inv No</th>
+                      <th class="py-2.5 px-3 text-left font-bold">Sale Date</th>
+                      <th class="py-2.5 px-3 text-left font-bold">Materials Particulars</th>
+                      <th class="py-2.5 px-3 text-right font-bold">Grand Total (₹)</th>
+                      <th class="py-2.5 px-3 text-right font-bold">Paid (₹)</th>
+                      <th class="py-2.5 px-3 text-right font-bold">Due Balance (₹)</th>
+                      <th class="py-2.5 px-3 text-center no-print font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    ${c.bills.map(b => `
+                      <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-2.5 px-3 font-bold text-gray-900">
+                          <a href="sale-details.html?id=${b.id}" class="text-blue-600 hover:underline">#${b.invoice_number}</a>
+                        </td>
+                        <td class="py-2.5 px-3 text-gray-600 whitespace-nowrap">${window.LSCUtils.formatDate(b.sale_date)}</td>
+                        <td class="py-2.5 px-3 text-gray-600 max-w-xs truncate" title="${b.material_summary || ''}">${b.material_summary || 'Stone Crusher Materials'}</td>
+                        <td class="py-2.5 px-3 text-right font-semibold text-gray-900">${window.LSCUtils.formatCurrency(b.grand_total)}</td>
+                        <td class="py-2.5 px-3 text-right font-medium text-emerald-600">${window.LSCUtils.formatCurrency(b.amount_paid)}</td>
+                        <td class="py-2.5 px-3 text-right font-extrabold text-red-600">${window.LSCUtils.formatCurrency(b.amount_due)}</td>
+                        <td class="py-2.5 px-3 text-center no-print whitespace-nowrap">
+                          <div class="flex items-center justify-center gap-1.5">
+                            <button type="button" onclick="openSettleModal(${b.id})" class="btn btn-outline-success btn-xs text-[11px] py-0.5 px-2 font-bold shadow-sm">
+                              Settle
+                            </button>
+                            <a href="sale-details.html?id=${b.id}" class="btn btn-ghost btn-xs text-[11px] py-0.5 px-1.5 text-gray-500">
+                              View
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                  <tfoot class="bg-slate-50/90 border-t border-slate-200 font-bold text-xs text-gray-700">
+                    <tr>
+                      <td colspan="3" class="py-2.5 px-3 text-right text-gray-600 uppercase text-[11px] font-bold">
+                        Subtotal for ${c.name} (${c.bills.length} Bills):
+                      </td>
+                      <td class="py-2.5 px-3 text-right text-gray-900 font-bold">${window.LSCUtils.formatCurrency(c.totalBilled)}</td>
+                      <td class="py-2.5 px-3 text-right text-emerald-600 font-bold">${window.LSCUtils.formatCurrency(c.totalPaid)}</td>
+                      <td class="py-2.5 px-3 text-right text-red-600 font-black text-sm">${window.LSCUtils.formatCurrency(c.totalDue)}</td>
+                      <td class="no-print"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Bottom Grand Summary Banner
+        const grandSummaryBanner = `
+          <div class="p-4 bg-slate-900 text-white rounded-xl shadow flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+            <div>
+              <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Outstanding Balance Summary</div>
+              <div class="text-sm font-bold text-slate-200 mt-0.5">${customerPartitions.length} Customers with dues • ${data.length} Unpaid Challans</div>
+            </div>
+            <div class="flex items-center gap-6">
+              <div class="text-right">
+                <div class="text-[11px] text-slate-400">Total Billed: <span class="text-slate-200 font-semibold">${window.LSCUtils.formatCurrency(overallTotalBilled)}</span></div>
+                <div class="text-[11px] text-slate-400">Total Paid: <span class="text-emerald-400 font-semibold">${window.LSCUtils.formatCurrency(overallTotalPaid)}</span></div>
+              </div>
+              <div class="pl-4 border-l border-slate-700 text-right">
+                <div class="text-xs text-red-400 font-bold uppercase">Total Due Balance</div>
+                <div class="text-2xl font-black text-red-400">${window.LSCUtils.formatCurrency(overallTotalDue)}</div>
+              </div>
+            </div>
+          </div>
         `;
+
+        document.getElementById('dues-partitions-container').innerHTML = partitionsHtml + grandSummaryBanner;
       } else if (type === 'attendance') {
         currentReportTitle = 'Staff Attendance Report';
         label.textContent = currentReportTitle;
@@ -727,7 +957,56 @@
         printHeading.textContent = currentReportTitle;
       }
 
-      document.getElementById('rep-table-container').classList.remove('hidden');
+      if (type === 'due') {
+        document.getElementById('rep-table-container').classList.add('hidden');
+        document.getElementById('dues-partitions-container').classList.remove('hidden');
+        document.getElementById('dues-search-box').classList.remove('hidden');
+      } else {
+        document.getElementById('dues-partitions-container').classList.add('hidden');
+        document.getElementById('dues-search-box').classList.add('hidden');
+        document.getElementById('rep-table-container').classList.remove('hidden');
+      }
+    }
+
+    function escapeQuotes(str) {
+      return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    async function openCustomerSettleModal(customerId, customerName) {
+      let sale = null;
+      if (customerId && customerId !== 'unknown' && customerId !== 'null' && customerId !== 'undefined') {
+        sale = currentRawData.find(s => s.customer_id == customerId);
+      }
+      if (!sale && customerName) {
+        sale = currentRawData.find(s => s.customer_name === customerName);
+      }
+      if (!sale) return;
+
+      await openSettleModal(sale.id);
+      fillTotalPersonDue();
+    }
+
+    function filterDuesPartitions() {
+      const query = (document.getElementById('dues-search-input').value || '').trim().toLowerCase();
+      const cards = document.querySelectorAll('#dues-partitions-container .due-person-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const searchTerms = card.getAttribute('data-search-terms') || '';
+        if (!query || searchTerms.includes(query)) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      const emptyMsg = document.getElementById('dues-filter-empty');
+      if (visibleCount === 0 && cards.length > 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+      }
     }
 
     // --- Payment Recording Modal with All Dues of Person ---
@@ -747,7 +1026,11 @@
 
       let custSales = [];
       try {
-        custSales = await window.LSCDB.getSales({ customer_id: custId });
+        if (custId) {
+          custSales = await window.LSCDB.getSales({ customer_id: custId });
+        } else {
+          custSales = currentRawData.filter(s => s.customer_name === custName);
+        }
       } catch (e) {
         custSales = [selectedSaleForSettle];
       }

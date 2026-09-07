@@ -1103,7 +1103,20 @@ window.LSCDB = {
     }
 
     if (type === 'due') {
-      return sales.filter(s => parseFloat(s.amount_due) > 0).sort((a, b) => b.amount_due - a.amount_due);
+      return sales.filter(s => parseFloat(s.amount_due) > 0).map(s => {
+        const c = customers.find(item => item.id == s.customer_id);
+        const matSummary = (s.items || []).map(i => {
+          const matObj = materials.find(m => m.id == i.material_id);
+          const name = i.custom_material_name || (matObj ? matObj.name : null) || i.material_name || i.name || 'Stone Material';
+          return `${name} (${i.quantity || 0} ${i.unit || 'Tonne'})`;
+        }).join(', ');
+        return {
+          ...s,
+          customer_name: (c ? c.name : null) || s.customer_name || 'N/A',
+          customer_mobile: (c ? c.mobile : null) || s.customer_mobile || '',
+          material_summary: matSummary || 'Stone Crusher Materials'
+        };
+      }).sort((a, b) => b.amount_due - a.amount_due);
     }
 
     // Daily Summary
