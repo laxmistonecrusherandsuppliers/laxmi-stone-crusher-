@@ -334,9 +334,15 @@ window.LSCDB = {
       due = Math.max(0, grand_total - actual_paid);
     }
 
-    // Map 'full' payment_mode to the actual payment method used (cash/upi/bank)
-    // 'full' is a logical state, not a valid DB enum — use payment_method as the mode when fully paid
-    const dbPaymentMode = (payment_mode === 'full') ? (payment_method || 'cash') : payment_mode;
+    // Map payment_mode strictly to DB check constraint ('full', 'partial', 'due')
+    let dbPaymentMode = 'due';
+    if (payment_mode === 'full' || due <= 0.01) {
+      dbPaymentMode = 'full';
+    } else if (payment_mode === 'partial' || actual_paid > 0) {
+      dbPaymentMode = 'partial';
+    } else {
+      dbPaymentMode = 'due';
+    }
 
     const user = window.LSCAuth.getCurrentUser();
     let newSaleId = Date.now();
@@ -424,7 +430,7 @@ window.LSCDB = {
       subtotal,
       gst_amount,
       grand_total,
-      payment_mode,
+      payment_mode: dbPaymentMode,
       amount_paid: actual_paid,
       amount_due: due,
       notes,
@@ -479,7 +485,7 @@ window.LSCDB = {
     let due = Math.max(0, grand_total - actual_paid);
     
     let payment_mode = 'due';
-    if (due <= 0.01) payment_mode = (existingSale.payment_mode === 'upi' ? 'upi' : 'cash');
+    if (due <= 0.01) payment_mode = 'full';
     else if (actual_paid > 0) payment_mode = 'partial';
 
     try {
