@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Account Statement & Reports - Lakshmi Stone Crusher & Suppliers</title>
+  <title>Report - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/style.css?v=1787172500">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,7 +22,7 @@
     <!-- Screen Header (Hidden on Print) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 no-print">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="page-main-title">Customer Account Statement & Reports</h1>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight" id="page-main-title">Report</h1>
         <p class="text-xs text-gray-500 mt-0.5" id="page-main-sub">Filter past bills by customer name & date range, view totals & print statement</p>
       </div>
       <div class="flex gap-2">
@@ -280,7 +280,7 @@
         if (urlType && typeSelect) {
           typeSelect.value = urlType;
         }
-        window.LSCLayout.init('reports', 'Customer Account Statement & Reports');
+        window.LSCLayout.init('reports', 'Report');
       }
 
       const activeType = typeSelect ? typeSelect.value : '';
@@ -379,7 +379,7 @@
         document.getElementById('page-main-sub').textContent = 'Track, filter, and settle all outstanding dues partitioned by each person';
         document.getElementById('report-title-label').textContent = 'Outstanding Dues (Grouped by Person)';
       } else {
-        document.getElementById('page-main-title').textContent = 'Customer Account Statement & Reports';
+        document.getElementById('page-main-title').textContent = 'Report';
         document.getElementById('page-main-sub').textContent = 'Filter past bills by customer name & date range, view totals & print statement';
       }
 
