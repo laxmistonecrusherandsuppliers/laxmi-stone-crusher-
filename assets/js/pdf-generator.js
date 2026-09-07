@@ -20,29 +20,44 @@ window.LSCPDF = {
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.4);
     doc.line(margin, y, W - margin, y);
-    y += 5;
+    y += 3;
+
+    // Center Logo (Goddess Laxmi)
+    const logoW = 16;
+    const logoH = 16;
+    const logoX = (W - logoW) / 2;
+    try {
+      const logoEl = document.getElementById('bill-logo-img');
+      if (logoEl && logoEl.complete && logoEl.naturalWidth > 0) {
+        doc.addImage(logoEl, 'PNG', logoX, y, logoW, logoH);
+      }
+    } catch (e) {
+      console.warn('Could not render logo in PDF:', e);
+    }
 
     // Top Contacts & Header
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    doc.text('Subhash Warule', margin, y);
+    doc.text('Subhash Warule', margin, y + 6);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text('7020778707', margin, y + 4.5);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(17);
-    doc.text('Laxmi Stone Crusher', W / 2, y + 2, { align: 'center' });
+    doc.text('7020778707', margin, y + 10.5);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('prasad warule', W - margin, y, { align: 'right' });
+    doc.text('prasad warule', W - margin, y + 6, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text('8010406871', W - margin, y + 4.5, { align: 'right' });
+    doc.text('8010406871', W - margin, y + 10.5, { align: 'right' });
 
-    y += 11;
+    // Below logo: Company Title
+    y += logoH + 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Laxmi Stone Crusher', W / 2, y, { align: 'center' });
+
+    y += 4;
     doc.line(margin, y, W - margin, y);
     y += 5;
 
@@ -98,7 +113,7 @@ window.LSCPDF = {
       };
     };
 
-    const tableCols = ['date', 'vech no', 'material', 'trip', 'brass', 'rate', 'total'];
+    const tableCols = ['date', 'vehicle no', 'material', 'trip', 'brass', 'rate', 'total'];
     let totalBrass = 0;
     const tableRows = (sale.items || []).map(item => {
       const parsed = parseItem(item);

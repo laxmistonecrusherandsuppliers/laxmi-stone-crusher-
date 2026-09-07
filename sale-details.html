@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bill Details - Lakshmi Stone Crusher & Suppliers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=1788785000">
+  <link rel="stylesheet" href="assets/css/style.css?v=1788785600">
   <style>
     /* Print optimizations for exact single-page A4 Challan output */
     @media print {
@@ -29,13 +29,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="assets/js/config.js?v=1788785000"></script>
-  <script src="assets/js/supabase-client.js?v=1788785000"></script>
-  <script src="assets/js/utils.js?v=1788785000"></script>
-  <script src="assets/js/auth.js?v=1788785000"></script>
-  <script src="assets/js/db-service.js?v=1788785000"></script>
-  <script src="assets/js/pdf-generator.js?v=1788785000"></script>
-  <script src="assets/js/layout.js?v=1788785000"></script>
+  <script src="assets/js/config.js?v=1788785600"></script>
+  <script src="assets/js/supabase-client.js?v=1788785600"></script>
+  <script src="assets/js/utils.js?v=1788785600"></script>
+  <script src="assets/js/auth.js?v=1788785600"></script>
+  <script src="assets/js/db-service.js?v=1788785600"></script>
+  <script src="assets/js/pdf-generator.js?v=1788785600"></script>
+  <script src="assets/js/layout.js?v=1788785600"></script>
 </head>
 <body>
   <div id="app">
@@ -134,17 +134,20 @@
       <div id="bill-loading" class="p-8 text-center text-gray-400 text-xs">Loading bill...</div>
 
       <div id="bill-content" class="hidden text-black font-sans">
-        <!-- Top Section: Subhash Warule (Left) | Laxmi Stone Crusher (Center) | Prasad Warule (Right) -->
+        <!-- Top Section: Subhash Warule (Left) | Goddess Laxmi Logo & Laxmi Stone Crusher (Center) | Prasad Warule (Right) -->
         <div class="border-t border-black pt-2 pb-2">
-          <div class="flex justify-between items-start">
-            <div class="text-left font-bold text-xs sm:text-sm text-gray-900 leading-tight">
+          <div class="flex justify-between items-center gap-2">
+            <div class="text-left font-bold text-xs sm:text-sm text-gray-900 leading-tight flex-1">
               Subhash Warule<br>
               <span class="font-normal text-xs text-gray-800">7020778707</span>
             </div>
-            <div class="text-center font-bold text-xl sm:text-3xl tracking-tight text-gray-900 px-2">
-              Laxmi Stone Crusher
+            <div class="flex flex-col items-center justify-center text-center px-2 flex-shrink-0">
+              <img id="bill-logo-img" src="assets/images/logo.png" alt="Laxmi Goddess" class="h-14 w-14 sm:h-16 sm:w-16 object-contain mb-1 drop-shadow-sm">
+              <div class="font-bold text-xl sm:text-3xl tracking-tight text-gray-900">
+                Laxmi Stone Crusher
+              </div>
             </div>
-            <div class="text-right font-bold text-xs sm:text-sm text-gray-900 leading-tight">
+            <div class="text-right font-bold text-xs sm:text-sm text-gray-900 leading-tight flex-1">
               prasad warule<br>
               <span class="font-normal text-xs text-gray-800">8010406871</span>
             </div>
@@ -164,13 +167,13 @@
           </div>
         </div>
 
-        <!-- Table: date | vech no | material | trip | brass | rate | total -->
+        <!-- Table: date | vehicle no | material | trip | brass | rate | total -->
         <div class="overflow-x-auto my-2">
           <table class="w-full text-xs sm:text-sm border-collapse border border-black text-left" id="challan-table" style="border: 1.5px solid #000;">
             <thead>
               <tr class="border-b border-black font-bold uppercase text-[11px] sm:text-xs bg-white">
                 <th class="border border-black p-2 w-24">date</th>
-                <th class="border border-black p-2 w-28">vech no</th>
+                <th class="border border-black p-2 w-28">vehicle no</th>
                 <th class="border border-black p-2">material</th>
                 <th class="border border-black p-2 w-16 text-center">trip</th>
                 <th class="border border-black p-2 w-24 text-right">brass</th>
@@ -977,10 +980,12 @@
     }
 
     // --- Thermal Receipt Logic ---
-    // --- Thermal Receipt Logic ---
     function renderThermalReceipt() {
       if (!currentSale) return;
       const html = `
+        <div class="flex justify-center mb-1">
+          <img src="assets/images/logo.png" alt="Laxmi Goddess" class="h-10 w-10 object-contain">
+        </div>
         <div class="text-center font-bold text-base mb-1">Laxmi Stone Crusher</div>
         <div class="text-center text-[9pt]">Subhash: 7020778707 | Prasad: 8010406871</div>
         <div class="border-t border-b border-dashed py-1 text-[9pt] flex justify-between my-2">
